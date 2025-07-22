@@ -1,5 +1,5 @@
 // a sealed class that can't be inherited and includes distinct objects for each category
-// instead of instanciating objects, we use them directly
+// instead of instantiating objects, we use them directly
 
 sealed class TokenType {
     // keywords
