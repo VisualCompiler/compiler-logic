@@ -1,7 +1,10 @@
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import java.io.ByteArrayOutputStream
 import kotlin.test.assertEquals
 
 class LexerTest {
+
     @Test
     fun `test keywords and identifier`(){
         val source = "int main"
@@ -68,4 +71,6 @@ class LexerTest {
 
         assertEquals(expected_tokens, types)
     }
+
+
 }
