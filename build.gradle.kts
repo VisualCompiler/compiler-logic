@@ -1,5 +1,7 @@
 plugins {
     kotlin("jvm") version "1.9.23"
+    id("org.jlleitschuh.gradle.ktlint") version "11.3.2"
+    id("org.jetbrains.kotlinx.kover") version "0.7.6"
 }
 
 group = "org.example"

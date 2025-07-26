@@ -1,12 +1,11 @@
-import org.junit.jupiter.api.Assertions
+
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayOutputStream
 import kotlin.test.assertEquals
 
 class LexerTest {
 
     @Test
-    fun `test keywords and identifier`(){
+    fun `test keywords and identifier`() {
         val source = "int main"
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()
@@ -18,7 +17,7 @@ class LexerTest {
     }
 
     @Test
-    fun `test integer values`(){
+    fun `test integer values`() {
         val source = "563"
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()
@@ -28,11 +27,11 @@ class LexerTest {
     }
 
     @Test
-    fun `test arithmetic expression`(){
-        val source="x = a + b - 432;"
+    fun `test arithmetic expression`() {
+        val source = "x = a + b - 432;"
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()
-        val types = tokens.map{ it.type }
+        val types = tokens.map { it.type }
         val expected_tokens = listOf(
             TokenType.IDENTIFIER,
             TokenType.ASSIGN,
@@ -49,7 +48,7 @@ class LexerTest {
     }
 
     @Test
-    fun `test parantheses and brackets and invalid`(){
+    fun `test parantheses and brackets and invalid`() {
         val source = "if (a){ return 0;}"
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()
@@ -67,10 +66,8 @@ class LexerTest {
             TokenType.EOF
         )
 
-        val types = tokens.map{it.type}
+        val types = tokens.map { it.type }
 
         assertEquals(expected_tokens, types)
     }
-
-
 }

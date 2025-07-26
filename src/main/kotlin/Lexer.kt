@@ -3,23 +3,23 @@
 
 sealed class TokenType {
     // keywords
-    object KEYWORD_INT: TokenType()
-    object KEYWORD_VOID: TokenType()
-    object KEYWORD_RETURN: TokenType()
+    object KEYWORD_INT : TokenType()
+    object KEYWORD_VOID : TokenType()
+    object KEYWORD_RETURN : TokenType()
 
-    object IDENTIFIER: TokenType()
+    object IDENTIFIER : TokenType()
 
     // literals
-    object INT_LITERAL: TokenType()
+    object INT_LITERAL : TokenType()
 
     // Symbols
-    object PLUS: TokenType()
-    object MINUS: TokenType()
-    object MULTIPLY: TokenType()
-    object DIVIDE: TokenType()
+    object PLUS : TokenType()
+    object MINUS : TokenType()
+    object MULTIPLY : TokenType()
+    object DIVIDE : TokenType()
 
-    object ASSIGN: TokenType()
-    object SEMICOLON: TokenType()
+    object ASSIGN : TokenType()
+    object SEMICOLON : TokenType()
     object LEFT_PAREN : TokenType()
     object RIGHT_PAREN : TokenType()
     object LEFT_BRACK : TokenType()
@@ -35,7 +35,7 @@ sealed class TokenType {
 
 data class Token(val type: TokenType, val lexeme: String, val line: Int, val column: Int)
 
-class Lexer(val source: String){
+class Lexer(val source: String) {
     private val tokens = mutableListOf<Token>()
     private var current = 0
     private var start = 0
@@ -49,20 +49,22 @@ class Lexer(val source: String){
         "return" to TokenType.KEYWORD_RETURN
     )
 
-    fun tokenize(): List<Token>{
-        while (!isAtEnd()){
+    fun tokenize(): List<Token> {
+        while (!isAtEnd()) {
             start = current
             scanToken()
         }
-        tokens.add(Token(TokenType.EOF, "", line, current-lineStart+1))
+        tokens.add(Token(TokenType.EOF, "", line, current - lineStart + 1))
         return tokens
     }
+
     // check if we are at end of the source code
-    private fun isAtEnd(): Boolean{
-        if (current >= source.length)
+    private fun isAtEnd(): Boolean {
+        if (current >= source.length) {
             return true
-        else
+        } else {
             return false
+        }
     }
 
     //
@@ -70,11 +72,10 @@ class Lexer(val source: String){
         return source[current++] // gets current char, then increments current
     }
 
-
     // use pattern matching for assigning values to token
-    private fun scanToken(){
-        when (val char = advance()){
-            '(' -> addToken(TokenType.LEFT_PAREN,)
+    private fun scanToken() {
+        when (val char = advance()) {
+            '(' -> addToken(TokenType.LEFT_PAREN)
             ')' -> addToken(TokenType.RIGHT_PAREN)
             '{' -> addToken(TokenType.LEFT_BRACK)
             '}' -> addToken(TokenType.RIGHT_BRACK)
@@ -91,34 +92,32 @@ class Lexer(val source: String){
                 lineStart = current
             }
 
-        else ->{
-            if (isDigit(char))
-                number()
-            else if (isAlphabetic(char))
-                identifier()
-            else {
-                println("Invalid character at line $line")
+            else -> {
+                if (isDigit(char)) {
+                    number()
+                } else if (isAlphabetic(char)) {
+                    identifier()
+                } else {
+                    println("Invalid character at line $line")
+                }
             }
         }
-
     }
-}
-    private fun identifier(){
+    private fun identifier() {
         while (isAlphaNumeric(peek())) advance()
-        val text = source.subSequence(start,current)
+        val text = source.subSequence(start, current)
         val type = keywords[text] ?: TokenType.IDENTIFIER
         addToken(type)
-
     }
 
-    private fun number(){
+    private fun number() {
         while (isDigit(peek())) advance()
         addToken(TokenType.INT_LITERAL)
     }
 
     private fun peek(): Char = if (isAtEnd()) '\u0000' else source[current]
     private fun isDigit(c: Char): Boolean = c in '0'..'9'
-    private fun isAlphabetic(c: Char): Boolean =  (c in 'a'..'z'|| (c in 'A'..'Z') || c == '_')
+    private fun isAlphabetic(c: Char): Boolean = (c in 'a'..'z' || (c in 'A'..'Z') || c == '_')
     private fun isAlphaNumeric(c: Char): Boolean = isDigit(c) || isAlphabetic(c)
 
     private fun addToken(type: TokenType) {

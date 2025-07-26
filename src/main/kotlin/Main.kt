@@ -15,8 +15,8 @@ fun main() {
     tokens.forEach { token ->
         println(
             "Type: ${token.type.toString().padEnd(18)} " +
-                    "Lexeme: '${token.lexeme.padEnd(6)}' " +
-                    "Position: [L:${token.line}, C:${token.column}]"
+                "Lexeme: '${token.lexeme.padEnd(6)}' " +
+                "Position: [L:${token.line}, C:${token.column}]"
         )
     }
 }
