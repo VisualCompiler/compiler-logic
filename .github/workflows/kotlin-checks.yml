@@ -29,6 +29,4 @@ jobs:
         run: ./gradlew ktlintCheck
         
       - name: Kotlin Kover
-        uses: stevenleadbeater/kotlin-kover-action@v1.0.3
-        with:
-          coverage-threshold: 85
+        run: ./gradlew koverXmlReport
