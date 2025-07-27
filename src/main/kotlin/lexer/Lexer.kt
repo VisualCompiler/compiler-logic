@@ -1,3 +1,5 @@
+package lexer
+
 // a sealed class that can't be inherited and includes distinct objects for each category
 // instead of instantiating objects, we use them directly
 
@@ -60,10 +62,10 @@ class Lexer(val source: String) {
 
     // check if we are at end of the source code
     private fun isAtEnd(): Boolean {
-        if (current >= source.length) {
-            return true
+        return if (current >= source.length) {
+            true
         } else {
-            return false
+            false
         }
     }
 

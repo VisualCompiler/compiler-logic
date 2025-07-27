@@ -1,6 +1,7 @@
 package org.example
 
 import Lexer
+import lexer.Lexer
 
 fun main() {
     val code = """

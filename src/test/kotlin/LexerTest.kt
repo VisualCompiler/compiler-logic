@@ -1,4 +1,6 @@
 
+import lexer.Lexer
+import lexer.TokenType
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
