@@ -5,4 +5,14 @@ sealed class FunctionDefinition : ASTNode()
 data class SimpleFunction(
     val name: Identifier,
     val body: Statement
-) : FunctionDefinition()
+) : FunctionDefinition() {
+    override fun prettyPrint(indent: Int): String {
+        return buildString {
+            appendLine("${indent(indent)}SimpleFunction(")
+            append("${indent(indent + 1)}name=${name.prettyPrint(0)}")
+            appendLine("${indent(indent + 1)}body=")
+            append("${indent(indent)}${body.prettyPrint(indent + 1)}")
+            appendLine("${indent(indent)})")
+        }
+    }
+}

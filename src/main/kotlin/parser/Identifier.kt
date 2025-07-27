@@ -4,4 +4,8 @@ import lexer.Token
 
 data class Identifier(
     val token: Token
-) : ASTNode()
+) : ASTNode() {
+    override fun prettyPrint(indent: Int): String {
+        return buildString { appendLine("${indent(indent)}\"${token.lexeme}\"") }
+    }
+}
