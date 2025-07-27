@@ -1,16 +1,15 @@
 package org.example
 
-import Lexer
 import lexer.Lexer
+import org.example.parser.Parser
 
 fun main() {
-    val code = """
-    int main(void){
-    int x = 5
-    int y = 3
-    int z = 5+3
-    }
-    """.trimIndent()
+    val code =
+        """
+        int main(void){
+        return 5;
+        }
+        """.trimIndent()
     val lexer = Lexer(code)
     val tokens = lexer.tokenize()
     tokens.forEach { token ->
@@ -20,4 +19,8 @@ fun main() {
                 "Position: [L:${token.line}, C:${token.column}]"
         )
     }
+
+    val parser = Parser()
+    val ast = parser.parseTokens(tokens)
+    println(ast.prettyPrint())
 }
