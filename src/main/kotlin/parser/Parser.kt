@@ -66,7 +66,7 @@ class Parser {
             )
         }
 
-        return Identifier(token = token)
+        return Identifier(value = token.lexeme)
     }
 
     private fun parseStatement(tokens: MutableList<Token>): Statement {
@@ -86,6 +86,6 @@ class Parser {
                 message = "Expected token: ${TokenType.INT_LITERAL}, got ${token.type}"
             )
         }
-        return IntExpression(value = token)
+        return IntExpression(value = token.lexeme.toInt())
     }
 }
