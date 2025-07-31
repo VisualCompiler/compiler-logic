@@ -10,7 +10,7 @@ class Parser {
         val ast = parseProgram(tokens)
 
         val lastToken = tokens.removeFirst()
-        if (lastToken.type != TokenType.EOF) {
+        if (lastToken.type != TokenType.EOF || !tokens.isEmpty()) {
             throw SyntaxError(
                 line = lastToken.line,
                 column = lastToken.column,

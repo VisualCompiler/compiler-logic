@@ -149,9 +149,9 @@ class ParserTest {
             Token(TokenType.INT_LITERAL, "42", 1, 25),
             Token(TokenType.SEMICOLON, ";", 1, 27),
             Token(TokenType.RIGHT_BRACK, "}", 1, 29),
+            Token(TokenType.EOF, "", 1, 31),
             // Extra tokens here
-            Token(TokenType.IDENTIFIER, "extra", 1, 31),
-            Token(TokenType.EOF, "", 1, 36)
+            Token(TokenType.IDENTIFIER, "extra", 1, 32)
         )
 
         val parser = Parser()
