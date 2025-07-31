@@ -3,7 +3,7 @@ package org.example.parser
 sealed class Statement : ASTNode()
 
 data class ReturnStatement(
-    val expression: Expression
+    val expression: Expression,
 ) : Statement() {
     override fun prettyPrint(indent: Int): String {
         return buildString {

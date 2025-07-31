@@ -1,4 +1,3 @@
-
 import lexer.Lexer
 import lexer.TokenType
 import org.junit.jupiter.api.Test
@@ -34,17 +33,18 @@ class LexerTest {
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()
         val types = tokens.map { it.type }
-        val expected_tokens = listOf(
-            TokenType.IDENTIFIER,
-            TokenType.ASSIGN,
-            TokenType.IDENTIFIER,
-            TokenType.PLUS,
-            TokenType.IDENTIFIER,
-            TokenType.MINUS,
-            TokenType.INT_LITERAL,
-            TokenType.SEMICOLON,
-            TokenType.EOF
-        )
+        val expected_tokens =
+            listOf(
+                TokenType.IDENTIFIER,
+                TokenType.ASSIGN,
+                TokenType.IDENTIFIER,
+                TokenType.PLUS,
+                TokenType.IDENTIFIER,
+                TokenType.MINUS,
+                TokenType.INT_LITERAL,
+                TokenType.SEMICOLON,
+                TokenType.EOF
+            )
 
         assertEquals(expected_tokens, types)
     }
@@ -55,18 +55,19 @@ class LexerTest {
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()
 
-        val expected_tokens = listOf(
-            TokenType.IDENTIFIER, // remove it when we add if as a keyword
-            TokenType.LEFT_PAREN,
-            TokenType.IDENTIFIER,
-            TokenType.RIGHT_PAREN,
-            TokenType.LEFT_BRACK,
-            TokenType.KEYWORD_RETURN,
-            TokenType.INT_LITERAL,
-            TokenType.SEMICOLON,
-            TokenType.RIGHT_BRACK,
-            TokenType.EOF
-        )
+        val expected_tokens =
+            listOf(
+                TokenType.IDENTIFIER, // remove it when we add if as a keyword
+                TokenType.LEFT_PAREN,
+                TokenType.IDENTIFIER,
+                TokenType.RIGHT_PAREN,
+                TokenType.LEFT_BRACK,
+                TokenType.KEYWORD_RETURN,
+                TokenType.INT_LITERAL,
+                TokenType.SEMICOLON,
+                TokenType.RIGHT_BRACK,
+                TokenType.EOF
+            )
 
         val types = tokens.map { it.type }
 

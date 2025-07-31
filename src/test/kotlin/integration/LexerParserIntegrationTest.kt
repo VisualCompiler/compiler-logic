@@ -1,7 +1,11 @@
 package integration
 
 import lexer.Lexer
-import org.example.parser.*
+import org.example.parser.IntExpression
+import org.example.parser.Parser
+import org.example.parser.ReturnStatement
+import org.example.parser.SimpleFunction
+import org.example.parser.SimpleProgram
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

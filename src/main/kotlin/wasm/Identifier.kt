@@ -1,5 +1,5 @@
 package org.example.wasm
 
 data class Identifier(
-    val name: String
+    val name: String,
 ) : WASMConstruct()

@@ -41,7 +41,7 @@ class Parser {
 
     private fun expect(
         expected: TokenType,
-        tokens: MutableList<Token>
+        tokens: MutableList<Token>,
     ): Token {
         val token = tokens.removeFirst()
 
