@@ -9,7 +9,7 @@ data class Return(
 ) : Instruction() {
     override fun toWat(indent: Int): String =
         buildString {
-            appendLine("${indent(indent)}${operand.toWat()}")
+            append("${indent(indent)}${operand.toWat()}")
             appendLine("${indent(indent)}return")
         }
 }

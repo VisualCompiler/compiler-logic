@@ -10,7 +10,7 @@ data class SimpleModule(
     override fun toWat(indent: Int): String =
         buildString {
             appendLine("(module")
-            appendLine(function.toWat(indent + 1))
+            append(function.toWat(indent + 1))
             if (function is WASMFunction) {
                 appendLine("${indent(indent + 1)}(export \"${function.name}\" (func $${function.name}))")
             }
