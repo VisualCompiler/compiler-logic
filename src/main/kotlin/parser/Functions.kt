@@ -5,6 +5,8 @@ sealed class FunctionDefinition : ASTNode()
 data class SimpleFunction(
     val name: Identifier,
     val body: Statement,
+    override val line: Int,
+    override val column: Int,
 ) : FunctionDefinition() {
     override fun prettyPrint(indent: Int): String {
         return buildString {

@@ -4,6 +4,8 @@ sealed class Program : ASTNode()
 
 data class SimpleProgram(
     val functionDefinition: FunctionDefinition,
+    override val line: Int,
+    override val column: Int,
 ) : Program() {
     override fun prettyPrint(indent: Int): String {
         return buildString {
