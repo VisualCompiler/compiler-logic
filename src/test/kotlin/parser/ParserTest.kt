@@ -3,7 +3,12 @@ package parser
 import lexer.Token
 import lexer.TokenType
 import org.example.Exceptions.SyntaxError
-import org.example.parser.*
+import org.example.parser.BinaryExpression
+import org.example.parser.IntExpression
+import org.example.parser.Parser
+import org.example.parser.ReturnStatement
+import org.example.parser.SimpleFunction
+import org.example.parser.SimpleProgram
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -16,19 +21,20 @@ class ParserTest {
         @Test
         fun `test basic program parsing`() {
             // Create a list of tokens for a simple program: int main(void) { return 42; }
-            val tokens = listOf(
-                Token(TokenType.KEYWORD_INT, "int", 1, 1),
-                Token(TokenType.IDENTIFIER, "main", 1, 5),
-                Token(TokenType.LEFT_PAREN, "(", 1, 9),
-                Token(TokenType.KEYWORD_VOID, "void", 1, 10),
-                Token(TokenType.RIGHT_PAREN, ")", 1, 14),
-                Token(TokenType.LEFT_BRACK, "{", 1, 16),
-                Token(TokenType.KEYWORD_RETURN, "return", 1, 18),
-                Token(TokenType.INT_LITERAL, "42", 1, 25),
-                Token(TokenType.SEMICOLON, ";", 1, 27),
-                Token(TokenType.RIGHT_BRACK, "}", 1, 29),
-                Token(TokenType.EOF, "", 1, 30)
-            )
+            val tokens =
+                listOf(
+                    Token(TokenType.KEYWORD_INT, "int", 1, 1),
+                    Token(TokenType.IDENTIFIER, "main", 1, 5),
+                    Token(TokenType.LEFT_PAREN, "(", 1, 9),
+                    Token(TokenType.KEYWORD_VOID, "void", 1, 10),
+                    Token(TokenType.RIGHT_PAREN, ")", 1, 14),
+                    Token(TokenType.LEFT_BRACK, "{", 1, 16),
+                    Token(TokenType.KEYWORD_RETURN, "return", 1, 18),
+                    Token(TokenType.INT_LITERAL, "42", 1, 25),
+                    Token(TokenType.SEMICOLON, ";", 1, 27),
+                    Token(TokenType.RIGHT_BRACK, "}", 1, 29),
+                    Token(TokenType.EOF, "", 1, 30),
+                )
 
             val parser = Parser()
             val ast = parser.parseTokens(tokens)
@@ -40,19 +46,20 @@ class ParserTest {
         @Test
         fun `test detailed AST structure for single integer`() {
             // Create a list of tokens for a simple program: int main(void) { return 42; }
-            val tokens = listOf(
-                Token(TokenType.KEYWORD_INT, "int", 1, 1),
-                Token(TokenType.IDENTIFIER, "main", 1, 5),
-                Token(TokenType.LEFT_PAREN, "(", 1, 9),
-                Token(TokenType.KEYWORD_VOID, "void", 1, 10),
-                Token(TokenType.RIGHT_PAREN, ")", 1, 14),
-                Token(TokenType.LEFT_BRACK, "{", 1, 16),
-                Token(TokenType.KEYWORD_RETURN, "return", 1, 18),
-                Token(TokenType.INT_LITERAL, "42", 1, 25),
-                Token(TokenType.SEMICOLON, ";", 1, 27),
-                Token(TokenType.RIGHT_BRACK, "}", 1, 29),
-                Token(TokenType.EOF, "", 1, 30)
-            )
+            val tokens =
+                listOf(
+                    Token(TokenType.KEYWORD_INT, "int", 1, 1),
+                    Token(TokenType.IDENTIFIER, "main", 1, 5),
+                    Token(TokenType.LEFT_PAREN, "(", 1, 9),
+                    Token(TokenType.KEYWORD_VOID, "void", 1, 10),
+                    Token(TokenType.RIGHT_PAREN, ")", 1, 14),
+                    Token(TokenType.LEFT_BRACK, "{", 1, 16),
+                    Token(TokenType.KEYWORD_RETURN, "return", 1, 18),
+                    Token(TokenType.INT_LITERAL, "42", 1, 25),
+                    Token(TokenType.SEMICOLON, ";", 1, 27),
+                    Token(TokenType.RIGHT_BRACK, "}", 1, 29),
+                    Token(TokenType.EOF, "", 1, 30),
+                )
 
             val parser = Parser()
             val ast = parser.parseTokens(tokens)
@@ -77,33 +84,33 @@ class ParserTest {
     //  verify the arithmetic expression functionality
     @Nested
     inner class ArithmeticExpressionTests {
-
-        private fun buildTokensForExpression(expressionTokens: List<Token>): List<Token> {
-            return listOf(
+        private fun buildTokensForExpression(expressionTokens: List<Token>): List<Token> =
+            listOf(
                 Token(TokenType.KEYWORD_INT, "int", 1, 1),
                 Token(TokenType.IDENTIFIER, "main", 1, 5),
                 Token(TokenType.LEFT_PAREN, "(", 1, 9),
                 Token(TokenType.KEYWORD_VOID, "void", 1, 10),
                 Token(TokenType.RIGHT_PAREN, ")", 1, 14),
                 Token(TokenType.LEFT_BRACK, "{", 1, 16),
-                Token(TokenType.KEYWORD_RETURN, "return", 1, 18)
-            ) + expressionTokens + listOf(
-                Token(TokenType.SEMICOLON, ";", 1, 27),
-                Token(TokenType.RIGHT_BRACK, "}", 1, 29),
-                Token(TokenType.EOF, "", 1, 30)
-            )
-        }
+                Token(TokenType.KEYWORD_RETURN, "return", 1, 18),
+            ) + expressionTokens +
+                listOf(
+                    Token(TokenType.SEMICOLON, ";", 1, 27),
+                    Token(TokenType.RIGHT_BRACK, "}", 1, 29),
+                    Token(TokenType.EOF, "", 1, 30),
+                )
 
         @Test
         fun `test simple addition`() {
             //  return 5 + 3;
-            val tokens = buildTokensForExpression(
-                listOf(
-                    Token(TokenType.INT_LITERAL, "5", 1, 25),
-                    Token(TokenType.PLUS, "+", 1, 26),
-                    Token(TokenType.INT_LITERAL, "3", 1, 27)
+            val tokens =
+                buildTokensForExpression(
+                    listOf(
+                        Token(TokenType.INT_LITERAL, "5", 1, 25),
+                        Token(TokenType.PLUS, "+", 1, 26),
+                        Token(TokenType.INT_LITERAL, "3", 1, 27),
+                    ),
                 )
-            )
             val parser = Parser()
             val ast = parser.parseTokens(tokens)
 
@@ -120,15 +127,16 @@ class ParserTest {
         @Test
         fun `test operator precedence`() {
             // return 2 + 3 * 4;
-            val tokens = buildTokensForExpression(
-                listOf(
-                    Token(TokenType.INT_LITERAL, "2", 1, 25),
-                    Token(TokenType.PLUS, "+", 1, 27),
-                    Token(TokenType.INT_LITERAL, "3", 1, 29),
-                    Token(TokenType.MULTIPLY, "*", 1, 31),
-                    Token(TokenType.INT_LITERAL, "4", 1, 33)
+            val tokens =
+                buildTokensForExpression(
+                    listOf(
+                        Token(TokenType.INT_LITERAL, "2", 1, 25),
+                        Token(TokenType.PLUS, "+", 1, 27),
+                        Token(TokenType.INT_LITERAL, "3", 1, 29),
+                        Token(TokenType.MULTIPLY, "*", 1, 31),
+                        Token(TokenType.INT_LITERAL, "4", 1, 33),
+                    ),
                 )
-            )
             val parser = Parser()
             val ast = parser.parseTokens(tokens)
 
@@ -154,17 +162,18 @@ class ParserTest {
         @Test
         fun `test parentheses overriding precedence`() {
             // return (2 + 3) * 4;
-            val tokens = buildTokensForExpression(
-                listOf(
-                    Token(TokenType.LEFT_PAREN, "(", 1, 25),
-                    Token(TokenType.INT_LITERAL, "2", 1, 26),
-                    Token(TokenType.PLUS, "+", 1, 28),
-                    Token(TokenType.INT_LITERAL, "3", 1, 30),
-                    Token(TokenType.RIGHT_PAREN, ")", 1, 31),
-                    Token(TokenType.MULTIPLY, "*", 1, 33),
-                    Token(TokenType.INT_LITERAL, "4", 1, 35)
+            val tokens =
+                buildTokensForExpression(
+                    listOf(
+                        Token(TokenType.LEFT_PAREN, "(", 1, 25),
+                        Token(TokenType.INT_LITERAL, "2", 1, 26),
+                        Token(TokenType.PLUS, "+", 1, 28),
+                        Token(TokenType.INT_LITERAL, "3", 1, 30),
+                        Token(TokenType.RIGHT_PAREN, ")", 1, 31),
+                        Token(TokenType.MULTIPLY, "*", 1, 33),
+                        Token(TokenType.INT_LITERAL, "4", 1, 35),
+                    ),
                 )
-            )
             val parser = Parser()
             val ast = parser.parseTokens(tokens)
 
@@ -190,15 +199,16 @@ class ParserTest {
         @Test
         fun `test left associativity`() {
             // return 10 - 4 - 2;
-            val tokens = buildTokensForExpression(
-                listOf(
-                    Token(TokenType.INT_LITERAL, "10", 1, 25),
-                    Token(TokenType.MINUS, "-", 1, 28),
-                    Token(TokenType.INT_LITERAL, "4", 1, 30),
-                    Token(TokenType.MINUS, "-", 1, 32),
-                    Token(TokenType.INT_LITERAL, "2", 1, 34)
+            val tokens =
+                buildTokensForExpression(
+                    listOf(
+                        Token(TokenType.INT_LITERAL, "10", 1, 25),
+                        Token(TokenType.MINUS, "-", 1, 28),
+                        Token(TokenType.INT_LITERAL, "4", 1, 30),
+                        Token(TokenType.MINUS, "-", 1, 32),
+                        Token(TokenType.INT_LITERAL, "2", 1, 34),
+                    ),
                 )
-            )
             val parser = Parser()
             val ast = parser.parseTokens(tokens)
 
@@ -228,23 +238,25 @@ class ParserTest {
         @Test
         fun `test syntax error - missing int keyword`() {
             // Missing the int keyword at the beginning
-            val tokens = listOf(
-                Token(TokenType.IDENTIFIER, "main", 1, 1),
-                Token(TokenType.LEFT_PAREN, "(", 1, 5),
-                Token(TokenType.KEYWORD_VOID, "void", 1, 6),
-                Token(TokenType.RIGHT_PAREN, ")", 1, 10),
-                Token(TokenType.LEFT_BRACK, "{", 1, 12),
-                Token(TokenType.KEYWORD_RETURN, "return", 1, 14),
-                Token(TokenType.INT_LITERAL, "42", 1, 21),
-                Token(TokenType.SEMICOLON, ";", 1, 23),
-                Token(TokenType.RIGHT_BRACK, "}", 1, 25),
-                Token(TokenType.EOF, "", 1, 26)
-            )
+            val tokens =
+                listOf(
+                    Token(TokenType.IDENTIFIER, "main", 1, 1),
+                    Token(TokenType.LEFT_PAREN, "(", 1, 5),
+                    Token(TokenType.KEYWORD_VOID, "void", 1, 6),
+                    Token(TokenType.RIGHT_PAREN, ")", 1, 10),
+                    Token(TokenType.LEFT_BRACK, "{", 1, 12),
+                    Token(TokenType.KEYWORD_RETURN, "return", 1, 14),
+                    Token(TokenType.INT_LITERAL, "42", 1, 21),
+                    Token(TokenType.SEMICOLON, ";", 1, 23),
+                    Token(TokenType.RIGHT_BRACK, "}", 1, 25),
+                    Token(TokenType.EOF, "", 1, 26),
+                )
 
             val parser = Parser()
-            val exception = assertThrows<SyntaxError> {
-                parser.parseTokens(tokens)
-            }
+            val exception =
+                assertThrows<SyntaxError> {
+                    parser.parseTokens(tokens)
+                }
 
             // Check that the error message contains the expected text
             assert(exception.message!!.contains("Expected token: KEYWORD_INT, got IDENTIFIER"))
@@ -255,24 +267,26 @@ class ParserTest {
         @Test
         fun `test syntax error - missing return keyword`() {
             // Missing the return keyword
-            val tokens = listOf(
-                Token(TokenType.KEYWORD_INT, "int", 1, 1),
-                Token(TokenType.IDENTIFIER, "main", 1, 5),
-                Token(TokenType.LEFT_PAREN, "(", 1, 9),
-                Token(TokenType.KEYWORD_VOID, "void", 1, 10),
-                Token(TokenType.RIGHT_PAREN, ")", 1, 14),
-                Token(TokenType.LEFT_BRACK, "{", 1, 16),
-                // Missing KEYWORD_RETURN here
-                Token(TokenType.INT_LITERAL, "42", 1, 18),
-                Token(TokenType.SEMICOLON, ";", 1, 20),
-                Token(TokenType.RIGHT_BRACK, "}", 1, 22),
-                Token(TokenType.EOF, "", 1, 23)
-            )
+            val tokens =
+                listOf(
+                    Token(TokenType.KEYWORD_INT, "int", 1, 1),
+                    Token(TokenType.IDENTIFIER, "main", 1, 5),
+                    Token(TokenType.LEFT_PAREN, "(", 1, 9),
+                    Token(TokenType.KEYWORD_VOID, "void", 1, 10),
+                    Token(TokenType.RIGHT_PAREN, ")", 1, 14),
+                    Token(TokenType.LEFT_BRACK, "{", 1, 16),
+                    // Missing KEYWORD_RETURN here
+                    Token(TokenType.INT_LITERAL, "42", 1, 18),
+                    Token(TokenType.SEMICOLON, ";", 1, 20),
+                    Token(TokenType.RIGHT_BRACK, "}", 1, 22),
+                    Token(TokenType.EOF, "", 1, 23),
+                )
 
             val parser = Parser()
-            val exception = assertThrows<SyntaxError> {
-                parser.parseTokens(tokens)
-            }
+            val exception =
+                assertThrows<SyntaxError> {
+                    parser.parseTokens(tokens)
+                }
 
             // Check that the error message contains the expected text
             assert(exception.message!!.contains("Expected token: KEYWORD_RETURN, got INT_LITERAL"))
@@ -283,26 +297,28 @@ class ParserTest {
         @Test
         fun `test syntax error - extra tokens after program`() {
             // Extra tokens after the program
-            val tokens = listOf(
-                Token(TokenType.KEYWORD_INT, "int", 1, 1),
-                Token(TokenType.IDENTIFIER, "main", 1, 5),
-                Token(TokenType.LEFT_PAREN, "(", 1, 9),
-                Token(TokenType.KEYWORD_VOID, "void", 1, 10),
-                Token(TokenType.RIGHT_PAREN, ")", 1, 14),
-                Token(TokenType.LEFT_BRACK, "{", 1, 16),
-                Token(TokenType.KEYWORD_RETURN, "return", 1, 18),
-                Token(TokenType.INT_LITERAL, "42", 1, 25),
-                Token(TokenType.SEMICOLON, ";", 1, 27),
-                Token(TokenType.RIGHT_BRACK, "}", 1, 29),
-                // Extra tokens here
-                Token(TokenType.IDENTIFIER, "extra", 1, 31),
-                Token(TokenType.EOF, "", 1, 36)
-            )
+            val tokens =
+                listOf(
+                    Token(TokenType.KEYWORD_INT, "int", 1, 1),
+                    Token(TokenType.IDENTIFIER, "main", 1, 5),
+                    Token(TokenType.LEFT_PAREN, "(", 1, 9),
+                    Token(TokenType.KEYWORD_VOID, "void", 1, 10),
+                    Token(TokenType.RIGHT_PAREN, ")", 1, 14),
+                    Token(TokenType.LEFT_BRACK, "{", 1, 16),
+                    Token(TokenType.KEYWORD_RETURN, "return", 1, 18),
+                    Token(TokenType.INT_LITERAL, "42", 1, 25),
+                    Token(TokenType.SEMICOLON, ";", 1, 27),
+                    Token(TokenType.RIGHT_BRACK, "}", 1, 29),
+                    // Extra tokens here
+                    Token(TokenType.IDENTIFIER, "extra", 1, 31),
+                    Token(TokenType.EOF, "", 1, 36),
+                )
 
             val parser = Parser()
-            val exception = assertThrows<SyntaxError> {
-                parser.parseTokens(tokens)
-            }
+            val exception =
+                assertThrows<SyntaxError> {
+                    parser.parseTokens(tokens)
+                }
 
             // Check that the error message contains the expected text
             assert(exception.message!!.contains("Expected end of file"))
