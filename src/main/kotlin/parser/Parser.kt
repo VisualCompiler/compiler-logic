@@ -78,14 +78,53 @@ class Parser {
     }
 
     private fun parseExpression(tokens: MutableList<Token>): Expression {
-        val token = tokens.removeFirst()
-        if (token.type != TokenType.INT_LITERAL) {
-            throw SyntaxError(
-                line = token.line,
-                column = token.column,
-                message = "Expected token: ${TokenType.INT_LITERAL}, got ${token.type}"
-            )
+        return parseAddition(tokens)
+}
+
+    private fun parseAddition(tokens: MutableList<Token>) : Expression{
+        var left_operand = parseTerm(tokens)
+
+        while (check(TokenType.PLUS, tokens) || check(TokenType.MINUS, tokens)){
+            var operator = tokens.removeFirst()
+            var right_operand = parseTerm(tokens)
+            left_operand = BinaryExpression(left_operand, operator, right_operand)
         }
-        return IntExpression(value = token)
+        return left_operand
+    }
+
+    private fun parseTerm(tokens: MutableList<Token>): Expression{
+        var left_operand = parsePrimary(tokens)
+
+        while (check(TokenType.MULTIPLY, tokens) || check(TokenType.DIVIDE,tokens)){
+            var operator = tokens.removeFirst()
+            var right_operand = parsePrimary(tokens)
+            left_operand = BinaryExpression(left_operand, operator, right_operand)
+        }
+        return left_operand
+    }
+
+    private fun parsePrimary(tokens: MutableList<Token>): Expression{
+        if (check(TokenType.INT_LITERAL, tokens)){
+            return IntExpression(tokens.removeFirst())
+        }
+
+        if (check(TokenType.LEFT_PAREN, tokens)){
+            expect(TokenType.LEFT_PAREN, tokens)
+            val expression = parseExpression(tokens)
+            expect(TokenType.RIGHT_PAREN,tokens)
+            return expression
+        }
+
+        val unexpectedToken = tokens.first()
+        throw SyntaxError(
+            line = unexpectedToken.line,
+            column = unexpectedToken.column,
+            message = "Unexpected token: ${unexpectedToken.type}"
+        )
+    }
+
+    private fun check(type: TokenType,tokens: MutableList<Token>): Boolean {
+        if (tokens.isEmpty()) return false
+        return tokens.first().type == type
     }
 }
