@@ -5,8 +5,8 @@ import lexer.TokenType
 import org.example.Exceptions.SyntaxError
 
 class Parser {
-    fun parseTokens(tokens: List<Token>): ASTNode {
-        val tokens = tokens.toMutableList()
+    fun parseTokens(incomingTokens: List<Token>): ASTNode {
+        val tokens = incomingTokens.toMutableList()
         val ast = parseProgram(tokens)
 
         val lastToken = tokens.removeFirst()

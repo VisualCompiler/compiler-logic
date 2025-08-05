@@ -17,7 +17,7 @@ data class BinaryExpression(
     val left_operand: Expression,
     val operator: Token,
     val right_operand: Expression
-): Expression(){
+) : Expression() {
     override fun prettyPrint(indent: Int): String {
         return buildString {
             appendLine("${indent(indent)}BinaryExpression(operator=${operator.lexeme})")
