@@ -189,7 +189,7 @@ class ParserTest {
 
         @Test
         fun `test left associativity`() {
-            //return 10 - 4 - 2;
+            // return 10 - 4 - 2;
             val tokens = buildTokensForExpression(
                 listOf(
                     Token(TokenType.INT_LITERAL, "10", 1, 25),
@@ -309,7 +309,5 @@ class ParserTest {
             assertEquals(1, exception.line)
             assertEquals(31, exception.column)
         }
-
-
     }
 }

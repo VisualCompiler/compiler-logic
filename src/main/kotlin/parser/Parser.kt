@@ -79,12 +79,12 @@ class Parser {
 
     private fun parseExpression(tokens: MutableList<Token>): Expression {
         return parseAddition(tokens)
-}
+    }
 
-    private fun parseAddition(tokens: MutableList<Token>) : Expression{
+    private fun parseAddition(tokens: MutableList<Token>): Expression {
         var left_operand = parseTerm(tokens)
 
-        while (check(TokenType.PLUS, tokens) || check(TokenType.MINUS, tokens)){
+        while (check(TokenType.PLUS, tokens) || check(TokenType.MINUS, tokens)) {
             var operator = tokens.removeFirst()
             var right_operand = parseTerm(tokens)
             left_operand = BinaryExpression(left_operand, operator, right_operand)
@@ -92,10 +92,10 @@ class Parser {
         return left_operand
     }
 
-    private fun parseTerm(tokens: MutableList<Token>): Expression{
+    private fun parseTerm(tokens: MutableList<Token>): Expression {
         var left_operand = parsePrimary(tokens)
 
-        while (check(TokenType.MULTIPLY, tokens) || check(TokenType.DIVIDE,tokens)){
+        while (check(TokenType.MULTIPLY, tokens) || check(TokenType.DIVIDE, tokens)) {
             var operator = tokens.removeFirst()
             var right_operand = parsePrimary(tokens)
             left_operand = BinaryExpression(left_operand, operator, right_operand)
@@ -103,15 +103,15 @@ class Parser {
         return left_operand
     }
 
-    private fun parsePrimary(tokens: MutableList<Token>): Expression{
-        if (check(TokenType.INT_LITERAL, tokens)){
+    private fun parsePrimary(tokens: MutableList<Token>): Expression {
+        if (check(TokenType.INT_LITERAL, tokens)) {
             return IntExpression(tokens.removeFirst())
         }
 
-        if (check(TokenType.LEFT_PAREN, tokens)){
+        if (check(TokenType.LEFT_PAREN, tokens)) {
             expect(TokenType.LEFT_PAREN, tokens)
             val expression = parseExpression(tokens)
-            expect(TokenType.RIGHT_PAREN,tokens)
+            expect(TokenType.RIGHT_PAREN, tokens)
             return expression
         }
 
@@ -123,7 +123,7 @@ class Parser {
         )
     }
 
-    private fun check(type: TokenType,tokens: MutableList<Token>): Boolean {
+    private fun check(type: TokenType, tokens: MutableList<Token>): Boolean {
         if (tokens.isEmpty()) return false
         return tokens.first().type == type
     }
