@@ -1,3 +1,4 @@
+
 package org.example.parser
 
 import lexer.Token
@@ -51,7 +52,7 @@ class Parser {
 
     private fun expect(
         expected: TokenType,
-        tokens: MutableList<Token>,
+        tokens: MutableList<Token>
     ): Token {
         val token = tokens.removeFirst()
 
@@ -98,17 +99,31 @@ class Parser {
 
     private fun parseExpression(tokens: MutableList<Token>): Expression {
         val token = tokens.removeFirst()
-        if (token.type != TokenType.INT_LITERAL) {
-            throw SyntaxError(
+
+        // check if its Unary Expression
+        if (token.type == TokenType.TILDE || token.type == TokenType.NEGATION) {
+            val operator = token
+            val expression = parseExpression(tokens)
+
+            return UnaryExpression(operator = operator, expression = expression, line = operator.line, column = operator.column)
+        } else if (token.type == TokenType.LEFT_PAREN) {
+            expect(TokenType.LEFT_PAREN, tokens)
+            val expression = parseExpression(tokens)
+            expect(TokenType.RIGHT_PAREN, tokens)
+            return expression
+        } else {
+            if (token.type != TokenType.INT_LITERAL) {
+                throw SyntaxError(
+                    line = token.line,
+                    column = token.column,
+                    message = "Expected an integer, unary operator, or parenthesis, but got ${token.type}"
+                )
+            }
+            return IntExpression(
+                value = token.lexeme.toInt(),
                 line = token.line,
-                column = token.column,
-                message = "Expected token: ${TokenType.INT_LITERAL}, got ${token.type}"
+                column = token.column
             )
         }
-        return IntExpression(
-            value = token.lexeme.toInt(),
-            line = token.line,
-            column = token.column
-        )
     }
 }

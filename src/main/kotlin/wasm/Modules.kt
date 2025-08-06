@@ -5,7 +5,7 @@ sealed class Module : WASMConstruct()
 data class SimpleModule(
     val function: Function,
     override val line: Int,
-    override val column: Int,
+    override val column: Int
 ) : Module() {
     override fun toWat(indent: Int): String =
         buildString {

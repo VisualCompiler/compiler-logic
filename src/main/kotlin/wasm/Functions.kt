@@ -6,7 +6,7 @@ data class WASMFunction(
     val name: String,
     val body: List<Instruction>,
     override val line: Int,
-    override val column: Int,
+    override val column: Int
 ) : Function() {
     override fun toWat(indent: Int): String {
         val bodyWat = body.joinToString("") { it.toWat(indent + 1) }
