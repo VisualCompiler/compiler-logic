@@ -66,7 +66,7 @@ class ParserTest {
         val simpleFunction = function
 
         // Check function name
-        assertEquals("main", simpleFunction.name.token.lexeme)
+        assertEquals("main", simpleFunction.name.value)
 
         // Check return statement
         val returnStatement = simpleFunction.body
@@ -77,7 +77,7 @@ class ParserTest {
         val expression = returnStmt.expression
         assertIs<org.example.parser.IntExpression>(expression)
         val intExpr = expression
-        assertEquals("42", intExpr.value.lexeme)
+        assertEquals(42, intExpr.value)
     }
 
     @Test
@@ -149,9 +149,9 @@ class ParserTest {
             Token(TokenType.INT_LITERAL, "42", 1, 25),
             Token(TokenType.SEMICOLON, ";", 1, 27),
             Token(TokenType.RIGHT_BRACK, "}", 1, 29),
+            Token(TokenType.EOF, "", 1, 31),
             // Extra tokens here
-            Token(TokenType.IDENTIFIER, "extra", 1, 31),
-            Token(TokenType.EOF, "", 1, 36)
+            Token(TokenType.IDENTIFIER, "extra", 1, 32)
         )
 
         val parser = Parser()

@@ -6,11 +6,11 @@ import org.example.Exceptions.SyntaxError
 
 class Parser {
     fun parseTokens(tokens: List<Token>): ASTNode {
-        val tokens = tokens.toMutableList()
-        val ast = parseProgram(tokens)
+        val tokenSet = tokens.toMutableList()
+        val ast = parseProgram(tokenSet)
 
-        val lastToken = tokens.removeFirst()
-        if (lastToken.type != TokenType.EOF) {
+        val lastToken = tokenSet.removeFirst()
+        if (lastToken.type != TokenType.EOF || !tokenSet.isEmpty()) {
             throw SyntaxError(
                 line = lastToken.line,
                 column = lastToken.column,
@@ -23,10 +23,15 @@ class Parser {
     private fun parseProgram(tokens: MutableList<Token>): SimpleProgram {
         val function = parseFunction(tokens)
 
-        return SimpleProgram(functionDefinition = function)
+        return SimpleProgram(
+            functionDefinition = function,
+            line = function.line,
+            column = function.column
+        )
     }
 
     private fun parseFunction(tokens: MutableList<Token>): FunctionDefinition {
+        val first = tokens.firstOrNull()
         expect(TokenType.KEYWORD_INT, tokens)
         val name = parseIdentifier(tokens)
         expect(TokenType.LEFT_PAREN, tokens)
@@ -36,12 +41,17 @@ class Parser {
         val body = parseStatement(tokens)
         expect(TokenType.RIGHT_BRACK, tokens)
 
-        return SimpleFunction(name = name, body = body)
+        return SimpleFunction(
+            name = name,
+            body = body,
+            line = first?.line!!,
+            column = first.column
+        )
     }
 
     private fun expect(
         expected: TokenType,
-        tokens: MutableList<Token>
+        tokens: MutableList<Token>,
     ): Token {
         val token = tokens.removeFirst()
 
@@ -66,15 +76,24 @@ class Parser {
             )
         }
 
-        return Identifier(token = token)
+        return Identifier(
+            value = token.lexeme,
+            line = token.line,
+            column = token.column
+        )
     }
 
     private fun parseStatement(tokens: MutableList<Token>): Statement {
+        val first = tokens.firstOrNull()
         expect(TokenType.KEYWORD_RETURN, tokens)
         val expression = parseExpression(tokens)
         expect(TokenType.SEMICOLON, tokens)
 
-        return ReturnStatement(expression = expression)
+        return ReturnStatement(
+            expression = expression,
+            line = first?.line!!,
+            column = first.column
+        )
     }
 
     private fun parseExpression(tokens: MutableList<Token>): Expression {
@@ -86,6 +105,10 @@ class Parser {
                 message = "Expected token: ${TokenType.INT_LITERAL}, got ${token.type}"
             )
         }
-        return IntExpression(value = token)
+        return IntExpression(
+            value = token.lexeme.toInt(),
+            line = token.line,
+            column = token.column
+        )
     }
 }
