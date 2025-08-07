@@ -19,7 +19,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 class ParserTest {
-    /** Helper function to build a full token list for a given expression. */
     private fun buildTokensForExpression(expressionTokens: List<Token>): List<Token> =
         listOf(
             Token(TokenType.KEYWORD_INT, "int", 1, 1),
@@ -36,7 +35,7 @@ class ParserTest {
                 Token(TokenType.EOF, "", 1, 100)
             )
 
-    /** Extracts the single expression node from a parsed AST for easier testing. */
+    /** Extracts the single expression node from a parsed AST  */
     private fun getExpressionFromAst(ast: ASTNode): Expression {
         assertIs<SimpleProgram>(ast)
         val function = ast.functionDefinition
@@ -54,7 +53,6 @@ class ParserTest {
             val parser = Parser()
             val ast = parser.parseTokens(tokens)
 
-            // Verify the AST structure in detail
             val expression = getExpressionFromAst(ast)
             assertIs<IntExpression>(expression)
             assertEquals(42, expression.value)
@@ -96,10 +94,10 @@ class ParserTest {
             val ast = parser.parseTokens(tokens)
             val expr = getExpressionFromAst(ast)
 
-            assertIs<UnaryExpression>(expr) // Outer unary op
+            assertIs<UnaryExpression>(expr)
             assertEquals(TokenType.NEGATION, expr.operator.type)
             val innerExpr = expr.expression
-            assertIs<UnaryExpression>(innerExpr) // Inner unary op
+            assertIs<UnaryExpression>(innerExpr)
             assertEquals(TokenType.NEGATION, innerExpr.operator.type)
             assertIs<IntExpression>(innerExpr.expression)
             assertEquals(5, (innerExpr.expression as IntExpression).value)
@@ -178,13 +176,13 @@ class ParserTest {
             val ast = parser.parseTokens(tokens)
             val expr = getExpressionFromAst(ast)
 
-            // The top-level operation is the *second* minus
+            // The top-level operation is the second minus
             assertIs<BinaryExpression>(expr)
             assertEquals(TokenType.NEGATION, expr.operator.type)
             assertIs<IntExpression>(expr.right)
             assertEquals(2, (expr.right as IntExpression).value)
 
-            // The left-hand side is the *first* minus operation (10 - 4)
+            // The left-hand side is the first minus operation (10 - 4)
             val leftExpr = expr.left
             assertIs<BinaryExpression>(leftExpr)
             assertEquals(TokenType.NEGATION, leftExpr.operator.type)
@@ -281,7 +279,6 @@ class ParserTest {
 
         @Test
         fun `test syntax error - extra tokens after program`() {
-            // CORRECTED: The extra token comes BEFORE the end of file token.
             val tokens =
                 listOf(
                     Token(TokenType.KEYWORD_INT, "int", 1, 1),

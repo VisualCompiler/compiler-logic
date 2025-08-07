@@ -120,16 +120,9 @@ class Parser {
                 break
             }
 
-            // We have an operator that meets the precedence requirement
             val operator = tokens.removeFirst()
-
-            // Recursively call parseExpression for the right-hand side.
-            // Crucially, we tell it that it must find an expression with
-            // a HIGHER precedence than our current operator. This is what
-            // makes `2 + 3 * 4` parse `3 * 4` first.
             val right = parseExpression(prec + 5, tokens)
 
-            // Combine the left, operator, and right into a new 'left' for the next loop iteration.
             left =
                 BinaryExpression(
                     left = left,
@@ -140,7 +133,6 @@ class Parser {
                 )
         }
         return left
-        // check if its Unary Expression
     }
 
     private fun parseFactor(tokens: MutableList<Token>): Expression {
