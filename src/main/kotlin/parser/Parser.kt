@@ -1,3 +1,4 @@
+
 package org.example.parser
 
 import lexer.Token
@@ -5,6 +6,15 @@ import lexer.TokenType
 import org.example.Exceptions.SyntaxError
 
 class Parser {
+    private val precedenceMap =
+        mapOf(
+            TokenType.PLUS to 45,
+            TokenType.NEGATION to 45,
+            TokenType.MULTIPLY to 50,
+            TokenType.DIVIDE to 50,
+            TokenType.REMAINDER to 50
+        )
+
     fun parseTokens(tokens: List<Token>): ASTNode {
         val tokenSet = tokens.toMutableList()
         val ast = parseProgram(tokenSet)
@@ -51,7 +61,7 @@ class Parser {
 
     private fun expect(
         expected: TokenType,
-        tokens: MutableList<Token>,
+        tokens: MutableList<Token>
     ): Token {
         val token = tokens.removeFirst()
 
@@ -86,7 +96,7 @@ class Parser {
     private fun parseStatement(tokens: MutableList<Token>): Statement {
         val first = tokens.firstOrNull()
         expect(TokenType.KEYWORD_RETURN, tokens)
-        val expression = parseExpression(tokens)
+        val expression = parseExpression(45, tokens)
         expect(TokenType.SEMICOLON, tokens)
 
         return ReturnStatement(
@@ -96,19 +106,56 @@ class Parser {
         )
     }
 
-    private fun parseExpression(tokens: MutableList<Token>): Expression {
-        val token = tokens.removeFirst()
-        if (token.type != TokenType.INT_LITERAL) {
+    private fun parseExpression(
+        minPrec: Int = 45,
+        tokens: MutableList<Token>
+    ): Expression {
+        var left = parseFactor(tokens)
+
+        while (tokens.isNotEmpty()) {
+            val nextToken = tokens.first()
+            val prec = precedenceMap[nextToken.type] ?: break
+
+            if (prec < minPrec) {
+                break
+            }
+
+            val operator = tokens.removeFirst()
+            val right = parseExpression(prec + 5, tokens)
+
+            left =
+                BinaryExpression(
+                    left = left,
+                    operator = operator,
+                    right = right,
+                    line = left.line,
+                    column = left.column
+                )
+        }
+        return left
+    }
+
+    private fun parseFactor(tokens: MutableList<Token>): Expression {
+        var nextToken = tokens.first()
+        if (nextToken.type == TokenType.INT_LITERAL) {
+            nextToken = tokens.removeFirst()
+            return IntExpression(value = nextToken.lexeme.toInt(), column = nextToken.column, line = nextToken.line)
+        } else if (nextToken.type == TokenType.TILDE || nextToken.type == TokenType.NEGATION) {
+            val operator = tokens.removeFirst()
+            val factor = parseFactor(tokens)
+            return UnaryExpression(operator = operator, expression = factor, line = operator.line, column = operator.column)
+        } else if (nextToken.type == TokenType.LEFT_PAREN) {
+            expect(TokenType.LEFT_PAREN, tokens)
+            val expression = parseExpression(45, tokens)
+            expect(TokenType.RIGHT_PAREN, tokens)
+            return expression
+        } else {
+            val nToken = tokens.removeFirst()
             throw SyntaxError(
-                line = token.line,
-                column = token.column,
-                message = "Expected token: ${TokenType.INT_LITERAL}, got ${token.type}"
+                line = nToken.line,
+                column = nToken.column,
+                message = "Unexpected token in expression: expected literal, unary operator, or '(', got ${nToken.type}"
             )
         }
-        return IntExpression(
-            value = token.lexeme.toInt(),
-            line = token.line,
-            column = token.column
-        )
     }
 }

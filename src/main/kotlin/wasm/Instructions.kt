@@ -5,7 +5,7 @@ sealed class Instruction : WASMConstruct()
 data class Return(
     val operand: Operand,
     override val line: Int,
-    override val column: Int,
+    override val column: Int
 ) : Instruction() {
     override fun toWat(indent: Int): String =
         buildString {
