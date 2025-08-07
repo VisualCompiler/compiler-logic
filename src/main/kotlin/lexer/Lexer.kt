@@ -25,6 +25,8 @@ sealed class TokenType {
 
     object DIVIDE : TokenType()
 
+    object REMAINDER : TokenType()
+
     object TILDE : TokenType()
 
     object NEGATION : TokenType()
@@ -106,7 +108,7 @@ class Lexer(
             '}' -> addToken(TokenType.RIGHT_BRACK)
             ';' -> addToken(TokenType.SEMICOLON)
             '+' -> addToken(TokenType.PLUS)
-            // '-' -> addToken(TokenType.MINUS)
+            '%' -> addToken(TokenType.REMAINDER)
             '*' -> addToken(TokenType.MULTIPLY)
             '/' -> addToken(TokenType.DIVIDE)
             '=' -> addToken(TokenType.ASSIGN)

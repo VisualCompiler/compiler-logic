@@ -1,6 +1,7 @@
 package org.example.wasm
 
 import org.example.parser.ASTNode
+import org.example.parser.BinaryExpression
 import org.example.parser.Identifier
 import org.example.parser.IntExpression
 import org.example.parser.ReturnStatement
@@ -50,5 +51,6 @@ class CodeGenerator {
                     column = ast.column
                 )
             is UnaryExpression -> TODO()
+            is BinaryExpression -> TODO()
         }
 }

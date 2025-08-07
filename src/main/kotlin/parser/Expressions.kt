@@ -24,3 +24,18 @@ data class UnaryExpression(
             append(expression.prettyPrint(indent + 1))
         }
 }
+
+data class BinaryExpression(
+    val left: Expression,
+    val operator: Token,
+    val right: Expression,
+    override val line: Int,
+    override val column: Int
+) : Expression() {
+    override fun prettyPrint(indent: Int): String =
+        buildString {
+            appendLine("${indent(indent)}BinaryExpression(operator='${operator.lexeme}')")
+            append(left.prettyPrint(indent + 1))
+            append(right.prettyPrint(indent + 1))
+        }
+}
