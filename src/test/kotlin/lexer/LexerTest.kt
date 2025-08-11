@@ -32,29 +32,27 @@ class LexerTest {
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()
         val types = tokens.map { it.type }
-        val expected_tokens =
+        val expectedTokens =
             listOf(
                 TokenType.IDENTIFIER,
                 TokenType.ASSIGN,
                 TokenType.IDENTIFIER,
                 TokenType.PLUS,
                 TokenType.IDENTIFIER,
-                // TokenType.MINUS,
-                // TokenType.INT_LITERAL,
                 TokenType.SEMICOLON,
                 TokenType.EOF
             )
 
-        assertEquals(expected_tokens, types)
+        assertEquals(expectedTokens, types)
     }
 
     @Test
-    fun `test parantheses and brackets and invalid`() {
+    fun `test parentheses and brackets and invalid`() {
         val source = "if (a){ return 0;}"
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()
 
-        val expected_tokens =
+        val expectedTokens =
             listOf(
                 TokenType.IDENTIFIER, // remove it when we add if as a keyword
                 TokenType.LEFT_PAREN,
@@ -70,6 +68,6 @@ class LexerTest {
 
         val types = tokens.map { it.type }
 
-        assertEquals(expected_tokens, types)
+        assertEquals(expectedTokens, types)
     }
 }

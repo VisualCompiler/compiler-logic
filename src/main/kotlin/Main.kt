@@ -1,5 +1,6 @@
 package org.example
 
+import assembly.CodeGenerator
 import lexer.Lexer
 import org.example.parser.Parser
 
@@ -23,4 +24,7 @@ fun main() {
     val parser = Parser()
     val ast = parser.parseTokens(tokens)
     println(ast.prettyPrint())
+
+    val codeGenerator = CodeGenerator()
+    println(codeGenerator.generateAsm(ast as org.example.parser.SimpleProgram).toAsm())
 }
