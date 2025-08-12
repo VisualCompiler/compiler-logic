@@ -1,7 +1,10 @@
 package lexer
 
-// a sealed class that can't be inherited and includes distinct objects for each category
-// instead of instantiating objects, we use them directly
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 sealed class TokenType {
     // keywords
@@ -18,8 +21,6 @@ sealed class TokenType {
 
     // Symbols
     object PLUS : TokenType()
-
-    object MINUS : TokenType()
 
     object MULTIPLY : TokenType()
 
@@ -175,5 +176,21 @@ class Lexer(
         val text = source.substring(start, current)
         val column = start - lineStart + 1
         tokens.add(Token(type, text, line, column))
+    }
+
+    fun toJsonString(): String {
+        val jsonTokens =
+            tokens.map { token ->
+                JsonObject(
+                    mapOf(
+                        "line" to JsonPrimitive(token.line),
+                        "column" to JsonPrimitive(token.column),
+                        "type" to JsonPrimitive(token.type.toString()),
+                        "lexeme" to JsonPrimitive(token.lexeme)
+                    )
+                )
+            }
+
+        return Json.encodeToString(JsonArray(jsonTokens))
     }
 }

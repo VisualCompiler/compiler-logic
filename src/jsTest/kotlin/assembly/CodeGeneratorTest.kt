@@ -13,16 +13,14 @@ class CodeGeneratorTest {
 
     @Test
     fun `test generate simple return statement with integer`() {
-        val intExpr = IntExpression(42, line = 1, column = 8)
-        val returnStatement = ReturnStatement(intExpr, line = 1, column = 1)
+        val intExpr = IntExpression(42)
+        val returnStatement = ReturnStatement(intExpr)
         val function =
             SimpleFunction(
-                name = Identifier("test", line = 1, column = 1),
-                body = returnStatement,
-                line = 1,
-                column = 1
+                name = Identifier("test"),
+                body = returnStatement
             )
-        val program = SimpleProgram(function, line = 1, column = 1)
+        val program = SimpleProgram(function)
 
         val asmProgram = codeGenerator.generateAsm(program)
         val resultLines = asmProgram.toAsm().lines()
@@ -39,16 +37,14 @@ class CodeGeneratorTest {
 
     @Test
     fun `test generate negative integer return value`() {
-        val intExpr = IntExpression(-123, line = 1, column = 8)
-        val returnStatement = ReturnStatement(intExpr, line = 1, column = 1)
+        val intExpr = IntExpression(-123)
+        val returnStatement = ReturnStatement(intExpr)
         val function =
             SimpleFunction(
-                name = Identifier("negative", line = 1, column = 1),
-                body = returnStatement,
-                line = 1,
-                column = 1
+                name = Identifier("negative"),
+                body = returnStatement
             )
-        val program = SimpleProgram(function, line = 1, column = 1)
+        val program = SimpleProgram(function)
 
         val asmProgram = codeGenerator.generateAsm(program)
         val resultLines = asmProgram.toAsm().lines()

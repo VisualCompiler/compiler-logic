@@ -34,9 +34,7 @@ class Parser {
         val function = parseFunction(tokens)
 
         return SimpleProgram(
-            functionDefinition = function,
-            line = function.line,
-            column = function.column
+            functionDefinition = function
         )
     }
 
@@ -53,9 +51,7 @@ class Parser {
 
         return SimpleFunction(
             name = name,
-            body = body,
-            line = first?.line!!,
-            column = first.column
+            body = body
         )
     }
 
@@ -87,9 +83,7 @@ class Parser {
         }
 
         return Identifier(
-            value = token.lexeme,
-            line = token.line,
-            column = token.column
+            value = token.lexeme
         )
     }
 
@@ -100,9 +94,7 @@ class Parser {
         expect(TokenType.SEMICOLON, tokens)
 
         return ReturnStatement(
-            expression = expression,
-            line = first?.line!!,
-            column = first.column
+            expression = expression
         )
     }
 
@@ -127,9 +119,7 @@ class Parser {
                 BinaryExpression(
                     left = left,
                     operator = operator,
-                    right = right,
-                    line = left.line,
-                    column = left.column
+                    right = right
                 )
         }
         return left
@@ -139,11 +129,11 @@ class Parser {
         var nextToken = tokens.first()
         if (nextToken.type == TokenType.INT_LITERAL) {
             nextToken = tokens.removeFirst()
-            return IntExpression(value = nextToken.lexeme.toInt(), column = nextToken.column, line = nextToken.line)
+            return IntExpression(value = nextToken.lexeme.toInt())
         } else if (nextToken.type == TokenType.TILDE || nextToken.type == TokenType.NEGATION) {
             val operator = tokens.removeFirst()
             val factor = parseFactor(tokens)
-            return UnaryExpression(operator = operator, expression = factor, line = operator.line, column = operator.column)
+            return UnaryExpression(operator = operator, expression = factor)
         } else if (nextToken.type == TokenType.LEFT_PAREN) {
             expect(TokenType.LEFT_PAREN, tokens)
             val expression = parseExpression(45, tokens)

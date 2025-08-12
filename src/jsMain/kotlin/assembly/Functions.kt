@@ -4,9 +4,7 @@ sealed class Function : AsmConstruct()
 
 data class AsmFunction(
     val name: String,
-    val body: List<Instruction>,
-    override val line: Int,
-    override val column: Int
+    val body: List<Instruction>
 ) : Function() {
     override fun toAsm(indentationLevel: Int): String {
         val bodyAsm = body.joinToString("\n") { it.toAsm(indentationLevel + 1) }

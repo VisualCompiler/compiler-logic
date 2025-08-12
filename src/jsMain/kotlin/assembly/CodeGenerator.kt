@@ -17,9 +17,7 @@ class CodeGenerator {
             is SimpleProgram -> {
                 val asmFunction = generateFunction(program.functionDefinition)
                 return SimpleAsmProgram(
-                    function = asmFunction,
-                    line = program.line,
-                    column = program.column
+                    function = asmFunction
                 )
             }
         }
@@ -31,9 +29,7 @@ class CodeGenerator {
                 val bodyInstructions = generateInstructions(func.body)
                 return AsmFunction(
                     name = func.name.value,
-                    body = bodyInstructions,
-                    line = func.line,
-                    column = func.column
+                    body = bodyInstructions
                 )
             }
         }
@@ -49,28 +45,15 @@ class CodeGenerator {
         when (expression) {
             is IntExpression -> {
                 val imm =
-                    Imm(
-                        value = expression.value,
-                        line = expression.line,
-                        column = expression.column
-                    )
+                    Imm(value = expression.value)
                 val retReg =
-                    Register(
-                        name = "EAX",
-                        line = expression.line,
-                        column = expression.column
-                    )
+                    Register(name = "EAX")
                 return listOf(
                     Mov(
                         src = imm,
-                        dest = retReg,
-                        line = expression.line,
-                        column = expression.column
+                        dest = retReg
                     ),
-                    Ret(
-                        line = expression.line,
-                        column = expression.column
-                    )
+                    Ret()
                 )
             }
             is BinaryExpression -> TODO()

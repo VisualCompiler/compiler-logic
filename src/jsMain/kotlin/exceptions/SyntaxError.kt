@@ -1,5 +1,6 @@
 package exceptions
 
+// TODO: Do not throw an exception
 class SyntaxError(
     message: String,
     val line: Int? = null,
