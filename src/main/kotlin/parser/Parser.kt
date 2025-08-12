@@ -1,9 +1,9 @@
 
 package org.example.parser
 
+import exceptions.SyntaxError
 import lexer.Token
 import lexer.TokenType
-import org.example.Exceptions.SyntaxError
 
 class Parser {
     private val precedenceMap =

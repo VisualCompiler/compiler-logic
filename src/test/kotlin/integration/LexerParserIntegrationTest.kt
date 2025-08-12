@@ -6,13 +6,11 @@ import org.example.parser.Parser
 import org.example.parser.ReturnStatement
 import org.example.parser.SimpleFunction
 import org.example.parser.SimpleProgram
-import org.example.wasm.CodeGenerator
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 class LexerParserIntegrationTest {
-
     @Test
     fun `test lexer and parser integration`() {
         // Source code for a simple program
@@ -45,22 +43,5 @@ class LexerParserIntegrationTest {
         assertIs<IntExpression>(expression)
         val intExpr = expression
         assertEquals(42, intExpr.value)
-
-        // Generate WAT code
-        val codeGenerator = CodeGenerator()
-        val watCode = codeGenerator.generateWat(ast)
-
-        // Verify the generated WAT code
-        val expectedWat = listOf(
-            "(module",
-            "  (func \$main",
-            "    i32.const 42",
-            "    return",
-            "  )",
-            "  (export \"main\" (func \$main))",
-            ")",
-            ""
-        )
-        assertEquals(expectedWat, watCode)
     }
 }

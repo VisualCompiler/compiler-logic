@@ -1,4 +1,4 @@
-package org.example.Exceptions
+package exceptions
 
 class SyntaxError(
     message: String,

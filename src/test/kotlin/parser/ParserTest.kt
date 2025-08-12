@@ -1,8 +1,8 @@
 package parser
 
+import exceptions.SyntaxError
 import lexer.Token
 import lexer.TokenType
-import org.example.Exceptions.SyntaxError
 import org.example.parser.ASTNode
 import org.example.parser.BinaryExpression
 import org.example.parser.Expression
