@@ -1,6 +1,6 @@
 package lexer
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class LexerTest {
@@ -47,7 +47,7 @@ class LexerTest {
     }
 
     @Test
-    fun `test parentheses and brackets and invalid`() {
+    fun `test parantheses and brackets and invalid`() {
         val source = "if (a){ return 0;}"
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()

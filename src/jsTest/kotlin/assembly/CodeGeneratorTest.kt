@@ -5,7 +5,7 @@ import org.example.parser.IntExpression
 import org.example.parser.ReturnStatement
 import org.example.parser.SimpleFunction
 import org.example.parser.SimpleProgram
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertContentEquals
 
 class CodeGeneratorTest {

@@ -1,7 +1,8 @@
 plugins {
-    kotlin("jvm") version "1.9.23"
+    kotlin("multiplatform") version "2.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "11.3.2"
     id("org.jetbrains.kotlinx.kover") version "0.7.6"
+    kotlin("plugin.serialization") version "2.2.0"
 }
 
 group = "org.example"
@@ -11,17 +12,28 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0") // JUnit 5
-}
-
-tasks.test {
-    useJUnitPlatform()
-    testLogging {
-        events("passed", "skipped", "failed")
-    }
-}
 kotlin {
-    jvmToolchain(19)
+    js(IR) {
+        outputModuleName = "CompilerLogic"
+        useEsModules()
+        binaries.executable()
+        nodejs {
+            testTask {
+                useMocha()
+            }
+        }
+        generateTypeScriptDefinitions()
+    }
+    sourceSets {
+        val jsMain by getting {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+            }
+        }
+        val jsTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+    }
 }
