@@ -25,6 +25,20 @@ class TackyGenVisitor : Visitor<TackyResult> {
         }
     }
 
+    private fun convertBinaryOp(tokenType: TokenType): TackyBinaryOP {
+        if (tokenType == TokenType.PLUS) {
+            return TackyBinaryOP.ADD
+        } else if (tokenType == TokenType.NEGATION) {
+            return TackyBinaryOP.SUBTRACT
+        } else if (tokenType == TokenType.MULTIPLY) {
+            return TackyBinaryOP.MULTIPLY
+        } else if (tokenType == TokenType.DIVIDE) {
+            return TackyBinaryOP.DIVIDE
+        } else {
+            throw IllegalArgumentException("Not a valid Binary operator: $tokenType")
+        }
+    }
+
     override fun visit(node: SimpleProgram): TackyResult = node.functionDefinition.accept(this)
 
     override fun visit(node: ReturnStatement): TackyResult {
@@ -50,7 +64,16 @@ class TackyGenVisitor : Visitor<TackyResult> {
     }
 
     override fun visit(node: BinaryExpression): TackyResult {
-        TODO("Not yet implemented")
+        val leftExp = node.left.accept(this)
+        val src1 = leftExp.resultVal!!
+        val rightExp = node.right.accept(this)
+        val src2 = rightExp.resultVal!!
+        val op = convertBinaryOp(node.operator.type)
+
+        val dst = newTemporary()
+        val binaryInstruction = TackyBinary(operator = op, src1 = src1, src2 = src2, dest = dst)
+        val allInstruction = leftExp.instructions + rightExp.instructions + binaryInstruction
+        return TackyResult(allInstruction, dst)
     }
 
     override fun visit(node: IntExpression): TackyResult =

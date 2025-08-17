@@ -7,3 +7,9 @@ data class SimpleAsmProgram(
 ) : Program() {
     override fun toAsm(indentationLevel: Int): String = function.toAsm(indentationLevel)
 }
+
+data class AsmProgram(
+    val function: AsmFunction
+) : AsmConstruct() {
+    override fun toAsm(indentationLevel: Int): String = function.toAsm(indentationLevel)
+}
