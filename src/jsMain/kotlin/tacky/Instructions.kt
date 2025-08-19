@@ -21,7 +21,8 @@ enum class TackyBinaryOP {
     ADD,
     SUBTRACT,
     MULTIPLY,
-    DIVIDE
+    DIVIDE,
+    REMAINDER
 }
 
 data class TackyBinary(

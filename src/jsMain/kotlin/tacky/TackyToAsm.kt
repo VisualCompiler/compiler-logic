@@ -71,6 +71,13 @@ class TackyToAsm {
                             Idiv(srcOp2),
                             Mov(Register(HardwareRegister.EAX), desOp)
                         )
+                    TackyBinaryOP.REMAINDER ->
+                        listOf(
+                            Mov(srcOp1, Register(HardwareRegister.EAX)),
+                            Cdq,
+                            Idiv(srcOp2),
+                            Mov(Register(HardwareRegister.EDX), desOp) // Result is the remainder in EDX
+                        )
                 }
             }
         }

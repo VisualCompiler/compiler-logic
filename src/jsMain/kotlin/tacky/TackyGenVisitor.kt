@@ -34,6 +34,8 @@ class TackyGenVisitor : Visitor<TackyResult> {
             return TackyBinaryOP.MULTIPLY
         } else if (tokenType == TokenType.DIVIDE) {
             return TackyBinaryOP.DIVIDE
+        } else if (tokenType == TokenType.REMAINDER) {
+            return TackyBinaryOP.REMAINDER
         } else {
             throw IllegalArgumentException("Not a valid Binary operator: $tokenType")
         }
