@@ -1,13 +1,13 @@
 package org.example.assembly
 
 import assembly.AllocateStack
+import assembly.AsmBinary
 import assembly.AsmProgram
 import assembly.HardwareRegister
 import assembly.Mov
 import assembly.Program
 import assembly.Register
 import assembly.Ret
-import assembly.SimpleAsmProgram
 import assembly.Stack
 
 class InstructionFixer {
@@ -17,13 +17,18 @@ class InstructionFixer {
     ): Program {
         var instructions = program.function.body
 
-        // 1. Rewrite invalid Mov instructions (Stack -> Stack)
+        // Rewrite invalid Mov instructions (Stack -> Stack)
         val fixedMovInstructions =
             instructions.flatMap { instruction ->
                 if (instruction is Mov && instruction.src is Stack && instruction.dest is Stack) {
                     listOf(
                         Mov(instruction.src, Register(HardwareRegister.R10D)),
                         Mov(Register(HardwareRegister.R10D), instruction.dest)
+                    )
+                } else if (instruction is AsmBinary && instruction.src is Stack && instruction.dest is Stack) {
+                    listOf(
+                        Mov(instruction.src, Register(HardwareRegister.R10D)),
+                        AsmBinary(instruction.op, Register(HardwareRegister.R10D), instruction.dest)
                     )
                 } else {
                     listOf(instruction)
@@ -40,6 +45,6 @@ class InstructionFixer {
             }
 
         val newFunction = program.function.copy(body = finalInstructions)
-        return SimpleAsmProgram(newFunction)
+        return AsmProgram(newFunction)
     }
 }

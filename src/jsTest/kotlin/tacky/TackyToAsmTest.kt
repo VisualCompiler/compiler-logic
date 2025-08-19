@@ -1,4 +1,6 @@
 package tacky
+import assembly.AsmBinary
+import assembly.AsmBinaryOp
 import assembly.AsmFunction
 import assembly.AsmProgram
 import assembly.AsmUnary
@@ -11,7 +13,6 @@ import assembly.Mov
 import assembly.Pseudo
 import assembly.Register
 import assembly.Ret
-import assembly.Sub
 import org.example.tacky.TackyBinary
 import org.example.tacky.TackyBinaryOP
 import org.example.tacky.TackyConstant
@@ -116,7 +117,7 @@ class TackyToAsmTest {
                     listOf(
                         // From TackyBinary
                         Mov(Imm(100), Pseudo("tmp.0")),
-                        Sub(Imm(5), Pseudo("tmp.0")),
+                        AsmBinary(AsmBinaryOp.SUB, Imm(5), Pseudo("tmp.0")),
                         // From TackyReturn
                         Mov(Pseudo("tmp.0"), Register(HardwareRegister.EAX)),
                         Ret

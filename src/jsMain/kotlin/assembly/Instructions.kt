@@ -23,10 +23,9 @@ enum class AsmUnaryOp(
 enum class AsmBinaryOp(
     val text: String
 ) {
-    ADD(""),
-    SUB(""),
-    MUL(""),
-    DIV("")
+    ADD("addl"),
+    SUB("subl"),
+    MUL("imull")
 }
 
 data class AsmUnary(
@@ -36,25 +35,12 @@ data class AsmUnary(
     override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}${op.text} ${dest.toAsm()}"
 }
 
-data class Add(
+data class AsmBinary(
+    val op: AsmBinaryOp,
     val src: Operand,
     val dest: Operand
 ) : Instruction() {
-    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}addl ${src.toAsm()}, ${dest.toAsm()}"
-}
-
-data class Imul(
-    val src: Operand,
-    val dest: Operand
-) : Instruction() {
-    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}imull ${src.toAsm()}, ${dest.toAsm()}"
-}
-
-data class Sub(
-    val src: Operand,
-    val dest: Operand
-) : Instruction() {
-    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}subl ${src.toAsm()}, ${dest.toAsm()}"
+    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}${op.text} ${src.toAsm()}, ${dest.toAsm()}"
 }
 
 data class Idiv(
@@ -63,6 +49,7 @@ data class Idiv(
     override fun toAsm(indentationLevel: Int): String = "idivl ${divisor.toAsm()}"
 }
 
+// Convert Doubleword 32 to Quadword 64
 object Cdq : Instruction() {
     override fun toAsm(indentationLevel: Int): String = "cdq"
 }
