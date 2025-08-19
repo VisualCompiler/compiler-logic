@@ -28,6 +28,11 @@ data class TackyRet(
     }
 }
 
+enum class TackyUnaryOP {
+    COMPLEMENT,
+    NEGATE
+}
+
 data class TackyUnary(
     val operator: TackyUnaryOP,
     val src: TackyVal,
@@ -52,11 +57,6 @@ data class TackyUnary(
             )
         return Json.encodeToString(jsonNode)
     }
-}
-
-enum class TackyUnaryOP {
-    COMPLEMENT,
-    NEGATE
 }
 
 enum class TackyBinaryOP {

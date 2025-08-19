@@ -1,0 +1,139 @@
+import {
+  stack,
+  register,
+  mov,
+  ret,
+  allocateStack,
+  asmProgram,
+  asmFunction,
+} from assembly
+
+class InstructionFixer {
+  fix(program, stackSpace) {
+    const instructions = program.function.body;
+
+    const fixedMovInstructions = instructions.flatMap((instruction) => {
+      if (instruction.type === 'Mov' && instruction.src.type === 'Stack' && instruction.dest.type === 'Stack') {
+        return [
+          mov(instruction.src, register('R10D')),
+          mov(register('R10D'), instruction.dest),
+        ];
+      }
+      return [instruction];
+    });
+
+    const body = fixedMovInstructions.filter(instr => instr.type !== 'Ret');
+
+    const finalInstructions = stackSpace > 0 ? [allocateStack(stackSpace), ...body] : body;
+
+    const newFunction = { ...program.function, body: finalInstructions };
+    return { function: newFunction };
+  }
+}
+
+describe('InstructionFixer', () => {
+  let fixer;
+
+  beforeEach(() => {
+    fixer = new InstructionFixer();
+  });
+
+  test('should expand an illegal Mov [Stack -> Stack] into two instructions', () => {
+    // Arrange
+    const program = asmProgram(
+      asmFunction('main', [
+        mov(stack(-4), stack(-8)),
+      ])
+    );
+    const stackSpace = 8;
+
+    // Act
+    const result = fixer.fix(program, stackSpace);
+
+    // Assert
+    const expectedBody = [
+      allocateStack(8),
+      mov(stack(-4), register('R10D')),
+      mov(register('R10D'), stack(-8)),
+    ];
+    expect(result.function.body).toEqual(expectedBody);
+  });
+
+  test('should add AllocateStack prologue when stackSpace is greater than 0', () => {
+    // Arrange
+    const program = asmProgram(
+      asmFunction('main', [
+        mov(register('EAX'), stack(-4)),
+        ret(),
+      ])
+    );
+    const stackSpace = 4;
+
+    // Act
+    const result = fixer.fix(program, stackSpace);
+
+    // Assert
+    const expectedBody = [
+      allocateStack(4),
+      mov(register('EAX'), stack(-4)),
+    ];
+    expect(result.function.body).toEqual(expectedBody);
+  });
+
+  test('should NOT add AllocateStack prologue when stackSpace is 0', () => {
+    // Arrange
+    const program = asmProgram(
+      asmFunction('main', [
+        mov(register('EAX'), register('EBX')),
+        ret(),
+      ])
+    );
+    const stackSpace = 0;
+
+    // Act
+    const result = fixer.fix(program, stackSpace);
+
+    // Assert
+    const expectedBody = [
+      mov(register('EAX'), register('EBX')),
+    ];
+    expect(result.function.body).toEqual(expectedBody);
+  });
+  
+  test('should remove Ret instructions regardless of stack space', () => {
+    // Arrange
+    const programWithStack = asmProgram(asmFunction('main', [ret()]));
+    const programWithoutStack = asmProgram(asmFunction('main', [ret()]));
+
+    // Act
+    const resultWithStack = fixer.fix(programWithStack, 4);
+    const resultWithoutStack = fixer.fix(programWithoutStack, 0);
+
+    // Assert
+    expect(resultWithStack.function.body.some(i => i.type === 'Ret')).toBe(false);
+    expect(resultWithoutStack.function.body.some(i => i.type === 'Ret')).toBe(false);
+  });
+
+
+  test('should not modify legal Mov instructions', () => {
+    // Arrange
+    const program = asmProgram(
+      asmFunction('main', [
+        mov(register('EAX'), stack(-4)),
+        mov(stack(-4), register('EBX')),
+      ])
+    );
+    const stackSpace = 4;
+
+    // Act
+    const result = fixer.fix(program, stackSpace);
+
+    // Assert
+    const expectedBody = [
+      allocateStack(4),
+      mov(register('EAX'), stack(-4)),
+      mov(stack(-4), register('EBX')),
+    ];
+    expect(result.function.body).toEqual(expectedBody);
+  });
+});

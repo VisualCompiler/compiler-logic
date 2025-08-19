@@ -1,6 +1,7 @@
 package org.example.tacky
 
-import assembly.Add
+import assembly.AsmBinary
+import assembly.AsmBinaryOp
 import assembly.AsmFunction
 import assembly.AsmProgram
 import assembly.AsmUnary
@@ -9,14 +10,12 @@ import assembly.Cdq
 import assembly.HardwareRegister
 import assembly.Idiv
 import assembly.Imm
-import assembly.Imul
 import assembly.Instruction
 import assembly.Mov
 import assembly.Operand
 import assembly.Pseudo
 import assembly.Register
 import assembly.Ret
-import assembly.Sub
 
 class TackyToAsm {
     fun convert(tackyProgram: TackyProgram): AsmProgram {
@@ -48,27 +47,30 @@ class TackyToAsm {
                 val srcOp1 = convertVal(tackyInstr.src1)
                 val srcOp2 = convertVal(tackyInstr.src2)
                 val desOp = convertVal(tackyInstr.dest)
+
                 when (tackyInstr.operator) {
                     TackyBinaryOP.ADD ->
                         listOf(
                             Mov(srcOp1, desOp),
-                            Add(srcOp2, desOp)
+                            AsmBinary(AsmBinaryOp.ADD, srcOp2, desOp)
                         )
                     TackyBinaryOP.MULTIPLY ->
                         listOf(
                             Mov(srcOp1, desOp),
-                            Imul(srcOp2, desOp)
+                            AsmBinary(AsmBinaryOp.MUL, srcOp2, desOp)
                         )
                     TackyBinaryOP.SUBTRACT ->
                         listOf(
                             Mov(srcOp1, desOp),
-                            Sub(srcOp2, desOp)
+                            AsmBinary(AsmBinaryOp.SUB, srcOp2, desOp)
                         )
                     TackyBinaryOP.DIVIDE ->
                         listOf(
+                            // EAX (the number being divided)
                             Mov(srcOp1, Register(HardwareRegister.EAX)),
                             Cdq,
                             Idiv(srcOp2),
+                            // res in EAX
                             Mov(Register(HardwareRegister.EAX), desOp)
                         )
                     TackyBinaryOP.REMAINDER ->

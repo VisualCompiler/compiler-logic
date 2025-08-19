@@ -11,7 +11,7 @@ data class Imm(
 data class Register(
     val name: HardwareRegister
 ) : Operand() {
-    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}$name"
+    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}${name.x32Name}"
 }
 
 data class Pseudo(
