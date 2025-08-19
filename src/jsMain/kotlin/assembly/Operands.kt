@@ -33,5 +33,6 @@ enum class HardwareRegister(
     val x32Name: String
 ) {
     EAX("eax"), // The 32-bit version of RAX
+    EDX("edx"),
     R10D("r10d") // The 32-bit version of R10
 }
