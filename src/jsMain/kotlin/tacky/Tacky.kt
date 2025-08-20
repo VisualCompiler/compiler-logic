@@ -49,7 +49,7 @@ data class TackyProgram(
         val children =
             JsonObject(
                 mapOf(
-                    "function" to JsonPrimitive(function.toJsonString())
+                    "function" to Json.parseToJsonElement(function.toJsonString())
                 )
             )
         val jsonNode =
@@ -70,13 +70,14 @@ data class TackyFunction(
 ) : TackyConstruct() {
     override fun toJsonString(): String {
         // Map each instruction in the body to its JSON string
-        val bodyAsJson = JsonArray(body.map { JsonPrimitive(it.toJsonString()) })
+        val bodyAsJsonElements = body.map { Json.parseToJsonElement(it.toJsonString()) }
+        val bodyAsJsonArray = JsonArray(bodyAsJsonElements)
 
         val children =
             JsonObject(
                 mapOf(
                     "name" to JsonPrimitive(name),
-                    "body" to bodyAsJson
+                    "body" to bodyAsJsonArray // Embed the array of JsonElements
                 )
             )
         val jsonNode =

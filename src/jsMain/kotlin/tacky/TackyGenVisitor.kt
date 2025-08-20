@@ -10,7 +10,7 @@ import org.example.parser.SimpleProgram
 import org.example.parser.UnaryExpression
 import org.example.parser.Visitor
 
-class TackyGenVisitor : Visitor<TackyResult> {
+class TackyGenVisitor : Visitor<Any> {
     private var tempCounter = 0
 
     private fun newTemporary(): TackyVar = TackyVar("tmp.${tempCounter++}")
@@ -41,21 +41,33 @@ class TackyGenVisitor : Visitor<TackyResult> {
         }
     }
 
-    override fun visit(node: SimpleProgram): TackyResult = node.functionDefinition.accept(this)
+    override fun visit(node: SimpleProgram): Any {
+        val tackyFunction = node.functionDefinition.accept(this) as TackyFunction
+        // Wrap the TackyFunction in a TackyProgram and return it. This is the final result.
+        return TackyProgram(tackyFunction)
+    }
 
-    override fun visit(node: ReturnStatement): TackyResult {
-        val expressionResult = node.expression.accept(this)
+    override fun visit(node: ReturnStatement): Any {
+        val expressionResult = node.expression.accept(this) as TackyResult
         val returnInstruction = TackyRet(expressionResult.resultVal!!)
         val allInstruction = expressionResult.instructions + returnInstruction
         return TackyResult(allInstruction, null)
     }
 
-    override fun visit(node: SimpleFunction): TackyResult = node.body.accept(this)
+    override fun visit(node: SimpleFunction): Any {
+        val functionName = node.name.value
+
+        val bodyResult = node.body.accept(this) as TackyResult
+
+        val instructionList = bodyResult.instructions
+
+        return TackyFunction(functionName, instructionList)
+    }
 
     override fun visit(node: Identifier): TackyResult = throw NotImplementedError("Identifiers not yet supported in TACKY generation.")
 
-    override fun visit(node: UnaryExpression): TackyResult {
-        val innerExp = node.expression.accept(this)
+    override fun visit(node: UnaryExpression): Any {
+        val innerExp = node.expression.accept(this) as TackyResult
         val src = innerExp.resultVal!!
 
         val dst = newTemporary()
@@ -65,10 +77,10 @@ class TackyGenVisitor : Visitor<TackyResult> {
         return TackyResult(allInstruction, dst)
     }
 
-    override fun visit(node: BinaryExpression): TackyResult {
-        val leftExp = node.left.accept(this)
+    override fun visit(node: BinaryExpression): Any {
+        val leftExp = node.left.accept(this) as TackyResult
         val src1 = leftExp.resultVal!!
-        val rightExp = node.right.accept(this)
+        val rightExp = node.right.accept(this) as TackyResult
         val src2 = rightExp.resultVal!!
         val op = convertBinaryOp(node.operator.type)
 
@@ -78,7 +90,7 @@ class TackyGenVisitor : Visitor<TackyResult> {
         return TackyResult(allInstruction, dst)
     }
 
-    override fun visit(node: IntExpression): TackyResult =
+    override fun visit(node: IntExpression): Any =
         TackyResult(
             instructions = emptyList(),
             resultVal = TackyConstant(node.value)

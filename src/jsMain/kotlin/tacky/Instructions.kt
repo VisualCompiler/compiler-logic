@@ -13,7 +13,7 @@ data class TackyRet(
         val children =
             JsonObject(
                 mapOf(
-                    "value" to JsonPrimitive(value.toJsonString())
+                    "value" to Json.parseToJsonElement(value.toJsonString())
                 )
             )
         val jsonNode =
@@ -43,8 +43,8 @@ data class TackyUnary(
             JsonObject(
                 mapOf(
                     "operator" to JsonPrimitive(operator.name),
-                    "src" to JsonPrimitive(src.toJsonString()),
-                    "dest" to JsonPrimitive(dest.toJsonString())
+                    "src" to Json.parseToJsonElement(src.toJsonString()),
+                    "dest" to Json.parseToJsonElement(dest.toJsonString())
                 )
             )
         val jsonNode =
@@ -78,9 +78,9 @@ data class TackyBinary(
             JsonObject(
                 mapOf(
                     "operator" to JsonPrimitive(operator.name),
-                    "src1" to JsonPrimitive(src1.toJsonString()),
-                    "src2" to JsonPrimitive(src2.toJsonString()),
-                    "dest" to JsonPrimitive(dest.toJsonString())
+                    "src1" to Json.parseToJsonElement(src1.toJsonString()),
+                    "src2" to Json.parseToJsonElement(src2.toJsonString()),
+                    "dest" to Json.parseToJsonElement(dest.toJsonString())
                 )
             )
         val jsonNode =

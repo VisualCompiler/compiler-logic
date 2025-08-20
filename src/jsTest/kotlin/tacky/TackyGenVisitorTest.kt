@@ -35,14 +35,8 @@ class TackyGenVisitorTest {
             )
         val visitor = TackyGenVisitor()
 
-        val visitorResult = ast.accept(visitor)
-
-        val tackyFunction =
-            TackyFunction(
-                name = (ast.functionDefinition as SimpleFunction).name.value,
-                body = visitorResult.instructions
-            )
-        val tackyProgram = TackyProgram(function = tackyFunction)
+        // Act: The visitor now returns the complete TackyProgram directly.
+        val actualProgram = ast.accept(visitor) as TackyProgram
 
         // Assert
         val expected =
@@ -52,7 +46,7 @@ class TackyGenVisitorTest {
                     body = listOf(TackyRet(TackyConstant(5)))
                 )
             )
-        assertEquals(expected, tackyProgram)
+        assertEquals(expected, actualProgram)
     }
 
     @Test
@@ -73,14 +67,8 @@ class TackyGenVisitorTest {
             )
         val visitor = TackyGenVisitor()
 
-        // Act
-        val visitorResult = ast.accept(visitor)
-        val tackyFunction =
-            TackyFunction(
-                name = (ast.functionDefinition as SimpleFunction).name.value,
-                body = visitorResult.instructions
-            )
-        val tackyProgram = TackyProgram(function = tackyFunction)
+        // Act: The visitor now returns the complete TackyProgram directly.
+        val actualProgram = ast.accept(visitor) as TackyProgram
 
         // Assert
         val expected =
@@ -94,7 +82,7 @@ class TackyGenVisitorTest {
                     )
                 )
             )
-        assertEquals(expected, tackyProgram)
+        assertEquals(expected, actualProgram)
     }
 
     @Test
@@ -123,14 +111,8 @@ class TackyGenVisitorTest {
             )
         val visitor = TackyGenVisitor()
 
-        // Act
-        val visitorResult = ast.accept(visitor)
-        val tackyFunction =
-            TackyFunction(
-                name = (ast.functionDefinition as SimpleFunction).name.value,
-                body = visitorResult.instructions
-            )
-        val tackyProgram = TackyProgram(function = tackyFunction)
+        // Act: The visitor now returns the complete TackyProgram directly.
+        val actualProgram = ast.accept(visitor) as TackyProgram
 
         // Assert
         val expected =
@@ -146,7 +128,7 @@ class TackyGenVisitorTest {
                     )
                 )
             )
-        assertEquals(expected, tackyProgram)
+        assertEquals(expected, actualProgram)
     }
 
     @Test
@@ -160,7 +142,7 @@ class TackyGenVisitorTest {
                     ReturnStatement(
                         BinaryExpression(
                             left = IntExpression(10),
-                            operator = Token(TokenType.NEGATION, "-", 1, 1), // Token type can be NEGATION for minus
+                            operator = Token(TokenType.NEGATION, "-", 1, 1), // Using NEGATION for SUBTRACT
                             right = IntExpression(3)
                         )
                     )
@@ -168,9 +150,8 @@ class TackyGenVisitorTest {
             )
         val visitor = TackyGenVisitor()
 
-        // Act
-        val visitorResult = ast.accept(visitor)
-        val tackyProgram = TackyProgram(TackyFunction("main", visitorResult.instructions))
+        // Act: The visitor now returns the complete TackyProgram directly.
+        val actualProgram = ast.accept(visitor) as TackyProgram
 
         // Assert
         val expected =
@@ -184,7 +165,7 @@ class TackyGenVisitorTest {
                     )
                 )
             )
-        assertEquals(expected, tackyProgram)
+        assertEquals(expected, actualProgram)
     }
 
     @Test
@@ -211,9 +192,8 @@ class TackyGenVisitorTest {
             )
         val visitor = TackyGenVisitor()
 
-        // Act
-        val visitorResult = ast.accept(visitor)
-        val tackyProgram = TackyProgram(TackyFunction("main", visitorResult.instructions))
+        // Act: The visitor now returns the complete TackyProgram directly.
+        val actualProgram = ast.accept(visitor) as TackyProgram
 
         // Assert: Check for the chain of temporary variables
         val expected =
@@ -228,6 +208,6 @@ class TackyGenVisitorTest {
                     )
                 )
             )
-        assertEquals(expected, tackyProgram)
+        assertEquals(expected, actualProgram)
     }
 }

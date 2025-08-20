@@ -79,8 +79,10 @@ class CompilerExport {
             if (parserOutput.errors.isEmpty() && ast != null) {
                 try {
                     val tackyGenVisitor = TackyGenVisitor()
-                    val tackyResult = ast!!.accept(tackyGenVisitor)
-                    tackyProgram = tackyResult.instructions.firstOrNull() as? TackyProgram // Store the TackyProgram object
+                    val result = ast!!.accept(tackyGenVisitor)
+                    tackyProgram = result as? TackyProgram
+
+                    println("TackyGenVisitor returned TackyProgram: $tackyProgram")
                     TackyOutput(
                         tacky = tackyProgram?.toJsonString(),
                         errors = emptyArray()
@@ -103,6 +105,7 @@ class CompilerExport {
                     errors = emptyArray()
                 )
             }
+        outputs.add(tackyOutput)
         // Code generation
         val codeGeneratorOutput =
             if (tackyOutput.errors.isEmpty() && tackyProgram != null) {
