@@ -2,23 +2,13 @@ package tacky
 
 import lexer.Token
 import lexer.TokenType
-import org.example.parser.BinaryExpression
-import org.example.parser.Identifier
-import org.example.parser.IntExpression
-import org.example.parser.ReturnStatement
-import org.example.parser.SimpleFunction
-import org.example.parser.SimpleProgram
-import org.example.parser.UnaryExpression
-import org.example.tacky.TackyBinary
-import org.example.tacky.TackyBinaryOP
-import org.example.tacky.TackyConstant
-import org.example.tacky.TackyFunction
-import org.example.tacky.TackyGenVisitor
-import org.example.tacky.TackyProgram
-import org.example.tacky.TackyRet
-import org.example.tacky.TackyUnary
-import org.example.tacky.TackyUnaryOP
-import org.example.tacky.TackyVar
+import parser.BinaryExpression
+import parser.Identifier
+import parser.IntExpression
+import parser.ReturnStatement
+import parser.SimpleFunction
+import parser.SimpleProgram
+import parser.UnaryExpression
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

@@ -13,16 +13,6 @@ import assembly.Mov
 import assembly.Pseudo
 import assembly.Register
 import assembly.Ret
-import org.example.tacky.TackyBinary
-import org.example.tacky.TackyBinaryOP
-import org.example.tacky.TackyConstant
-import org.example.tacky.TackyFunction
-import org.example.tacky.TackyProgram
-import org.example.tacky.TackyRet
-import org.example.tacky.TackyToAsm
-import org.example.tacky.TackyUnary
-import org.example.tacky.TackyUnaryOP
-import org.example.tacky.TackyVar
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

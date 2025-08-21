@@ -3,15 +3,6 @@ package parser
 import exceptions.SyntaxError
 import lexer.Token
 import lexer.TokenType
-import org.example.parser.ASTNode
-import org.example.parser.BinaryExpression
-import org.example.parser.Expression
-import org.example.parser.IntExpression
-import org.example.parser.Parser
-import org.example.parser.ReturnStatement
-import org.example.parser.SimpleFunction
-import org.example.parser.SimpleProgram
-import org.example.parser.UnaryExpression
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

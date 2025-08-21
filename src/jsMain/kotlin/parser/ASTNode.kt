@@ -1,4 +1,4 @@
-package org.example.parser
+package parser
 
 sealed class ASTNode {
     abstract fun prettyPrint(indent: Int = 0): String

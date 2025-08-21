@@ -1,5 +1,4 @@
-
-package org.example.parser
+package parser
 
 import exceptions.SyntaxError
 import lexer.Token

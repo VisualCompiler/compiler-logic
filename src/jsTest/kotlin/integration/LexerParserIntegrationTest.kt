@@ -1,11 +1,11 @@
 package integration
 
 import lexer.Lexer
-import org.example.parser.IntExpression
-import org.example.parser.Parser
-import org.example.parser.ReturnStatement
-import org.example.parser.SimpleFunction
-import org.example.parser.SimpleProgram
+import parser.IntExpression
+import parser.Parser
+import parser.ReturnStatement
+import parser.SimpleFunction
+import parser.SimpleProgram
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

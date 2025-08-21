@@ -1,15 +1,15 @@
 package org.example
 
+import assembly.InstructionFixer
+import assembly.PseudoEliminator
 import exceptions.SyntaxError
 import lexer.Lexer
 import lexer.Token
-import org.example.assembly.InstructionFixer
-import org.example.assembly.PseudoEliminator
-import org.example.parser.ASTNode
-import org.example.parser.Parser
-import org.example.tacky.TackyGenVisitor
-import org.example.tacky.TackyProgram
-import org.example.tacky.TackyToAsm
+import parser.ASTNode
+import parser.Parser
+import tacky.TackyGenVisitor
+import tacky.TackyProgram
+import tacky.TackyToAsm
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport

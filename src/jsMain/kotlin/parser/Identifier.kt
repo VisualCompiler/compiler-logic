@@ -1,4 +1,4 @@
-package org.example.parser
+package parser
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

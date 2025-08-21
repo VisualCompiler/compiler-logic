@@ -1,4 +1,4 @@
-package org.example.parser
+package parser
 
 interface Visitor<T> {
     fun visit(node: SimpleProgram): T

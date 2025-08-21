@@ -1,14 +1,4 @@
-package org.example.assembly
-
-import assembly.AllocateStack
-import assembly.AsmBinary
-import assembly.AsmProgram
-import assembly.HardwareRegister
-import assembly.Mov
-import assembly.Program
-import assembly.Register
-import assembly.Ret
-import assembly.Stack
+package assembly
 
 class InstructionFixer {
     fun fix(
