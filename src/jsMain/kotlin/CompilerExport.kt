@@ -1,12 +1,15 @@
 package org.example
 
-import assembly.CodeGenerator
 import exceptions.SyntaxError
 import lexer.Lexer
 import lexer.Token
+import org.example.assembly.InstructionFixer
+import org.example.assembly.PseudoEliminator
 import org.example.parser.ASTNode
 import org.example.parser.Parser
-import org.example.parser.SimpleProgram
+import org.example.tacky.TackyGenVisitor
+import org.example.tacky.TackyProgram
+import org.example.tacky.TackyToAsm
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
@@ -17,6 +20,7 @@ class CompilerExport {
 
         var tokens: List<Token>? = null
         var ast: ASTNode? = null
+        var tackyProgram: TackyProgram? = null
 
         // Lexing
         val lexerOutput =
@@ -71,16 +75,54 @@ class CompilerExport {
                 )
             }
         outputs.add(parserOutput)
-
-        // Code generation (only if parser succeeded)
-        val codeGeneratorOutput =
+        val tackyOutput =
             if (parserOutput.errors.isEmpty() && ast != null) {
                 try {
-                    val codeGenerator = CodeGenerator()
-                    val asm = codeGenerator.generateAsm(ast as SimpleProgram)
+                    val tackyGenVisitor = TackyGenVisitor()
+                    val result = ast!!.accept(tackyGenVisitor)
+                    tackyProgram = result as? TackyProgram
+
+                    println("TackyGenVisitor returned TackyProgram: $tackyProgram")
+                    TackyOutput(
+                        tacky = tackyProgram?.toJsonString(),
+                        errors = emptyArray()
+                    )
+                } catch (e: SyntaxError) {
+                    val error =
+                        CompilationError(
+                            type = ErrorType.CODE_GENERATION,
+                            message = e.message ?: "Unknown tacky generation error",
+                            line = e.line ?: -1,
+                            column = e.column ?: -1
+                        )
+                    overallErrors.add(error)
+                    TackyOutput(
+                        errors = arrayOf(error)
+                    )
+                }
+            } else {
+                TackyOutput(
+                    errors = emptyArray()
+                )
+            }
+        outputs.add(tackyOutput)
+        // Code generation
+        val codeGeneratorOutput =
+            if (tackyOutput.errors.isEmpty() && tackyProgram != null) {
+                try {
+                    val tackyToAsmConverter = TackyToAsm()
+                    val asmWithPseudos = tackyToAsmConverter.convert(tackyProgram!!)
+
+                    val pseudoEliminator = PseudoEliminator()
+                    val (asmWithStack, stackSpaceNeeded) = pseudoEliminator.eliminate(asmWithPseudos)
+
+                    val instructionFixer = InstructionFixer()
+                    val finalAsmProgram = instructionFixer.fix(asmWithStack, stackSpaceNeeded)
+
+                    val finalAssemblyString = finalAsmProgram.toAsm()
                     CodeGeneratorOutput(
                         errors = emptyArray(),
-                        assembly = asm.toAsm()
+                        assembly = finalAssemblyString
                     )
                 } catch (e: Exception) {
                     val error =

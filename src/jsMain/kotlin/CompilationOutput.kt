@@ -1,5 +1,6 @@
 package org.example
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -19,6 +20,7 @@ enum class ErrorType {
 enum class CompilationStage {
     LEXER,
     PARSER,
+    TACKY,
     CODE_GENERATOR
 }
 
@@ -33,6 +35,7 @@ sealed class CompilationOutput {
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 @Serializable
+@SerialName("LexerOutput")
 data class LexerOutput(
     override val stage: CompilationStage = CompilationStage.LEXER,
     val tokens: String? = null,
@@ -42,6 +45,7 @@ data class LexerOutput(
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 @Serializable
+@SerialName("ParserOutput")
 data class ParserOutput(
     override val stage: CompilationStage = CompilationStage.PARSER,
     val ast: String? = null,
@@ -51,6 +55,17 @@ data class ParserOutput(
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 @Serializable
+@SerialName("TackyOutput")
+data class TackyOutput(
+    override val stage: CompilationStage = CompilationStage.TACKY,
+    val tacky: String? = null,
+    override val errors: Array<CompilationError>
+) : CompilationOutput()
+
+@OptIn(ExperimentalJsExport::class)
+@JsExport
+@Serializable
+@SerialName("CodeGeneratorOutput")
 data class CodeGeneratorOutput(
     override val stage: CompilationStage = CompilationStage.CODE_GENERATOR,
     val assembly: String? = null,
@@ -75,5 +90,9 @@ data class CompilationResult(
     val overallSuccess: Boolean,
     val overallErrors: Array<CompilationError>
 ) {
-    fun toJsonString(): String = Json.encodeToString(this)
+    fun toJsonString(): String =
+        Json {
+            classDiscriminator = "stageType"
+            encodeDefaults = true
+        }.encodeToString(this)
 }
