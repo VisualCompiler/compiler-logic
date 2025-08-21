@@ -24,7 +24,23 @@ kotlin {
         }
         generateTypeScriptDefinitions()
     }
+    jvm {
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+        }
+    }
     sourceSets {
+        val jvmMain by getting {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+            }
+        }
+        val jvmTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation("org.junit.jupiter:junit-jupiter:5.9.2")
+            }
+        }
         val jsMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
@@ -33,6 +49,21 @@ kotlin {
         val jsTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+            }
+        }
+    }
+}
+
+koverReport {
+    filters {
+        includes {
+            classes("*")
+        }
+    }
+    verify {
+        rule {
+            bound {
+                minValue = 0 // Temporary
             }
         }
     }
