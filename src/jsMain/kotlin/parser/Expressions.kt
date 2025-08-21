@@ -24,8 +24,6 @@ data class IntExpression(
 
         return Json.encodeToString(jsonNode)
     }
-
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
 
 data class UnaryExpression(
@@ -58,8 +56,6 @@ data class UnaryExpression(
 
         return Json.encodeToString(jsonNode)
     }
-
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
 
 data class BinaryExpression(
@@ -95,6 +91,4 @@ data class BinaryExpression(
 
         return Json.encodeToString(jsonNode)
     }
-
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }

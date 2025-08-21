@@ -6,6 +6,4 @@ sealed class ASTNode {
     fun indent(level: Int): String = "    ".repeat(level) // 4 spaces per level
 
     abstract fun toJsonString(): String
-
-    abstract fun <T> accept(visitor: Visitor<T>): T
 }

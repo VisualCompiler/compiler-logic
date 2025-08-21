@@ -19,7 +19,6 @@ enum class ErrorType {
 enum class CompilationStage {
     LEXER,
     PARSER,
-    TACKY,
     CODE_GENERATOR
 }
 
@@ -46,15 +45,6 @@ data class LexerOutput(
 data class ParserOutput(
     override val stage: CompilationStage = CompilationStage.PARSER,
     val ast: String? = null,
-    override val errors: Array<CompilationError>
-) : CompilationOutput()
-
-@OptIn(ExperimentalJsExport::class)
-@JsExport
-@Serializable
-data class TackyOutput(
-    override val stage: CompilationStage = CompilationStage.TACKY,
-    val tacky: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
 

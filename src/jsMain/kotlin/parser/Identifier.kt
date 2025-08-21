@@ -21,6 +21,4 @@ data class Identifier(
 
         return Json.encodeToString(jsonNode)
     }
-
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }

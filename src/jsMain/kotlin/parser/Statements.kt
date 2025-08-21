@@ -18,24 +18,20 @@ data class ReturnStatement(
         }
 
     override fun toJsonString(): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "expression" to JsonPrimitive(expression.toJsonString())
-                )
+        val children = JsonObject(
+            mapOf(
+                "expression" to JsonPrimitive(expression.toJsonString())
             )
+        )
 
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("return expression"),
-                    "children" to children
-                )
+        val jsonNode = JsonObject(
+            mapOf(
+                "type" to JsonPrimitive(this::class.simpleName),
+                "label" to JsonPrimitive("return expression"),
+                "children" to children
             )
+        )
 
         return Json.encodeToString(jsonNode)
     }
-
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
