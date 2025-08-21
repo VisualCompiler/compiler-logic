@@ -68,3 +68,43 @@ koverReport {
         }
     }
 }
+
+// Task to automatically sync JVM sources from JS sources
+tasks.register("syncJvmSources") {
+    group = "build"
+    description = "Sync JVM source directories from JS source directories, excluding JS-specific files"
+
+    doLast {
+        val srcDir = project.file("src")
+        val jsMainDir = File(srcDir, "jsMain/kotlin")
+        val jsTestDir = File(srcDir, "jsTest/kotlin")
+        val jvmMainDir = File(srcDir, "jvmMain/kotlin")
+        val jvmTestDir = File(srcDir, "jvmTest/kotlin")
+
+        // Create directories if they don't exist
+        jvmMainDir.mkdirs()
+        jvmTestDir.mkdirs()
+
+        if (jsMainDir.exists()) {
+            copy {
+                from(jsMainDir)
+                into(jvmMainDir)
+                exclude("**/CompilationOutput.kt")
+                exclude("**/CompilerExport.kt")
+            }
+        }
+
+        if (jsTestDir.exists()) {
+            copy {
+                from(jsTestDir)
+                into(jvmTestDir)
+                exclude("**/CompilerExportTest.kt")
+            }
+        }
+    }
+}
+
+// Make jvmTest depend on syncJvmSources
+tasks.named("jvmTest") {
+    dependsOn("syncJvmSources")
+}

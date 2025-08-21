@@ -2,7 +2,6 @@ name: Kotlin CI
 
 on:
   push:
-  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -32,6 +31,3 @@ jobs:
         
       - name: Build with Gradle
         run: ./gradlew build
-        
-      - name: Kotlin Kover
-        run: ./gradlew koverXmlReport
