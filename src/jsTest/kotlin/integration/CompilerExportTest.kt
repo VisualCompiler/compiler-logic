@@ -1,6 +1,6 @@
 package integration
 
-import org.example.CompilerExport
+import CompilerExport
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue

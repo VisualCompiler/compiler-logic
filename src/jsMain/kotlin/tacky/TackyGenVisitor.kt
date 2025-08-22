@@ -1,8 +1,8 @@
 package tacky
 
+import exceptions.TackyException
 import lexer.TokenType
 import parser.BinaryExpression
-import parser.Identifier
 import parser.IntExpression
 import parser.ReturnStatement
 import parser.SimpleFunction
@@ -21,7 +21,7 @@ class TackyGenVisitor : Visitor<Any> {
         } else if (tokenType == TokenType.NEGATION) {
             return TackyUnaryOP.NEGATE
         } else {
-            throw IllegalArgumentException("Not a valid unary operator: $tokenType")
+            throw TackyException(tokenType.toString())
         }
     }
 
@@ -37,7 +37,7 @@ class TackyGenVisitor : Visitor<Any> {
         } else if (tokenType == TokenType.REMAINDER) {
             return TackyBinaryOP.REMAINDER
         } else {
-            throw IllegalArgumentException("Not a valid Binary operator: $tokenType")
+            throw TackyException(tokenType.toString())
         }
     }
 
@@ -55,7 +55,7 @@ class TackyGenVisitor : Visitor<Any> {
     }
 
     override fun visit(node: SimpleFunction): Any {
-        val functionName = node.name.value
+        val functionName = node.name
 
         val bodyResult = node.body.accept(this) as TackyResult
 
@@ -63,8 +63,6 @@ class TackyGenVisitor : Visitor<Any> {
 
         return TackyFunction(functionName, instructionList)
     }
-
-    override fun visit(node: Identifier): TackyResult = throw NotImplementedError("Identifiers not yet supported in TACKY generation.")
 
     override fun visit(node: UnaryExpression): Any {
         val innerExp = node.expression.accept(this) as TackyResult

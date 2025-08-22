@@ -1,7 +1,9 @@
 package exceptions
 
-// TODO: Do not throw an exception
-class SyntaxError(
+import CompilerStage
+
+sealed class CompilationException(
+    open val stage: CompilerStage,
     message: String,
     val line: Int? = null,
     val column: Int? = null
@@ -13,9 +15,9 @@ class SyntaxError(
             column: Int?
         ): String =
             when {
-                line != null && column != null -> "Syntax error at line $line, column $column: $message"
-                line != null -> "Syntax error at line $line: $message"
-                else -> "Syntax error: $message"
+                line != null && column != null -> "Compilation error at line $line, column $column: $message"
+                line != null -> "Compilation error at line $line: $message"
+                else -> "Compilation error: $message"
             }
     }
 }

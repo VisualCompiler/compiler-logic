@@ -8,13 +8,13 @@ import kotlinx.serialization.json.JsonPrimitive
 sealed class FunctionDefinition : ASTNode()
 
 data class SimpleFunction(
-    val name: Identifier,
+    val name: String,
     val body: Statement
 ) : FunctionDefinition() {
     override fun prettyPrint(indent: Int): String =
         buildString {
             appendLine("${indent(indent)}SimpleFunction(")
-            append("${indent(indent + 1)}name=${name.prettyPrint(0)}")
+            append("${indent(indent + 1)}name=$name")
             appendLine("${indent(indent + 1)}body=")
             append("${indent(indent)}${body.prettyPrint(indent + 1)}")
             appendLine("${indent(indent)})")
@@ -24,7 +24,7 @@ data class SimpleFunction(
         val children =
             JsonObject(
                 mapOf(
-                    "name" to JsonPrimitive(name.toJsonString()),
+                    "name" to JsonPrimitive(name),
                     "body" to JsonPrimitive(body.toJsonString())
                 )
             )

@@ -1,5 +1,3 @@
-package org.example
-
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -28,7 +26,7 @@ enum class CompilationStage {
 @JsExport
 @Serializable
 sealed class CompilationOutput {
-    abstract val stage: CompilationStage
+    abstract val stage: CompilerStage
     abstract val errors: Array<CompilationError>
 }
 
@@ -37,7 +35,7 @@ sealed class CompilationOutput {
 @Serializable
 @SerialName("LexerOutput")
 data class LexerOutput(
-    override val stage: CompilationStage = CompilationStage.LEXER,
+    override val stage: CompilerStage = CompilerStage.LEXER,
     val tokens: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
@@ -47,7 +45,7 @@ data class LexerOutput(
 @Serializable
 @SerialName("ParserOutput")
 data class ParserOutput(
-    override val stage: CompilationStage = CompilationStage.PARSER,
+    override val stage: CompilerStage = CompilerStage.PARSER,
     val ast: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
@@ -57,7 +55,7 @@ data class ParserOutput(
 @Serializable
 @SerialName("TackyOutput")
 data class TackyOutput(
-    override val stage: CompilationStage = CompilationStage.TACKY,
+    override val stage: CompilerStage = CompilerStage.TACKY,
     val tacky: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
@@ -67,7 +65,7 @@ data class TackyOutput(
 @Serializable
 @SerialName("CodeGeneratorOutput")
 data class CodeGeneratorOutput(
-    override val stage: CompilationStage = CompilationStage.CODE_GENERATOR,
+    override val stage: CompilerStage = CompilerStage.CODE_GENERATOR,
     val assembly: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()

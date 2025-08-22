@@ -32,7 +32,7 @@ class LexerParserIntegrationTest {
         val function = program.functionDefinition
         assertIs<SimpleFunction>(function)
         val simpleFunction = function
-        assertEquals("main", simpleFunction.name.value)
+        assertEquals("main", simpleFunction.name)
 
         // Check return value
         val returnStatement = simpleFunction.body

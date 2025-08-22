@@ -3,7 +3,6 @@ package tacky
 import lexer.Token
 import lexer.TokenType
 import parser.BinaryExpression
-import parser.Identifier
 import parser.IntExpression
 import parser.ReturnStatement
 import parser.SimpleFunction
@@ -19,7 +18,7 @@ class TackyGenVisitorTest {
         val ast =
             SimpleProgram(
                 SimpleFunction(
-                    name = Identifier("main"),
+                    name = "main",
                     body = ReturnStatement(expression = IntExpression(5))
                 )
             )
@@ -45,7 +44,7 @@ class TackyGenVisitorTest {
         val ast =
             SimpleProgram(
                 SimpleFunction(
-                    name = Identifier("main"),
+                    name = "main",
                     body =
                     ReturnStatement(
                         UnaryExpression(
@@ -81,7 +80,7 @@ class TackyGenVisitorTest {
         val ast =
             SimpleProgram(
                 SimpleFunction(
-                    name = Identifier("main"),
+                    name = "main",
                     body =
                     ReturnStatement(
                         UnaryExpression(
@@ -127,7 +126,7 @@ class TackyGenVisitorTest {
         val ast =
             SimpleProgram(
                 SimpleFunction(
-                    name = Identifier("main"),
+                    name = "main",
                     body =
                     ReturnStatement(
                         BinaryExpression(
@@ -164,7 +163,7 @@ class TackyGenVisitorTest {
         val ast =
             SimpleProgram(
                 SimpleFunction(
-                    name = Identifier("main"),
+                    name = "main",
                     body =
                     ReturnStatement(
                         BinaryExpression(

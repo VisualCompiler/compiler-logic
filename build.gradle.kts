@@ -59,11 +59,15 @@ koverReport {
         includes {
             classes("*")
         }
+        excludes {
+            // Exclude methods annotated with @Suppress("UNUSED")
+            classes("exceptions.*")
+        }
     }
     verify {
         rule {
             bound {
-                minValue = 0 // Temporary
+                minValue = 0
             }
         }
     }

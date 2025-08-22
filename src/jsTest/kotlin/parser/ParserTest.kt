@@ -1,6 +1,7 @@
 package parser
 
-import exceptions.SyntaxError
+import exceptions.UnexpectedEndOfFileException
+import exceptions.UnexpectedTokenSyntaxException
 import lexer.Token
 import lexer.TokenType
 import kotlin.test.Test
@@ -251,7 +252,7 @@ class ParserTest {
                 Token(TokenType.EOF, "", 1, 26)
             )
         val parser = Parser()
-        assertFailsWith<SyntaxError> { parser.parseTokens(tokens) }
+        assertFailsWith<UnexpectedTokenSyntaxException> { parser.parseTokens(tokens) }
     }
 
     @Test
@@ -273,7 +274,7 @@ class ParserTest {
             )
 
         val parser = Parser()
-        val exception = assertFailsWith<SyntaxError> { parser.parseTokens(tokens) }
+        val exception = assertFailsWith<UnexpectedEndOfFileException> { parser.parseTokens(tokens) }
         assertTrue(exception.message!!.contains("Expected end of file"))
     }
 
@@ -288,8 +289,8 @@ class ParserTest {
                 )
             )
         val parser = Parser()
-        val exception = assertFailsWith<SyntaxError> { parser.parseTokens(tokens) }
+        val exception = assertFailsWith<UnexpectedTokenSyntaxException> { parser.parseTokens(tokens) }
         // The parser expects a factor after an operator
-        assertTrue(exception.message!!.contains("Unexpected token in expression"))
+        assertTrue(exception.message!!.contains("Expected literal, unary operator, or '('"))
     }
 }
