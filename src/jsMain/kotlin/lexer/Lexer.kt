@@ -20,7 +20,7 @@ sealed class TokenType {
     // literals
     object INT_LITERAL : TokenType()
 
-    // Symbols
+    // Binary
     object PLUS : TokenType()
 
     object MULTIPLY : TokenType()
@@ -29,13 +29,36 @@ sealed class TokenType {
 
     object REMAINDER : TokenType()
 
-    object TILDE : TokenType()
-
-    object NEGATION : TokenType()
-
     object DECREMENT : TokenType()
 
+    object NEGATION : TokenType() // Binary and Unary (-)
+
+    // Logical
+    object AND : TokenType()
+
+    object OR : TokenType()
+
+    object NOT : TokenType()
+
+    // Relational
+    object LESS : TokenType()
+
+    object GREATER : TokenType()
+
+    object LESS_EQUAL : TokenType()
+
+    object GREATER_EQUAL : TokenType()
+
+    // Unary
+    object TILDE : TokenType()
+
+    // Symbol
+
     object ASSIGN : TokenType()
+
+    object EQUAL_TO : TokenType()
+
+    object NOT_EQUAL : TokenType()
 
     object SEMICOLON : TokenType()
 
@@ -113,7 +136,6 @@ class Lexer(
             '%' -> addToken(TokenType.REMAINDER)
             '*' -> addToken(TokenType.MULTIPLY)
             '/' -> addToken(TokenType.DIVIDE)
-            '=' -> addToken(TokenType.ASSIGN)
 
             '~' -> addToken(TokenType.TILDE)
             '-' -> {
@@ -124,6 +146,44 @@ class Lexer(
                 } else {
                     // it's just a negation/minus token.
                     addToken(TokenType.NEGATION)
+                }
+            }
+            '&' -> {
+                if (match('&')) {
+                    addToken(TokenType.AND)
+                }
+            }
+            '|' -> {
+                if (match('|')) {
+                    addToken(TokenType.OR)
+                }
+            }
+            '=' -> {
+                if (match('=')) {
+                    addToken(TokenType.EQUAL_TO)
+                } else {
+                    addToken(TokenType.ASSIGN)
+                }
+            }
+            '!' -> {
+                if (match('=')) {
+                    addToken(TokenType.NOT_EQUAL)
+                } else {
+                    addToken(TokenType.NOT)
+                }
+            }
+            '<' -> {
+                if (match('=')) {
+                    addToken(TokenType.LESS_EQUAL)
+                } else {
+                    addToken(TokenType.LESS)
+                }
+            }
+            '>' -> {
+                if (match('=')) {
+                    addToken(TokenType.GREATER_EQUAL)
+                } else {
+                    addToken(TokenType.GREATER)
                 }
             }
 
