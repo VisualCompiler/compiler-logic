@@ -38,8 +38,6 @@ sealed class TokenType {
 
     object OR : TokenType()
 
-    object NOT : TokenType()
-
     // Relational
     object LESS : TokenType()
 
@@ -52,6 +50,7 @@ sealed class TokenType {
     // Unary
     object TILDE : TokenType()
 
+    object NOT : TokenType()
     // Symbol
 
     object ASSIGN : TokenType()

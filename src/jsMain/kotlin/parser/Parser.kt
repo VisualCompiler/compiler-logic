@@ -12,7 +12,15 @@ class Parser {
             TokenType.NEGATION to 45,
             TokenType.MULTIPLY to 50,
             TokenType.DIVIDE to 50,
-            TokenType.REMAINDER to 50
+            TokenType.REMAINDER to 50,
+            TokenType.GREATER to 35,
+            TokenType.GREATER_EQUAL to 35,
+            TokenType.LESS to 35,
+            TokenType.LESS_EQUAL to 35,
+            TokenType.EQUAL_TO to 30,
+            TokenType.NOT_EQUAL to 30,
+            TokenType.AND to 10,
+            TokenType.OR to 5
         )
 
     fun parseTokens(tokens: List<Token>): ASTNode {
@@ -129,7 +137,7 @@ class Parser {
         if (nextToken.type == TokenType.INT_LITERAL) {
             nextToken = tokens.removeFirst()
             return IntExpression(value = nextToken.lexeme.toInt())
-        } else if (nextToken.type == TokenType.TILDE || nextToken.type == TokenType.NEGATION) {
+        } else if (nextToken.type == TokenType.TILDE || nextToken.type == TokenType.NEGATION || nextToken.type == TokenType.NOT) {
             val operator = tokens.removeFirst()
             val factor = parseFactor(tokens)
             return UnaryExpression(operator = operator, expression = factor)
