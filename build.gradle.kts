@@ -67,7 +67,7 @@ koverReport {
     verify {
         rule {
             bound {
-                minValue = 0
+                minValue = 80
             }
         }
     }
@@ -111,4 +111,12 @@ tasks.register("syncJvmSources") {
 // Make jvmTest depend on syncJvmSources
 tasks.named("jvmTest") {
     dependsOn("syncJvmSources")
+}
+
+// Ensure Kover HTML report is generated when running the standard build
+// Also run ktlintFormat before building to auto-format code
+// Using finalizedBy so the report runs after a successful build without affecting task up-to-date checks
+tasks.named("build") {
+    dependsOn("ktlintFormat")
+    finalizedBy("koverHtmlReport")
 }
