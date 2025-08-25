@@ -67,21 +67,6 @@ data class TackyLabel(
     override fun toPseudoCode(indentationLevel: Int): String = "$name:"
 }
 
-data class TackyLabel(
-    val name: String
-) : TackyInstruction() {
-    override fun toJsonString(): String {
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive(name)
-                )
-            )
-        return Json.encodeToString(jsonNode)
-    }
-}
-
 data class TackyProgram(
     val function: TackyFunction
 ) : TackyConstruct() {
