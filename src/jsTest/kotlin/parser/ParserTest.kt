@@ -2,6 +2,10 @@ package parser
 
 import exceptions.UnexpectedEndOfFileException
 import exceptions.UnexpectedTokenSyntaxException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import lexer.Lexer
 import lexer.Token
 import lexer.TokenType
 import kotlin.test.Test
@@ -291,6 +295,23 @@ class ParserTest {
         val parser = Parser()
         val exception = assertFailsWith<UnexpectedTokenSyntaxException> { parser.parseTokens(tokens) }
         // The parser expects a factor after an operator
-        assertTrue(exception.message!!.contains("Expected literal, unary operator, or '('"))
+        assertTrue(exception.message!!.contains(TokenType.INT_LITERAL.toString()))
+    }
+
+    @Test
+    fun `ast toJsonString produces valid JsonObject with expected keys`() {
+        val code = "int main(void) { return 5 + 3; }"
+        val lexer = Lexer(code)
+        val tokens = lexer.tokenize()
+        val parser = Parser()
+        val ast = parser.parseTokens(tokens)
+
+        val json = ast.toJsonString()
+        val parsed = Json.parseToJsonElement(json).jsonObject
+
+        // Basic structure checks
+        assertEquals("SimpleProgram", parsed["type"]!!.jsonPrimitive.content)
+        assertTrue(parsed.containsKey("children"))
+        assertTrue(parsed.containsKey("label"))
     }
 }

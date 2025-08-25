@@ -141,7 +141,8 @@ class Parser {
         } else {
             val nToken = tokens.removeFirst()
             throw UnexpectedTokenSyntaxException(
-                expected = "literal, unary operator, or '('",
+                expected =
+                "${TokenType.INT_LITERAL}, ${TokenType.TILDE}, ${TokenType.NEGATION}, ${TokenType.LEFT_PAREN}, ${TokenType.RIGHT_PAREN}",
                 actual = nToken.type.toString(),
                 line = nToken.line,
                 column = nToken.column

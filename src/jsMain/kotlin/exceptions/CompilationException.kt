@@ -1,6 +1,6 @@
 package exceptions
 
-import CompilerStage
+import compiler.CompilerStage
 
 sealed class CompilationException(
     open val stage: CompilerStage,

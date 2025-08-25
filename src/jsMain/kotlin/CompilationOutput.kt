@@ -26,7 +26,7 @@ enum class CompilationStage {
 @JsExport
 @Serializable
 sealed class CompilationOutput {
-    abstract val stage: CompilerStage
+    abstract val stage: CompilationStage
     abstract val errors: Array<CompilationError>
 }
 
@@ -35,7 +35,7 @@ sealed class CompilationOutput {
 @Serializable
 @SerialName("LexerOutput")
 data class LexerOutput(
-    override val stage: CompilerStage = CompilerStage.LEXER,
+    override val stage: CompilationStage = CompilationStage.LEXER,
     val tokens: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
@@ -45,7 +45,7 @@ data class LexerOutput(
 @Serializable
 @SerialName("ParserOutput")
 data class ParserOutput(
-    override val stage: CompilerStage = CompilerStage.PARSER,
+    override val stage: CompilationStage = CompilationStage.PARSER,
     val ast: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
@@ -55,7 +55,7 @@ data class ParserOutput(
 @Serializable
 @SerialName("TackyOutput")
 data class TackyOutput(
-    override val stage: CompilerStage = CompilerStage.TACKY,
+    override val stage: CompilationStage = CompilationStage.TACKY,
     val tacky: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
@@ -65,7 +65,7 @@ data class TackyOutput(
 @Serializable
 @SerialName("CodeGeneratorOutput")
 data class CodeGeneratorOutput(
-    override val stage: CompilerStage = CompilerStage.CODE_GENERATOR,
+    override val stage: CompilationStage = CompilationStage.CODE_GENERATOR,
     val assembly: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
