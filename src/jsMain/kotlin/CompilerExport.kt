@@ -1,3 +1,5 @@
+import assembly.AsmProgram
+import assembly.CodeEmitter
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
 import exceptions.CodeGenerationException
@@ -118,7 +120,14 @@ class CompilerExport {
                     val instructionFixer = InstructionFixer()
                     val finalAsmProgram = instructionFixer.fix(asmWithStack, stackSpaceNeeded)
 
-                    val finalAssemblyString = finalAsmProgram.toAsm()
+                    val codeEmitter = CodeEmitter()
+                    val finalAssemblyString = codeEmitter.emit(finalAsmProgram as AsmProgram)
+
+                    CodeGeneratorOutput(
+                        errors = emptyArray(),
+                        assembly = finalAssemblyString
+                    )
+
                     CodeGeneratorOutput(
                         errors = emptyArray(),
                         assembly = finalAssemblyString

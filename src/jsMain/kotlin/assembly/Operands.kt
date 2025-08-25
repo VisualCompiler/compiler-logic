@@ -4,29 +4,19 @@ sealed class Operand : AsmConstruct()
 
 data class Imm(
     val value: Int
-) : Operand() {
-    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}$value"
-}
+) : Operand()
 
 data class Register(
     val name: HardwareRegister
-) : Operand() {
-    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}${name.x32Name}"
-}
+) : Operand()
 
 data class Pseudo(
     val name: String
-) : Operand() {
-    // override fun toAsm(): String = throw IllegalStateException("Cannot emit assembly with pseudo-register '$name'")
-    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}"
-}
+) : Operand()
 
 data class Stack(
     val offset: Int
-) : Operand() {
-    // override fun toAsm(): String = "$offset(%rbp)"
-    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}$offset(%rbp)"
-}
+) : Operand()
 
 // Hardware Registers
 enum class HardwareRegister(
