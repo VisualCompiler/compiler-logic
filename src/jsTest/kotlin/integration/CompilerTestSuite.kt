@@ -26,14 +26,14 @@ class CompilerTestSuite {
             val lexer = Lexer(testCase.code)
             val tokens = lexer.tokenize()
             if (testCase.expectedTokenList != null) {
-                assertEquals(tokens, testCase.expectedTokenList)
+                assertEquals(testCase.expectedTokenList, tokens)
             }
 
             // Parser stage
             val parser = Parser()
             val ast = parser.parseTokens(tokens)
             if (testCase.expectedAst != null) {
-                assertEquals(ast, testCase.expectedAst)
+                assertEquals(testCase.expectedAst, ast)
             }
 
             // Tacky generation stage
@@ -41,7 +41,7 @@ class CompilerTestSuite {
             val tackyResult = ast.accept(tackyGenVisitor)
             val tackyProgram = tackyResult as? TackyProgram
             if (testCase.expectedTacky != null) {
-                assertEquals(tackyProgram, testCase.expectedTacky)
+                assertEquals(testCase.expectedTacky, tackyProgram)
             }
 
             // Assembly generation stage
@@ -52,7 +52,7 @@ class CompilerTestSuite {
             val instructionFixer = InstructionFixer()
             val finalAsmProgram = instructionFixer.fix(asmWithStack, stackSpaceNeeded)
             if (testCase.expectedAssembly != null) {
-                assertEquals(finalAsmProgram, testCase.expectedAssembly)
+                assertEquals(testCase.expectedAssembly, finalAsmProgram)
             }
         }
     }
@@ -61,7 +61,7 @@ class CompilerTestSuite {
     fun testInvalidPrograms() {
         for (testCase in InvalidTestCases.testCases) {
             // Lexer stage
-            val lexer = Lexer(testCase.code)
+            val lexer = Lexer(testCase.code!!)
             if (testCase.failingStage == CompilerStage.LEXER) {
                 assertFailsWith(testCase.expectedException) {
                     lexer.tokenize()

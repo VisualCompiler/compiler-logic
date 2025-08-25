@@ -1,6 +1,6 @@
 package exceptions
 
-import CompilerStage
+import compiler.CompilerStage
 
 class CodeGenerationException(
     message: String,

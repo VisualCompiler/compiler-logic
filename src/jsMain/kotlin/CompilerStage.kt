@@ -1,3 +1,5 @@
+package compiler
+
 enum class CompilerStage {
     LEXER,
     PARSER,
