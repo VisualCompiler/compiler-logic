@@ -37,3 +37,7 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Duplicated directories only used for generating test reports ###
+/src/jvmTest/
+/src/jvmMain/

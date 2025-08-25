@@ -1,7 +1,7 @@
+package parser
 
-package org.example.parser
-
-import exceptions.SyntaxError
+import exceptions.UnexpectedEndOfFileException
+import exceptions.UnexpectedTokenSyntaxException
 import lexer.Token
 import lexer.TokenType
 
@@ -20,11 +20,10 @@ class Parser {
         val ast = parseProgram(tokenSet)
 
         val lastToken = tokenSet.removeFirst()
-        if (lastToken.type != TokenType.EOF || !tokenSet.isEmpty()) {
-            throw SyntaxError(
+        if (!tokenSet.isEmpty()) {
+            throw UnexpectedEndOfFileException(
                 line = lastToken.line,
-                column = lastToken.column,
-                message = "Expected end of file"
+                column = lastToken.column
             )
         }
         return ast
@@ -62,35 +61,35 @@ class Parser {
         val token = tokens.removeFirst()
 
         if (token.type != expected) {
-            throw SyntaxError(
+            throw UnexpectedTokenSyntaxException(
+                expected = expected.toString(),
+                actual = token.type.toString(),
                 line = token.line,
-                column = token.column,
-                message = "Expected token: $expected, got ${token.type}"
+                column = token.column
             )
         }
 
         return token
     }
 
-    private fun parseIdentifier(tokens: MutableList<Token>): Identifier {
+    private fun parseIdentifier(tokens: MutableList<Token>): String {
         val token = tokens.removeFirst()
         if (token.type != TokenType.IDENTIFIER) {
-            throw SyntaxError(
+            throw UnexpectedTokenSyntaxException(
+                expected = TokenType.IDENTIFIER.toString(),
+                actual = token.type.toString(),
                 line = token.line,
-                column = token.column,
-                message = "Expected token: ${TokenType.IDENTIFIER}, got ${token.type}"
+                column = token.column
             )
         }
 
-        return Identifier(
-            value = token.lexeme
-        )
+        return token.lexeme
     }
 
     private fun parseStatement(tokens: MutableList<Token>): Statement {
         val first = tokens.firstOrNull()
         expect(TokenType.KEYWORD_RETURN, tokens)
-        val expression = parseExpression(45, tokens)
+        val expression = parseExpression(tokens = tokens)
         expect(TokenType.SEMICOLON, tokens)
 
         return ReturnStatement(
@@ -136,15 +135,17 @@ class Parser {
             return UnaryExpression(operator = operator, expression = factor)
         } else if (nextToken.type == TokenType.LEFT_PAREN) {
             expect(TokenType.LEFT_PAREN, tokens)
-            val expression = parseExpression(45, tokens)
+            val expression = parseExpression(tokens = tokens)
             expect(TokenType.RIGHT_PAREN, tokens)
             return expression
         } else {
             val nToken = tokens.removeFirst()
-            throw SyntaxError(
+            throw UnexpectedTokenSyntaxException(
+                expected =
+                "${TokenType.INT_LITERAL}, ${TokenType.TILDE}, ${TokenType.NEGATION}, ${TokenType.LEFT_PAREN}, ${TokenType.RIGHT_PAREN}",
+                actual = nToken.type.toString(),
                 line = nToken.line,
-                column = nToken.column,
-                message = "Unexpected token in expression: expected literal, unary operator, or '(', got ${nToken.type}"
+                column = nToken.column
             )
         }
     }

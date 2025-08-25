@@ -1,15 +1,14 @@
-package org.example
-
-import exceptions.SyntaxError
+import assembly.InstructionFixer
+import assembly.PseudoEliminator
+import exceptions.CodeGenerationException
+import exceptions.CompilationException
 import lexer.Lexer
 import lexer.Token
-import org.example.assembly.InstructionFixer
-import org.example.assembly.PseudoEliminator
-import org.example.parser.ASTNode
-import org.example.parser.Parser
-import org.example.tacky.TackyGenVisitor
-import org.example.tacky.TackyProgram
-import org.example.tacky.TackyToAsm
+import parser.ASTNode
+import parser.Parser
+import tacky.TackyGenVisitor
+import tacky.TackyProgram
+import tacky.TackyToAsm
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
@@ -31,13 +30,13 @@ class CompilerExport {
                     tokens = lexer.toJsonString(),
                     errors = emptyArray()
                 )
-            } catch (e: Exception) {
+            } catch (e: CompilationException) {
                 val error =
                     CompilationError(
                         type = ErrorType.LEXICAL,
                         message = e.message ?: "Unknown lexical error",
-                        line = -1,
-                        column = -1
+                        line = e.line ?: -1,
+                        column = e.column ?: -1
                     )
                 overallErrors.add(error)
                 LexerOutput(
@@ -56,7 +55,7 @@ class CompilerExport {
                         errors = emptyArray(),
                         ast = ast.toJsonString()
                     )
-                } catch (e: SyntaxError) {
+                } catch (e: CompilationException) {
                     val error =
                         CompilationError(
                             type = ErrorType.SYNTAX,
@@ -79,7 +78,7 @@ class CompilerExport {
             if (parserOutput.errors.isEmpty() && ast != null) {
                 try {
                     val tackyGenVisitor = TackyGenVisitor()
-                    val result = ast!!.accept(tackyGenVisitor)
+                    val result = ast.accept(tackyGenVisitor)
                     tackyProgram = result as? TackyProgram
 
                     println("TackyGenVisitor returned TackyProgram: $tackyProgram")
@@ -87,7 +86,7 @@ class CompilerExport {
                         tacky = tackyProgram?.toJsonString(),
                         errors = emptyArray()
                     )
-                } catch (e: SyntaxError) {
+                } catch (e: CompilationException) {
                     val error =
                         CompilationError(
                             type = ErrorType.CODE_GENERATION,
@@ -123,6 +122,18 @@ class CompilerExport {
                     CodeGeneratorOutput(
                         errors = emptyArray(),
                         assembly = finalAssemblyString
+                    )
+                } catch (e: CodeGenerationException) {
+                    val error =
+                        CompilationError(
+                            type = ErrorType.CODE_GENERATION,
+                            message = e.message ?: "Unknown code generation error",
+                            line = e.line ?: -1,
+                            column = e.column ?: -1
+                        )
+                    overallErrors.add(error)
+                    CodeGeneratorOutput(
+                        errors = arrayOf(error)
                     )
                 } catch (e: Exception) {
                     val error =

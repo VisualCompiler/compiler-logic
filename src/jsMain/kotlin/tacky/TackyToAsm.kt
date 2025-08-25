@@ -1,4 +1,4 @@
-package org.example.tacky
+package tacky
 
 import assembly.AsmBinary
 import assembly.AsmBinaryOp

@@ -1,4 +1,4 @@
-package org.example.tacky
+package tacky
 
 data class TackyResult(
     val instructions: List<TackyInstruction>,

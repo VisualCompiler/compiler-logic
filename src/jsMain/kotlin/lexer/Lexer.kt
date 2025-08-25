@@ -1,5 +1,6 @@
 package lexer
 
+import exceptions.LexicalException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -138,7 +139,7 @@ class Lexer(
                 } else if (isAlphabetic(char)) {
                     identifier()
                 } else {
-                    println("Invalid character at line $line")
+                    throw LexicalException(char, line, current - lineStart)
                 }
             }
         }

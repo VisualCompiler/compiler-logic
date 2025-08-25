@@ -24,7 +24,23 @@ kotlin {
         }
         generateTypeScriptDefinitions()
     }
+    jvm {
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+        }
+    }
     sourceSets {
+        val jvmMain by getting {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+            }
+        }
+        val jvmTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation("org.junit.jupiter:junit-jupiter:5.9.2")
+            }
+        }
         val jsMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
@@ -36,4 +52,80 @@ kotlin {
             }
         }
     }
+}
+
+koverReport {
+    filters {
+        includes {
+            classes("*")
+        }
+        excludes {
+            // Exclude methods annotated with @Suppress("UNUSED")
+            classes("exceptions.*")
+        }
+    }
+    verify {
+        rule {
+            bound {
+                minValue = 80
+            }
+        }
+    }
+}
+
+// Task to automatically sync JVM sources from JS sources
+tasks.register("syncJvmSources") {
+    group = "build"
+    description = "Sync JVM source directories from JS source directories, excluding JS-specific files"
+
+    doLast {
+        val srcDir = project.file("src")
+        val jsMainDir = File(srcDir, "jsMain/kotlin")
+        val jsTestDir = File(srcDir, "jsTest/kotlin")
+        val jvmMainDir = File(srcDir, "jvmMain/kotlin")
+        val jvmTestDir = File(srcDir, "jvmTest/kotlin")
+
+        // Create directories if they don't exist
+        jvmMainDir.mkdirs()
+        jvmTestDir.mkdirs()
+
+        if (jsMainDir.exists()) {
+            copy {
+                from(jsMainDir)
+                into(jvmMainDir)
+                exclude("**/CompilationOutput.kt")
+                exclude("**/CompilerExport.kt")
+            }
+        }
+
+        if (jsTestDir.exists()) {
+            copy {
+                from(jsTestDir)
+                into(jvmTestDir)
+                exclude("**/CompilerExportTest.kt")
+            }
+        }
+    }
+}
+
+listOf(
+    "runKtlintCheckOverJsMainSourceSet",
+    "runKtlintCheckOverJsTestSourceSet",
+    "runKtlintCheckOverJvmMainSourceSet",
+    "runKtlintCheckOverJvmTestSourceSet"
+).forEach { taskName ->
+    tasks.named(taskName) {
+        dependsOn("ktlintFormat")
+    }
+}
+// Make jvmTest depend on syncJvmSources
+tasks.named("jvmTest") {
+    dependsOn("syncJvmSources")
+}
+
+// Ensure Kover HTML report is generated when running the standard build
+// Also run ktlintFormat before building to auto-format code
+// Using finalizedBy so the report runs after a successful build without affecting task up-to-date checks
+tasks.named("build") {
+    finalizedBy("koverHtmlReport")
 }

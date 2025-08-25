@@ -1,12 +1,4 @@
-package org.example.assembly
-
-import assembly.AsmBinary
-import assembly.AsmProgram
-import assembly.AsmUnary
-import assembly.Mov
-import assembly.Operand
-import assembly.Pseudo
-import assembly.Stack
+package assembly
 
 class PseudoEliminator {
     data class EliminationResult(

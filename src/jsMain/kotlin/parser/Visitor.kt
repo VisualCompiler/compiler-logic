@@ -1,4 +1,4 @@
-package org.example.parser
+package parser
 
 interface Visitor<T> {
     fun visit(node: SimpleProgram): T
@@ -6,8 +6,6 @@ interface Visitor<T> {
     fun visit(node: ReturnStatement): T
 
     fun visit(node: SimpleFunction): T
-
-    fun visit(node: Identifier): T
 
     fun visit(node: UnaryExpression): T
 

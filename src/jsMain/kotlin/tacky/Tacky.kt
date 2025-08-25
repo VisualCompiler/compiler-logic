@@ -1,4 +1,4 @@
-package org.example.tacky
+package tacky
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
