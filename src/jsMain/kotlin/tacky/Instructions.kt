@@ -7,6 +7,28 @@ import kotlinx.serialization.json.JsonPrimitive
 
 sealed class TackyInstruction : TackyConstruct()
 
+private fun TackyUnaryOP.toSymbol(): String =
+    when (this) {
+        TackyUnaryOP.NEGATE -> "-"
+        TackyUnaryOP.COMPLEMENT -> "~"
+        TackyUnaryOP.NOT -> "!"
+    }
+
+private fun TackyBinaryOP.toSymbol(): String =
+    when (this) {
+        TackyBinaryOP.ADD -> "+"
+        TackyBinaryOP.SUBTRACT -> "-"
+        TackyBinaryOP.MULTIPLY -> "*"
+        TackyBinaryOP.DIVIDE -> "/"
+        TackyBinaryOP.REMAINDER -> "%"
+        TackyBinaryOP.EQUAL -> "=="
+        TackyBinaryOP.NOT_EQUAL -> "!="
+        TackyBinaryOP.LESS -> "<"
+        TackyBinaryOP.LESS_EQUAL -> "<="
+        TackyBinaryOP.GREATER -> ">"
+        TackyBinaryOP.GREATER_EQUAL -> ">="
+    }
+
 data class TackyRet(
     val value: TackyVal
 ) : TackyInstruction() {
@@ -27,6 +49,8 @@ data class TackyRet(
             )
         return Json.encodeToString(jsonNode)
     }
+
+    override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}return ${value.toPseudoCode()}"
 }
 
 enum class TackyUnaryOP {
@@ -59,6 +83,9 @@ data class TackyUnary(
             )
         return Json.encodeToString(jsonNode)
     }
+
+    override fun toPseudoCode(indentationLevel: Int): String =
+        "${indent(indentationLevel)}${dest.toPseudoCode()} = ${operator.toSymbol()}${src.toPseudoCode()}"
 }
 
 enum class TackyBinaryOP {
@@ -101,6 +128,9 @@ data class TackyBinary(
             )
         return Json.encodeToString(jsonNode)
     }
+
+    override fun toPseudoCode(indentationLevel: Int): String =
+        "${indent(indentationLevel)}${dest.toPseudoCode()} = ${src1.toPseudoCode()} ${operator.toSymbol()} ${src2.toPseudoCode()}"
 }
 
 data class TackyCopy(
@@ -125,6 +155,8 @@ data class TackyCopy(
             )
         return Json.encodeToString(jsonNode)
     }
+
+    override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}${dest.toPseudoCode()} = ${src.toPseudoCode()}"
 }
 
 data class TackyJump(
@@ -147,6 +179,8 @@ data class TackyJump(
             )
         return Json.encodeToString(jsonNode)
     }
+
+    override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}goto ${target.name}"
 }
 
 data class JumpIfZero(
@@ -171,6 +205,9 @@ data class JumpIfZero(
             )
         return Json.encodeToString(jsonNode)
     }
+
+    override fun toPseudoCode(indentationLevel: Int): String =
+        "${indent(indentationLevel)}if (${condition.toPseudoCode()} == 0) goto ${target.name}"
 }
 
 data class JumpIfNotZero(
@@ -195,4 +232,7 @@ data class JumpIfNotZero(
             )
         return Json.encodeToString(jsonNode)
     }
+
+    override fun toPseudoCode(indentationLevel: Int): String =
+        "${indent(indentationLevel)}if (${condition.toPseudoCode()} != 0) goto ${target.name}"
 }

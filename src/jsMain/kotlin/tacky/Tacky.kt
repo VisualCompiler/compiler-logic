@@ -8,6 +8,10 @@ import kotlinx.serialization.json.JsonPrimitive
 
 sealed class TackyConstruct {
     abstract fun toJsonString(): String
+
+    abstract fun toPseudoCode(indentationLevel: Int = 0): String
+
+    protected fun indent(level: Int): String = "  ".repeat(level)
 }
 
 sealed class TackyVal : TackyConstruct()
@@ -25,6 +29,8 @@ data class TackyConstant(
             )
         return Json.encodeToString(jsonNode)
     }
+
+    override fun toPseudoCode(indentationLevel: Int): String = value.toString()
 }
 
 data class TackyVar(
@@ -40,6 +46,8 @@ data class TackyVar(
             )
         return Json.encodeToString(jsonNode)
     }
+
+    override fun toPseudoCode(indentationLevel: Int): String = name
 }
 
 data class TackyLabel(
@@ -55,6 +63,8 @@ data class TackyLabel(
             )
         return Json.encodeToString(jsonNode)
     }
+
+    override fun toPseudoCode(indentationLevel: Int): String = "$name:"
 }
 
 data class TackyProgram(
@@ -77,6 +87,8 @@ data class TackyProgram(
             )
         return Json.encodeToString(jsonNode)
     }
+
+    override fun toPseudoCode(indentationLevel: Int): String = function.toPseudoCode(indentationLevel)
 }
 
 data class TackyFunction(
@@ -104,5 +116,13 @@ data class TackyFunction(
                 )
             )
         return Json.encodeToString(jsonNode)
+    }
+
+    override fun toPseudoCode(indentationLevel: Int): String {
+        val bodyAsCode = body.joinToString("\n") { it.toPseudoCode(indentationLevel + 1) }
+        return buildString {
+            appendLine("${indent(indentationLevel)}def $name():")
+            append(bodyAsCode)
+        }
     }
 }
