@@ -70,6 +70,27 @@ object InvalidTestCases {
                 code = "int 5;",
                 failingStage = CompilerStage.PARSER,
                 expectedException = UnexpectedTokenSyntaxException::class
+            ),
+            // Invalid Relational/Logical Expressions ---
+            InvalidTestCase(
+                code = "int main(void) { return 5 <; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = UnexpectedTokenSyntaxException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { return > 10; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = UnexpectedTokenSyntaxException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { return 1 &&; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = UnexpectedTokenSyntaxException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { return || 0; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = UnexpectedTokenSyntaxException::class
             )
         )
 }

@@ -293,4 +293,76 @@ class ParserTest {
         // The parser expects a factor after an operator
         assertTrue(exception.message!!.contains("Expected literal, unary operator, or '('"))
     }
+
+    @Test
+    fun `test simple relational expression`() {
+        // Expression: 5 < 10
+        val tokens =
+            buildTokensForExpression(
+                listOf(
+                    Token(TokenType.INT_LITERAL, "5", 1, 25),
+                    Token(TokenType.LESS, "<", 1, 27),
+                    Token(TokenType.INT_LITERAL, "10", 1, 29)
+                )
+            )
+        val parser = Parser()
+        val ast = parser.parseTokens(tokens)
+        val expr = getExpressionFromAst(ast)
+
+        val binaryExpr = expr as? BinaryExpression ?: error("Expression is not a BinaryExpression")
+        assertEquals(TokenType.LESS, binaryExpr.operator.type)
+        assertEquals(5, (binaryExpr.left as IntExpression).value)
+        assertEquals(10, (binaryExpr.right as IntExpression).value)
+    }
+
+    @Test
+    fun `test logical NOT expression`() {
+        // Expression: !0
+        val tokens =
+            buildTokensForExpression(
+                listOf(
+                    Token(TokenType.NOT, "!", 1, 25),
+                    Token(TokenType.INT_LITERAL, "0", 1, 26)
+                )
+            )
+        val parser = Parser()
+        val ast = parser.parseTokens(tokens)
+        val expr = getExpressionFromAst(ast)
+
+        val unaryExpr = expr as? UnaryExpression ?: error("Expression is not a UnaryExpression")
+        assertEquals(TokenType.NOT, unaryExpr.operator.type)
+        assertEquals(0, (unaryExpr.expression as IntExpression).value)
+    }
+
+    @Test
+    fun `test precedence between logical and relational operators`() {
+        // Expression: 1 == 2 && 3 < 4
+        val tokens =
+            buildTokensForExpression(
+                listOf(
+                    Token(TokenType.INT_LITERAL, "1", 1, 0),
+                    Token(TokenType.EQUAL_TO, "==", 1, 0),
+                    Token(TokenType.INT_LITERAL, "2", 1, 0),
+                    Token(TokenType.AND, "&&", 1, 0),
+                    Token(TokenType.INT_LITERAL, "3", 1, 0),
+                    Token(TokenType.LESS, "<", 1, 0),
+                    Token(TokenType.INT_LITERAL, "4", 1, 0)
+                )
+            )
+        val parser = Parser()
+        val ast = parser.parseTokens(tokens)
+        val expr = getExpressionFromAst(ast)
+
+        // Top level should be AND because it has lower precedence
+        val topBinary = expr as? BinaryExpression ?: error("Top is not BinaryExpression")
+        assertEquals(TokenType.AND, topBinary.operator.type)
+
+        // Left side should be EQUAL
+        val leftBinary = topBinary.left as? BinaryExpression ?: error("Left is not BinaryExpression")
+        assertEquals(TokenType.EQUAL_TO, leftBinary.operator.type)
+
+        // Right side should be LESS_THAN
+        val rightBinary = topBinary.right as? BinaryExpression ?: error("Right is not BinaryExpression")
+        assertEquals(TokenType.LESS, rightBinary.operator.type)
+    }
 }

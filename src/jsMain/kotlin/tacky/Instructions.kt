@@ -31,7 +31,8 @@ data class TackyRet(
 
 enum class TackyUnaryOP {
     COMPLEMENT,
-    NEGATE
+    NEGATE,
+    NOT
 }
 
 data class TackyUnary(
@@ -65,7 +66,13 @@ enum class TackyBinaryOP {
     SUBTRACT,
     MULTIPLY,
     DIVIDE,
-    REMAINDER
+    REMAINDER,
+    LESS,
+    GREATER,
+    LESS_EQUAL,
+    GREATER_EQUAL,
+    EQUAL,
+    NOT_EQUAL
 }
 
 data class TackyBinary(
@@ -89,6 +96,100 @@ data class TackyBinary(
                 mapOf(
                     "type" to JsonPrimitive(this::class.simpleName),
                     "label" to JsonPrimitive("op, src1, src2, dest"),
+                    "children" to children
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+}
+
+data class TackyCopy(
+    val src: TackyVal,
+    val dest: TackyVar
+) : TackyInstruction() {
+    override fun toJsonString(): String {
+        val children =
+            JsonObject(
+                mapOf(
+                    "src" to Json.parseToJsonElement(src.toJsonString()),
+                    "dest" to Json.parseToJsonElement(dest.toJsonString())
+                )
+            )
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(this::class.simpleName),
+                    "label" to JsonPrimitive("src, dest"),
+                    "children" to children
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+}
+
+data class TackyJump(
+    val target: TackyLabel
+) : TackyInstruction() {
+    override fun toJsonString(): String {
+        val children =
+            JsonObject(
+                mapOf(
+                    "target" to Json.parseToJsonElement(target.toJsonString())
+                )
+            )
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(this::class.simpleName),
+                    "label" to JsonPrimitive("target"),
+                    "children" to children
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+}
+
+data class JumpIfZero(
+    val condition: TackyVal,
+    val target: TackyLabel
+) : TackyInstruction() {
+    override fun toJsonString(): String {
+        val children =
+            JsonObject(
+                mapOf(
+                    "condition" to Json.parseToJsonElement(condition.toJsonString()),
+                    "target" to Json.parseToJsonElement(target.toJsonString())
+                )
+            )
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(this::class.simpleName),
+                    "label" to JsonPrimitive("condition, target"),
+                    "children" to children
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+}
+
+data class JumpIfNotZero(
+    val condition: TackyVal,
+    val target: TackyLabel
+) : TackyInstruction() {
+    override fun toJsonString(): String {
+        val children =
+            JsonObject(
+                mapOf(
+                    "condition" to Json.parseToJsonElement(condition.toJsonString()),
+                    "target" to Json.parseToJsonElement(target.toJsonString())
+                )
+            )
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(this::class.simpleName),
+                    "label" to JsonPrimitive("condition, target"),
                     "children" to children
                 )
             )

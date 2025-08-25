@@ -199,4 +199,72 @@ class TackyGenVisitorTest {
             )
         assertEquals(expected, actualProgram)
     }
+
+    @Test
+    fun `it should convert a relational operator`() {
+        // AST for "return 5 < 10;"
+        val ast =
+            SimpleProgram(
+                SimpleFunction(
+                    "main",
+                    ReturnStatement(
+                        BinaryExpression(IntExpression(5), Token(TokenType.LESS, "<", 1, 1), IntExpression(10))
+                    )
+                )
+            )
+        val visitor = TackyGenVisitor()
+
+        // Act
+        val actualProgram = ast.accept(visitor) as TackyProgram
+
+        // Assert
+        val expected =
+            TackyProgram(
+                TackyFunction(
+                    "main",
+                    listOf(
+                        TackyBinary(TackyBinaryOP.LESS, TackyConstant(5), TackyConstant(10), TackyVar("tmp.0")),
+                        TackyRet(TackyVar("tmp.0"))
+                    )
+                )
+            )
+        assertEquals(expected, actualProgram)
+    }
+
+    @Test
+    fun `it should convert a short-circuiting AND expression`() {
+        // AST for "return 1 && 0;"
+        val ast =
+            SimpleProgram(
+                SimpleFunction(
+                    "main",
+                    ReturnStatement(
+                        BinaryExpression(IntExpression(1), Token(TokenType.AND, "&&", 1, 1), IntExpression(0))
+                    )
+                )
+            )
+        val visitor = TackyGenVisitor()
+
+        // Act
+        val actualProgram = ast.accept(visitor) as TackyProgram
+
+        // Assert
+        val expected =
+            TackyProgram(
+                TackyFunction(
+                    "main",
+                    listOf(
+                        JumpIfZero(TackyConstant(1), TackyLabel(".L_and_false_0")),
+                        JumpIfZero(TackyConstant(0), TackyLabel(".L_and_false_0")),
+                        TackyCopy(TackyConstant(1), TackyVar("tmp.0")),
+                        TackyJump(TackyLabel(".L_and_end_1")),
+                        TackyLabel(".L_and_false_0"),
+                        TackyCopy(TackyConstant(0), TackyVar("tmp.0")),
+                        TackyLabel(".L_and_end_1"),
+                        TackyRet(TackyVar("tmp.0"))
+                    )
+                )
+            )
+        assertEquals(expected, actualProgram)
+    }
 }

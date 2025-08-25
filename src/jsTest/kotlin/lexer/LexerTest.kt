@@ -70,4 +70,27 @@ class LexerTest {
 
         assertEquals(expectedTokens, types)
     }
+
+    @Test
+    fun `test relational and logical operators`() {
+        val source = "< > <= >= == != ! && ||"
+        val lexer = Lexer(source)
+        val tokens = lexer.tokenize()
+        val types = tokens.map { it.type }
+        val expectedTokens =
+            listOf(
+                TokenType.LESS,
+                TokenType.GREATER,
+                TokenType.LESS_EQUAL,
+                TokenType.GREATER_EQUAL,
+                TokenType.EQUAL_TO,
+                TokenType.NOT_EQUAL,
+                TokenType.NOT,
+                TokenType.AND,
+                TokenType.OR,
+                TokenType.EOF
+            )
+
+        assertEquals(expectedTokens, types)
+    }
 }

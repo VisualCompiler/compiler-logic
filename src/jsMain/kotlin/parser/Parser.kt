@@ -8,19 +8,19 @@ import lexer.TokenType
 class Parser {
     private val precedenceMap =
         mapOf(
+            TokenType.OR to 5,
+            TokenType.AND to 10,
+            TokenType.EQUAL_TO to 30,
+            TokenType.NOT_EQUAL to 30,
+            TokenType.LESS to 35,
+            TokenType.LESS_EQUAL to 35,
+            TokenType.GREATER to 35,
+            TokenType.GREATER_EQUAL to 35,
             TokenType.PLUS to 45,
             TokenType.NEGATION to 45,
             TokenType.MULTIPLY to 50,
             TokenType.DIVIDE to 50,
-            TokenType.REMAINDER to 50,
-            TokenType.GREATER to 35,
-            TokenType.GREATER_EQUAL to 35,
-            TokenType.LESS to 35,
-            TokenType.LESS_EQUAL to 35,
-            TokenType.EQUAL_TO to 30,
-            TokenType.NOT_EQUAL to 30,
-            TokenType.AND to 10,
-            TokenType.OR to 5
+            TokenType.REMAINDER to 50
         )
 
     fun parseTokens(tokens: List<Token>): ASTNode {
@@ -97,7 +97,7 @@ class Parser {
     private fun parseStatement(tokens: MutableList<Token>): Statement {
         val first = tokens.firstOrNull()
         expect(TokenType.KEYWORD_RETURN, tokens)
-        val expression = parseExpression(45, tokens)
+        val expression = parseExpression(0, tokens)
         expect(TokenType.SEMICOLON, tokens)
 
         return ReturnStatement(
@@ -106,7 +106,7 @@ class Parser {
     }
 
     private fun parseExpression(
-        minPrec: Int = 45,
+        minPrec: Int = 0,
         tokens: MutableList<Token>
     ): Expression {
         var left = parseFactor(tokens)
@@ -143,7 +143,7 @@ class Parser {
             return UnaryExpression(operator = operator, expression = factor)
         } else if (nextToken.type == TokenType.LEFT_PAREN) {
             expect(TokenType.LEFT_PAREN, tokens)
-            val expression = parseExpression(45, tokens)
+            val expression = parseExpression(0, tokens)
             expect(TokenType.RIGHT_PAREN, tokens)
             return expression
         } else {
