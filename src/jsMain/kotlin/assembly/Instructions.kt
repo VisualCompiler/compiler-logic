@@ -13,7 +13,7 @@ enum class AsmUnaryOp(
     val text: String
 ) {
     NEG("negl"),
-    NOT("notl")
+    NOT("notl") // complement
 }
 
 enum class AsmBinaryOp(
@@ -100,4 +100,60 @@ data class SetCC(
 ) : Instruction() {
     // The toAsm method is not needed here if the CodeEmitter handles everything.
     // Or, if it's required by the sealed class, it can be simple:
+}
+
+data class Label(
+    val name: String
+) : Instruction() {
+    override fun toAsm(indentationLevel: Int): String = "$name:"
+}
+
+data class Jmp(
+    val label: Label
+) : Instruction() {
+    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}jmp ${label.name}"
+}
+
+data class Cmp(
+    val src: Operand,
+    val dest: Operand
+) : Instruction() {
+    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}cmpl ${src.toAsm()}, ${dest.toAsm()}"
+}
+
+enum class ConditionCode { E, NE, G, GE, L, LE }
+
+data class JmpCC(
+    val condition: ConditionCode,
+    val label: Label
+) : Instruction() {
+    private val opText =
+        when (condition) {
+            ConditionCode.E -> "je"
+            ConditionCode.NE -> "jne"
+            ConditionCode.G -> "jg"
+            ConditionCode.GE -> "jge"
+            ConditionCode.L -> "jl"
+            ConditionCode.LE -> "jle"
+        }
+
+    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}$opText ${label.name}"
+}
+
+data class SetCC(
+    val condition: ConditionCode,
+    val dest: Operand
+) : Instruction() {
+    private val opText =
+        when (condition) {
+            ConditionCode.E -> "sete"
+            ConditionCode.NE -> "setne"
+            ConditionCode.G -> "setg"
+            ConditionCode.GE -> "setge"
+            ConditionCode.L -> "setl"
+            ConditionCode.LE -> "setle"
+        }
+
+    // Note: This will be fixed later to handle 1-byte registers. For now, this is fine.
+    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}$opText ${dest.toAsm()}"
 }
