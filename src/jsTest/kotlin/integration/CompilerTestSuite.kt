@@ -61,7 +61,7 @@ class CompilerTestSuite {
     fun testInvalidPrograms() {
         for (testCase in InvalidTestCases.testCases) {
             // Lexer stage
-            val lexer = Lexer(testCase.code!!)
+            val lexer = Lexer(testCase.code)
             if (testCase.failingStage == CompilerStage.LEXER) {
                 assertFailsWith(testCase.expectedException) {
                     lexer.tokenize()

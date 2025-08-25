@@ -8,14 +8,6 @@ import lexer.TokenType
 class Parser {
     private val precedenceMap =
         mapOf(
-            TokenType.OR to 5,
-            TokenType.AND to 10,
-            TokenType.EQUAL_TO to 30,
-            TokenType.NOT_EQUAL to 30,
-            TokenType.LESS to 35,
-            TokenType.LESS_EQUAL to 35,
-            TokenType.GREATER to 35,
-            TokenType.GREATER_EQUAL to 35,
             TokenType.PLUS to 45,
             TokenType.NEGATION to 45,
             TokenType.MULTIPLY to 50,
@@ -28,7 +20,7 @@ class Parser {
         val ast = parseProgram(tokenSet)
 
         val lastToken = tokenSet.removeFirst()
-        if (lastToken.type != TokenType.EOF || !tokenSet.isEmpty()) {
+        if (!tokenSet.isEmpty()) {
             throw UnexpectedEndOfFileException(
                 line = lastToken.line,
                 column = lastToken.column
@@ -97,7 +89,7 @@ class Parser {
     private fun parseStatement(tokens: MutableList<Token>): Statement {
         val first = tokens.firstOrNull()
         expect(TokenType.KEYWORD_RETURN, tokens)
-        val expression = parseExpression(0, tokens)
+        val expression = parseExpression(tokens = tokens)
         expect(TokenType.SEMICOLON, tokens)
 
         return ReturnStatement(
@@ -106,7 +98,7 @@ class Parser {
     }
 
     private fun parseExpression(
-        minPrec: Int = 0,
+        minPrec: Int = 45,
         tokens: MutableList<Token>
     ): Expression {
         var left = parseFactor(tokens)
@@ -137,13 +129,13 @@ class Parser {
         if (nextToken.type == TokenType.INT_LITERAL) {
             nextToken = tokens.removeFirst()
             return IntExpression(value = nextToken.lexeme.toInt())
-        } else if (nextToken.type == TokenType.TILDE || nextToken.type == TokenType.NEGATION || nextToken.type == TokenType.NOT) {
+        } else if (nextToken.type == TokenType.TILDE || nextToken.type == TokenType.NEGATION) {
             val operator = tokens.removeFirst()
             val factor = parseFactor(tokens)
             return UnaryExpression(operator = operator, expression = factor)
         } else if (nextToken.type == TokenType.LEFT_PAREN) {
             expect(TokenType.LEFT_PAREN, tokens)
-            val expression = parseExpression(0, tokens)
+            val expression = parseExpression(tokens = tokens)
             expect(TokenType.RIGHT_PAREN, tokens)
             return expression
         } else {
