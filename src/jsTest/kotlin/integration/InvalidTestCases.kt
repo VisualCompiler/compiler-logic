@@ -36,12 +36,12 @@ object InvalidTestCases {
                 expectedException = UnexpectedTokenSyntaxException::class
             ),
             InvalidTestCase(
-                code = "int main(void) { return (5 + 3; }",
+                code = "int main(void) { return (5 + 3; } ;",
                 failingStage = CompilerStage.PARSER,
                 expectedException = UnexpectedTokenSyntaxException::class
             ),
             InvalidTestCase(
-                code = "int main(void) { return 5 + 3); }",
+                code = "int main(void) { return --9; }",
                 failingStage = CompilerStage.PARSER,
                 expectedException = UnexpectedTokenSyntaxException::class
             ),

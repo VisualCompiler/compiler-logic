@@ -5,10 +5,10 @@ class InstructionFixer {
         program: AsmProgram,
         stackSpace: Int
     ): Program {
-        var instructions = program.function.body
+        val instructions = program.function.body
 
         // Rewrite invalid Mov instructions (Stack -> Stack)
-        val fixedMovInstructions =
+        val fixedInstructions =
             instructions.flatMap { instruction ->
                 if (instruction is Mov && instruction.src is Stack && instruction.dest is Stack) {
                     listOf(
@@ -28,10 +28,10 @@ class InstructionFixer {
         val finalInstructions =
             if (stackSpace > 0) {
                 // Remove the placeholder Ret instructions, as the epilogue handles it
-                val body = fixedMovInstructions.filterNot { it is Ret }
+                val body = fixedInstructions.filterNot { it is Ret }
                 listOf(AllocateStack(stackSpace)) + body
             } else {
-                fixedMovInstructions.filterNot { it is Ret }
+                fixedInstructions.filterNot { it is Ret }
             }
 
         val newFunction = program.function.copy(body = finalInstructions)

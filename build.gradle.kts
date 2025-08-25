@@ -108,6 +108,16 @@ tasks.register("syncJvmSources") {
     }
 }
 
+listOf(
+    "runKtlintCheckOverJsMainSourceSet",
+    "runKtlintCheckOverJsTestSourceSet",
+    "runKtlintCheckOverJvmMainSourceSet",
+    "runKtlintCheckOverJvmTestSourceSet"
+).forEach { taskName ->
+    tasks.named(taskName) {
+        dependsOn("ktlintFormat")
+    }
+}
 // Make jvmTest depend on syncJvmSources
 tasks.named("jvmTest") {
     dependsOn("syncJvmSources")
@@ -117,6 +127,5 @@ tasks.named("jvmTest") {
 // Also run ktlintFormat before building to auto-format code
 // Using finalizedBy so the report runs after a successful build without affecting task up-to-date checks
 tasks.named("build") {
-    dependsOn("ktlintFormat")
     finalizedBy("koverHtmlReport")
 }
