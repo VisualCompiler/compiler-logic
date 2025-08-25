@@ -121,13 +121,13 @@ class TackyToAsm {
             is JumpIfNotZero ->
                 listOf(
                     Cmp(Imm(0), convertVal(tackyInstr.condition)),
-                    JmpCC(ConditionCode.NE, Label(tackyInstr.target.name))
+                    JmpCC(ConditionCode.E, Label(tackyInstr.target.name))
                 )
 
             is JumpIfZero ->
                 listOf(
                     Cmp(Imm(0), convertVal(tackyInstr.condition)),
-                    JmpCC(ConditionCode.E, Label(tackyInstr.target.name))
+                    JmpCC(ConditionCode.E, assembly.Label(tackyInstr.target.name))
                 )
 
             is TackyCopy -> listOf(Mov(convertVal(tackyInstr.src), convertVal(tackyInstr.dest)))

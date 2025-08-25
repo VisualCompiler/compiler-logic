@@ -20,6 +20,16 @@ class InstructionFixer {
                         Mov(instruction.src, Register(HardwareRegister.R10D)),
                         AsmBinary(instruction.op, Register(HardwareRegister.R10D), instruction.dest)
                     )
+                } else if (instruction is Cmp && instruction.src is Stack && instruction.dest is Stack) {
+                    listOf(
+                        Mov(instruction.src, Register(HardwareRegister.R10D)),
+                        Cmp(Register(HardwareRegister.R10D), instruction.dest)
+                    )
+                } else if (instruction is Cmp && instruction.dest is Imm) {
+                    listOf(
+                        Mov(instruction.dest, Register(HardwareRegister.R11D)),
+                        Cmp(instruction.src, Register(HardwareRegister.R11D))
+                    )
                 } else {
                     listOf(instruction)
                 }

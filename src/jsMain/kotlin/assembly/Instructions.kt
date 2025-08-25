@@ -17,7 +17,7 @@ enum class AsmUnaryOp(
     val text: String
 ) {
     NEG("negl"),
-    NOT("notl") // complement
+    NOT("notl")
 }
 
 enum class AsmBinaryOp(
@@ -72,15 +72,6 @@ data class Jmp(
     override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}jmp ${label.name}"
 }
 
-data class Cmp(
-    val src: Operand,
-    val dest: Operand
-) : Instruction() {
-    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}cmpl ${src.toAsm()}, ${dest.toAsm()}"
-}
-
-enum class ConditionCode { E, NE, G, GE, L, LE }
-
 data class JmpCC(
     val condition: ConditionCode,
     val label: Label
@@ -98,20 +89,43 @@ data class JmpCC(
     override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}$opText ${label.name}"
 }
 
+data class Cmp(
+    val src: Operand,
+    val dest: Operand
+) : Instruction() {
+    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}cmpl ${src.toAsm()}, ${dest.toAsm()}"
+}
+
+enum class JumpCondition(
+    val text: String
+) {
+    E("je"), // Equal
+    NE("jne"), // Not Equal
+    L("jl"), // Less
+    LE("jle"), // Less or Equal
+    G("jg"), // Greater
+    GE("jge"), // Greater or Equal
+    Z("jz"), // Zero
+    NZ("jnz") // Not Zero
+}
+
+enum class ConditionCode { E, NE, G, GE, L, LE }
+
+data class Jcc(
+    val condition: JumpCondition,
+    val label: Label
+) : Instruction() {
+    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}${condition.text} ${label.name}"
+}
+
 data class SetCC(
     val condition: ConditionCode,
     val dest: Operand
 ) : Instruction() {
-    private val opText =
-        when (condition) {
-            ConditionCode.E -> "sete"
-            ConditionCode.NE -> "setne"
-            ConditionCode.G -> "setg"
-            ConditionCode.GE -> "setge"
-            ConditionCode.L -> "setl"
-            ConditionCode.LE -> "setle"
-        }
-
-    // Note: This will be fixed later to handle 1-byte registers. For now, this is fine.
-    override fun toAsm(indentationLevel: Int): String = "${indent(indentationLevel)}$opText ${dest.toAsm()}"
+    // The toAsm method is not needed here if the CodeEmitter handles everything.
+    // Or, if it's required by the sealed class, it can be simple:
+    override fun toAsm(indentationLevel: Int): String {
+        // This is just a placeholder; the real logic is in the emitter.
+        return "SetCC(condition=$condition, dest=$dest)"
+    }
 }

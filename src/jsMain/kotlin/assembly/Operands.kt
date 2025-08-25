@@ -30,9 +30,11 @@ data class Stack(
 
 // Hardware Registers
 enum class HardwareRegister(
-    val x32Name: String
+    val x32Name: String,
+    val x8Name: String
 ) {
-    EAX("eax"), // The 32-bit version of RAX
-    EDX("edx"),
-    R10D("r10d") // The 32-bit version of R10
+    EAX("eax", "al"),
+    EDX("edx", "dl"),
+    R10D("r10d", "r10b"),
+    R11D("r11d", "r11b")
 }
