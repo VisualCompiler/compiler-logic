@@ -100,7 +100,7 @@ class TackyGenVisitor : Visitor<Any> {
                 val resultVar = newTemporary()
 
                 val left = node.left.accept(this) as TackyResult
-                val right = node.right.accept((this))as TackyResult
+                val right = node.right.accept(this)as TackyResult
 
                 val instructions = mutableListOf<TackyInstruction>()
                 instructions.addAll(left.instructions)

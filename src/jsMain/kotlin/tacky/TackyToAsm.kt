@@ -109,8 +109,7 @@ class TackyToAsm {
                                 else -> throw IllegalStateException("Unreachable: This case is logically impossible.")
                             }
                         listOf(
-                            Mov(src1, Register(HardwareRegister.EAX)),
-                            Cmp(src2, Register(HardwareRegister.EAX)),
+                            Cmp(src2, src1),
                             Mov(Imm(0), dest), // Zero out destination
                             SetCC(condition, dest) // conditionally set the low byte to 0/1
                         )

@@ -57,28 +57,25 @@ data class Jmp(
 data class JmpCC(
     val condition: ConditionCode,
     val label: Label
-) : Instruction() {
-    private val opText =
-        when (condition) {
-            ConditionCode.E -> "je"
-            ConditionCode.NE -> "jne"
-            ConditionCode.G -> "jg"
-            ConditionCode.GE -> "jge"
-            ConditionCode.L -> "jl"
-            ConditionCode.LE -> "jle"
-        }
-}
+) : Instruction()
 
 data class Cmp(
     val src: Operand,
     val dest: Operand
 ) : Instruction()
 
-enum class ConditionCode { E, NE, G, GE, L, LE }
+enum class ConditionCode(
+    val text: String
+) {
+    E("e"), // Equal
+    NE("ne"), // Not Equal
+    L("l"), // Less
+    LE("le"), // Less or Equal
+    G("g"), // Greater
+    GE("ge") // Greater or Equal
+}
 
 data class SetCC(
     val condition: ConditionCode,
     val dest: Operand
-) : Instruction() {
-    // The toAsm method is not needed here if the CodeEmitter handles everything.
-}
+) : Instruction()

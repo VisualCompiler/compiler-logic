@@ -162,28 +162,46 @@ object ValidTestCases {
                         body =
                         listOf(
                             AllocateStack(28),
+                            // --- Block for tmp.0 = 5 - 3 ---
                             Mov(Imm(5), Stack(-4)),
                             AsmBinary(AsmBinaryOp.SUB, Imm(3), Stack(-4)),
+                            // --- Block for tmp.1 = tmp.0 * 4 ---
+                            // Note: We use R10D here because the destination of the MOV is a register
                             Mov(Stack(-4), Register(HardwareRegister.R10D)),
                             Mov(Register(HardwareRegister.R10D), Stack(-8)),
-                            AsmBinary(AsmBinaryOp.MUL, Imm(4), Stack(-8)),
+                            // --- THIS IS THE KEY CHANGE ---
+                            // The fixer sees `imul Imm(4), Stack(-8)` and replaces it
+                            Mov(Stack(-8), Register(HardwareRegister.R11D)), // Load dest
+                            AsmBinary(AsmBinaryOp.MUL, Imm(4), Register(HardwareRegister.R11D)), // Multiply
+                            Mov(Register(HardwareRegister.R11D), Stack(-8)), // Store result
+                            // --- The rest of the blocks are now correct based on this change ---
+                            // Block for tmp.2 = -5
                             Mov(Imm(5), Stack(-12)),
                             AsmUnary(AsmUnaryOp.NEG, Stack(-12)),
+                            // Block for tmp.3 = ~tmp.2
                             Mov(Stack(-12), Register(HardwareRegister.R10D)),
                             Mov(Register(HardwareRegister.R10D), Stack(-16)),
                             AsmUnary(AsmUnaryOp.NOT, Stack(-16)),
+                            // Block for tmp.4 = tmp.3 / 6
                             Mov(Stack(-16), Register(HardwareRegister.EAX)),
                             Cdq,
-                            Idiv(Imm(6)),
+                            // FIXER: The Idiv(Imm(6)) will be fixed here
+                            Mov(Imm(6), Register(HardwareRegister.R10D)),
+                            Idiv(Register(HardwareRegister.R10D)),
                             Mov(Register(HardwareRegister.EAX), Stack(-20)),
+                            // Block for tmp.5 = tmp.4 % 3
                             Mov(Stack(-20), Register(HardwareRegister.EAX)),
                             Cdq,
-                            Idiv(Imm(3)),
+                            // FIXER: The Idiv(Imm(3)) will be fixed here
+                            Mov(Imm(3), Register(HardwareRegister.R10D)),
+                            Idiv(Register(HardwareRegister.R10D)),
                             Mov(Register(HardwareRegister.EDX), Stack(-24)),
+                            // Block for tmp.6 = tmp.1 + tmp.5
                             Mov(Stack(-8), Register(HardwareRegister.R10D)),
                             Mov(Register(HardwareRegister.R10D), Stack(-28)),
                             Mov(Stack(-24), Register(HardwareRegister.R10D)),
                             AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-28)),
+                            // Final return
                             Mov(Stack(-28), Register(HardwareRegister.EAX))
                         )
                     )
@@ -243,44 +261,48 @@ object ValidTestCases {
                         body =
                         listOf(
                             AllocateStack(size = 20),
-                            Mov(src = Imm(value = 1), dest = Register(name = HardwareRegister.EAX)),
-                            Cmp(src = Imm(value = 0), dest = Register(name = HardwareRegister.EAX)),
+                            // Block for tmp.1 = (1 == 0)
+                            Mov(src = Imm(value = 1), dest = Register(name = HardwareRegister.R11D)),
+                            Cmp(src = Imm(value = 0), dest = Register(name = HardwareRegister.R11D)),
                             Mov(src = Imm(value = 0), dest = Stack(offset = -4)),
                             SetCC(condition = ConditionCode.E, dest = Stack(offset = -4)),
-                            // This is the first jump for the OR operation
+                            // First jump for OR: if (tmp.1 != 0) goto .L_or_true_0
                             Cmp(src = Imm(value = 0), dest = Stack(offset = -4)),
                             JmpCC(condition = ConditionCode.NE, label = Label(name = ".L_or_true_0")),
-                            // Start of the AND block
-                            Mov(src = Imm(value = 5), dest = Register(name = HardwareRegister.EAX)),
-                            Cmp(src = Imm(value = 2), dest = Register(name = HardwareRegister.EAX)),
+                            // Block for tmp.3 = (5 > 2)
+                            Mov(src = Imm(value = 5), dest = Register(name = HardwareRegister.R11D)),
+                            Cmp(src = Imm(value = 2), dest = Register(name = HardwareRegister.R11D)),
                             Mov(src = Imm(value = 0), dest = Stack(offset = -8)),
                             SetCC(condition = ConditionCode.G, dest = Stack(offset = -8)),
+                            // First jump for AND: if (tmp.3 == 0) goto .L_and_false_2
                             Cmp(src = Imm(value = 0), dest = Stack(offset = -8)),
                             JmpCC(condition = ConditionCode.E, label = Label(name = ".L_and_false_2")),
-                            Mov(src = Imm(value = 10), dest = Register(name = HardwareRegister.EAX)),
-                            Cmp(src = Imm(value = 20), dest = Register(name = HardwareRegister.EAX)),
+                            // Block for tmp.4 = (10 <= 20)
+                            Mov(src = Imm(value = 10), dest = Register(name = HardwareRegister.R11D)),
+                            Cmp(src = Imm(value = 20), dest = Register(name = HardwareRegister.R11D)),
                             Mov(src = Imm(value = 0), dest = Stack(offset = -12)),
                             SetCC(condition = ConditionCode.LE, dest = Stack(offset = -12)),
+                            // Second jump for AND: if (tmp.4 == 0) goto .L_and_false_2
                             Cmp(src = Imm(value = 0), dest = Stack(offset = -12)),
                             JmpCC(condition = ConditionCode.E, label = Label(name = ".L_and_false_2")),
-                            // AND is true path
+                            // AND is true path (tmp.2 = 1)
                             Mov(src = Imm(value = 1), dest = Stack(offset = -16)),
                             Jmp(label = Label(name = ".L_and_end_3")),
                             // AND is false path
                             Label(name = ".L_and_false_2"),
                             Mov(src = Imm(value = 0), dest = Stack(offset = -16)),
                             Label(name = ".L_and_end_3"),
-                            // Resume OR logic, checking the result of the AND block
+                            // Second jump for OR: if (tmp.2 != 0) goto .L_or_true_0
                             Cmp(src = Imm(value = 0), dest = Stack(offset = -16)),
                             JmpCC(condition = ConditionCode.NE, label = Label(name = ".L_or_true_0")),
-                            // OR is false path
+                            // OR is false path (tmp.0 = 0)
                             Mov(src = Imm(value = 0), dest = Stack(offset = -20)),
                             Jmp(label = Label(name = ".L_or_end_1")),
                             // OR is true path
                             Label(name = ".L_or_true_0"),
                             Mov(src = Imm(value = 1), dest = Stack(offset = -20)),
                             Label(name = ".L_or_end_1"),
-                            // Final return
+                            // Final return tmp.0
                             Mov(src = Stack(offset = -20), dest = Register(name = HardwareRegister.EAX))
                         )
                     )

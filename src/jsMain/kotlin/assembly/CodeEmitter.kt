@@ -40,11 +40,11 @@ class CodeEmitter {
             // Labels and Jumps
             is Label -> formatLabel(instruction.name) + ":"
             is Jmp -> "${indent}jmp ${formatLabel(instruction.label.name)}"
-            is JmpCC -> "${indent}j${getConditionSuffix(instruction.condition)} ${formatLabel(instruction.label.name)}"
+            is JmpCC -> "${indent}j${instruction.condition.text} ${formatLabel(instruction.label.name)}"
 
             is SetCC -> {
                 val destOperand = emitOperand(instruction.dest, size = OperandSize.BYTE)
-                "${indent}set${getConditionSuffix(instruction.condition)} $destOperand"
+                "${indent}set${instruction.condition.text} $destOperand"
             }
 
             // Ret is handled by the main epilogue
@@ -76,15 +76,5 @@ class CodeEmitter {
             if (useLinuxPrefix) name else name.substring(1)
         } else {
             name
-        }
-
-    private fun getConditionSuffix(condition: ConditionCode): String =
-        when (condition) {
-            ConditionCode.E -> "e"
-            ConditionCode.NE -> "ne"
-            ConditionCode.G -> "g"
-            ConditionCode.GE -> "ge"
-            ConditionCode.L -> "l"
-            ConditionCode.LE -> "le"
         }
 }
