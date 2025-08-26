@@ -97,7 +97,7 @@ class Parser {
     private fun parseStatement(tokens: MutableList<Token>): Statement {
         val first = tokens.firstOrNull()
         expect(TokenType.KEYWORD_RETURN, tokens)
-        val expression = parseExpression(0, tokens)
+        val expression = parseExpression(tokens = tokens)
         expect(TokenType.SEMICOLON, tokens)
 
         return ReturnStatement(
@@ -143,7 +143,7 @@ class Parser {
             return UnaryExpression(operator = operator, expression = factor)
         } else if (nextToken.type == TokenType.LEFT_PAREN) {
             expect(TokenType.LEFT_PAREN, tokens)
-            val expression = parseExpression(0, tokens)
+            val expression = parseExpression(tokens = tokens)
             expect(TokenType.RIGHT_PAREN, tokens)
             return expression
         } else {
