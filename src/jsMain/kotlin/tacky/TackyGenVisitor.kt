@@ -12,14 +12,19 @@ import parser.Visitor
 
 class TackyGenVisitor : Visitor<Any> {
     private var tempCounter = 0
+    private var labelCounter = 0
 
     private fun newTemporary(): TackyVar = TackyVar("tmp.${tempCounter++}")
+
+    private fun newLabel(base: String): TackyLabel = TackyLabel(".L_${base}_${labelCounter++}")
 
     private fun convertUnaryOp(tokenType: TokenType): TackyUnaryOP {
         if (tokenType == TokenType.TILDE) {
             return TackyUnaryOP.COMPLEMENT
         } else if (tokenType == TokenType.NEGATION) {
             return TackyUnaryOP.NEGATE
+        } else if (tokenType == TokenType.NOT) {
+            return TackyUnaryOP.NOT
         } else {
             throw TackyException(tokenType.toString())
         }
@@ -36,6 +41,18 @@ class TackyGenVisitor : Visitor<Any> {
             return TackyBinaryOP.DIVIDE
         } else if (tokenType == TokenType.REMAINDER) {
             return TackyBinaryOP.REMAINDER
+        } else if (tokenType == TokenType.EQUAL_TO) {
+            return TackyBinaryOP.EQUAL
+        } else if (tokenType == TokenType.GREATER) {
+            return TackyBinaryOP.GREATER
+        } else if (tokenType == TokenType.LESS) {
+            return TackyBinaryOP.LESS
+        } else if (tokenType == TokenType.GREATER_EQUAL) {
+            return TackyBinaryOP.GREATER_EQUAL
+        } else if (tokenType == TokenType.LESS_EQUAL) {
+            return TackyBinaryOP.LESS_EQUAL
+        } else if (tokenType == TokenType.NOT_EQUAL) {
+            return TackyBinaryOP.NOT_EQUAL
         } else {
             throw TackyException(tokenType.toString())
         }
@@ -76,16 +93,62 @@ class TackyGenVisitor : Visitor<Any> {
     }
 
     override fun visit(node: BinaryExpression): Any {
-        val leftExp = node.left.accept(this) as TackyResult
-        val src1 = leftExp.resultVal!!
-        val rightExp = node.right.accept(this) as TackyResult
-        val src2 = rightExp.resultVal!!
-        val op = convertBinaryOp(node.operator.type)
+        when (node.operator.type) {
+            TokenType.AND -> {
+                val falseLabel = newLabel("and_false")
+                val endLabel = newLabel("and_end")
+                val resultVar = newTemporary()
 
-        val dst = newTemporary()
-        val binaryInstruction = TackyBinary(operator = op, src1 = src1, src2 = src2, dest = dst)
-        val allInstruction = leftExp.instructions + rightExp.instructions + binaryInstruction
-        return TackyResult(allInstruction, dst)
+                val left = node.left.accept(this) as TackyResult
+                val right = node.right.accept(this)as TackyResult
+
+                val instructions = mutableListOf<TackyInstruction>()
+                instructions.addAll(left.instructions)
+                instructions.add(JumpIfZero(left.resultVal!!, falseLabel))
+                instructions.addAll(right.instructions)
+                instructions.add(JumpIfZero(right.resultVal!!, falseLabel))
+                instructions.add(TackyCopy(TackyConstant(1), resultVar))
+                instructions.add(TackyJump(endLabel))
+                instructions.add(falseLabel)
+                instructions.add(TackyCopy(TackyConstant(0), resultVar))
+                instructions.add(endLabel)
+
+                return TackyResult(instructions, resultVar)
+            }
+            TokenType.OR -> {
+                val trueLabel = newLabel("or_true")
+                val endLabel = newLabel("or_end")
+                val resultVar = newTemporary()
+
+                val left = node.left.accept(this) as TackyResult
+                val right = node.right.accept(this) as TackyResult
+
+                val instructions = mutableListOf<TackyInstruction>()
+                instructions.addAll(left.instructions)
+                instructions.add(JumpIfNotZero(left.resultVal!!, trueLabel))
+                instructions.addAll(right.instructions)
+                instructions.add(JumpIfNotZero(right.resultVal!!, trueLabel))
+                instructions.add(TackyCopy(TackyConstant(0), resultVar))
+                instructions.add(TackyJump(endLabel))
+                instructions.add(trueLabel)
+                instructions.add(TackyCopy(TackyConstant(1), resultVar))
+                instructions.add(endLabel)
+
+                return TackyResult(instructions, resultVar)
+            }
+            else -> {
+                val leftExp = node.left.accept(this) as TackyResult
+                val src1 = leftExp.resultVal!!
+                val rightExp = node.right.accept(this) as TackyResult
+                val src2 = rightExp.resultVal!!
+                val op = convertBinaryOp(node.operator.type)
+
+                val dst = newTemporary()
+                val binaryInstruction = TackyBinary(operator = op, src1 = src1, src2 = src2, dest = dst)
+                val allInstruction = leftExp.instructions + rightExp.instructions + binaryInstruction
+                return TackyResult(allInstruction, dst)
+            }
+        }
     }
 
     override fun visit(node: IntExpression): Any =

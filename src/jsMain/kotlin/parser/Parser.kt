@@ -8,6 +8,14 @@ import lexer.TokenType
 class Parser {
     private val precedenceMap =
         mapOf(
+            TokenType.OR to 5,
+            TokenType.AND to 10,
+            TokenType.EQUAL_TO to 30,
+            TokenType.NOT_EQUAL to 30,
+            TokenType.LESS to 35,
+            TokenType.LESS_EQUAL to 35,
+            TokenType.GREATER to 35,
+            TokenType.GREATER_EQUAL to 35,
             TokenType.PLUS to 45,
             TokenType.NEGATION to 45,
             TokenType.MULTIPLY to 50,
@@ -98,7 +106,7 @@ class Parser {
     }
 
     private fun parseExpression(
-        minPrec: Int = 45,
+        minPrec: Int = 0,
         tokens: MutableList<Token>
     ): Expression {
         var left = parseFactor(tokens)

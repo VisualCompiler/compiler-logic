@@ -7,18 +7,48 @@ class InstructionFixer {
     ): Program {
         val instructions = program.function.body
 
-        // Rewrite invalid Mov instructions (Stack -> Stack)
+        // Rewrite invalid instructions
         val fixedInstructions =
             instructions.flatMap { instruction ->
-                if (instruction is Mov && instruction.src is Stack && instruction.dest is Stack) {
+                if (instruction is Idiv && instruction.divisor is Imm) {
+                    listOf(
+                        Mov(instruction.divisor, Register(HardwareRegister.R10D)),
+                        Idiv(Register(HardwareRegister.R10D))
+                    )
+                } else if (instruction is Mov && instruction.src is Stack && instruction.dest is Stack) {
                     listOf(
                         Mov(instruction.src, Register(HardwareRegister.R10D)),
                         Mov(Register(HardwareRegister.R10D), instruction.dest)
                     )
-                } else if (instruction is AsmBinary && instruction.src is Stack && instruction.dest is Stack) {
+                }
+                // handle sub and add
+                else if (instruction is AsmBinary &&
+                    instruction.op != AsmBinaryOp.MUL &&
+                    instruction.src is Stack &&
+                    instruction.dest is Stack
+                ) {
                     listOf(
                         Mov(instruction.src, Register(HardwareRegister.R10D)),
                         AsmBinary(instruction.op, Register(HardwareRegister.R10D), instruction.dest)
+                    )
+                } else if (instruction is AsmBinary &&
+                    instruction.op == AsmBinaryOp.MUL &&
+                    instruction.dest is Stack
+                ) {
+                    listOf(
+                        Mov(instruction.dest, Register(HardwareRegister.R11D)),
+                        AsmBinary(instruction.op, instruction.src, Register(HardwareRegister.R11D)),
+                        Mov(Register(HardwareRegister.R11D), instruction.dest)
+                    )
+                } else if (instruction is Cmp && instruction.src is Stack && instruction.dest is Stack) {
+                    listOf(
+                        Mov(instruction.src, Register(HardwareRegister.R10D)),
+                        Cmp(Register(HardwareRegister.R10D), instruction.dest)
+                    )
+                } else if (instruction is Cmp && instruction.dest is Imm) {
+                    listOf(
+                        Mov(instruction.dest, Register(HardwareRegister.R11D)),
+                        Cmp(instruction.src, Register(HardwareRegister.R11D))
                     )
                 } else {
                     listOf(instruction)

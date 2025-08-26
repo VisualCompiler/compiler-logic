@@ -7,15 +7,21 @@ import assembly.AsmProgram
 import assembly.AsmUnary
 import assembly.AsmUnaryOp
 import assembly.Cdq
+import assembly.Cmp
+import assembly.ConditionCode
 import assembly.HardwareRegister
 import assembly.Idiv
 import assembly.Imm
 import assembly.Instruction
+import assembly.Jmp
+import assembly.JmpCC
+import assembly.Label
 import assembly.Mov
 import assembly.Operand
 import assembly.Pseudo
 import assembly.Register
 import assembly.Ret
+import assembly.SetCC
 
 class TackyToAsm {
     fun convert(tackyProgram: TackyProgram): AsmProgram {
@@ -34,54 +40,100 @@ class TackyToAsm {
                     Ret
                 )
             }
-            is TackyUnary -> {
-                val srcOperand = convertVal(tackyInstr.src)
-                val destOperand = convertVal(tackyInstr.dest)
-                listOf(
-                    Mov(srcOperand, destOperand),
-                    AsmUnary(convertOp(tackyInstr.operator), destOperand)
-                )
-            }
+            is TackyUnary ->
+                when (tackyInstr.operator) {
+                    TackyUnaryOP.NOT -> {
+                        val src = convertVal(tackyInstr.src)
+                        val dest = convertVal(tackyInstr.dest)
+                        listOf(
+                            Cmp(Imm(0), src),
+                            Mov(Imm(0), dest), // Zero out destination
+                            SetCC(ConditionCode.E, dest) // Set if equal to zero
+                        )
+                    }
+                    else -> {
+                        val destOperand = convertVal(tackyInstr.dest)
+                        listOf(
+                            Mov(convertVal(tackyInstr.src), destOperand),
+                            AsmUnary(convertOp(tackyInstr.operator), destOperand)
+                        )
+                    }
+                }
 
             is TackyBinary -> {
-                val srcOp1 = convertVal(tackyInstr.src1)
-                val srcOp2 = convertVal(tackyInstr.src2)
-                val desOp = convertVal(tackyInstr.dest)
+                val src1 = convertVal(tackyInstr.src1)
+                val src2 = convertVal(tackyInstr.src2)
+                val dest = convertVal(tackyInstr.dest)
 
                 when (tackyInstr.operator) {
                     TackyBinaryOP.ADD ->
                         listOf(
-                            Mov(srcOp1, desOp),
-                            AsmBinary(AsmBinaryOp.ADD, srcOp2, desOp)
+                            Mov(src1, dest),
+                            AsmBinary(AsmBinaryOp.ADD, src2, dest)
                         )
                     TackyBinaryOP.MULTIPLY ->
                         listOf(
-                            Mov(srcOp1, desOp),
-                            AsmBinary(AsmBinaryOp.MUL, srcOp2, desOp)
+                            Mov(src1, dest),
+                            AsmBinary(AsmBinaryOp.MUL, src2, dest)
                         )
                     TackyBinaryOP.SUBTRACT ->
                         listOf(
-                            Mov(srcOp1, desOp),
-                            AsmBinary(AsmBinaryOp.SUB, srcOp2, desOp)
+                            Mov(src1, dest),
+                            AsmBinary(AsmBinaryOp.SUB, src2, dest)
                         )
                     TackyBinaryOP.DIVIDE ->
                         listOf(
-                            // EAX (the number being divided)
-                            Mov(srcOp1, Register(HardwareRegister.EAX)),
+                            Mov(src1, Register(HardwareRegister.EAX)), // Dividend in EAX
                             Cdq,
-                            Idiv(srcOp2),
-                            // res in EAX
-                            Mov(Register(HardwareRegister.EAX), desOp)
+                            Idiv(src2), // Divisor
+                            Mov(Register(HardwareRegister.EAX), dest) // Quotient result is in EAX
                         )
                     TackyBinaryOP.REMAINDER ->
                         listOf(
-                            Mov(srcOp1, Register(HardwareRegister.EAX)),
+                            Mov(src1, Register(HardwareRegister.EAX)),
                             Cdq,
-                            Idiv(srcOp2),
-                            Mov(Register(HardwareRegister.EDX), desOp) // Result is the remainder in EDX
+                            Idiv(src2),
+                            Mov(Register(HardwareRegister.EDX), dest) // Remainder result is in EDX
                         )
+
+                    TackyBinaryOP.EQUAL, TackyBinaryOP.NOT_EQUAL, TackyBinaryOP.GREATER,
+                    TackyBinaryOP.GREATER_EQUAL, TackyBinaryOP.LESS, TackyBinaryOP.LESS_EQUAL -> {
+                        val condition =
+                            when (tackyInstr.operator) {
+                                TackyBinaryOP.EQUAL -> ConditionCode.E
+                                TackyBinaryOP.NOT_EQUAL -> ConditionCode.NE
+                                TackyBinaryOP.GREATER -> ConditionCode.G
+                                TackyBinaryOP.GREATER_EQUAL -> ConditionCode.GE
+                                TackyBinaryOP.LESS -> ConditionCode.L
+                                TackyBinaryOP.LESS_EQUAL -> ConditionCode.LE
+                                else -> throw IllegalStateException("Unreachable: This case is logically impossible.")
+                            }
+                        listOf(
+                            Cmp(src2, src1),
+                            Mov(Imm(0), dest), // Zero out destination
+                            SetCC(condition, dest) // conditionally set the low byte to 0/1
+                        )
+                    }
                 }
             }
+
+            is JumpIfNotZero ->
+                listOf(
+                    Cmp(Imm(0), convertVal(tackyInstr.condition)),
+                    JmpCC(ConditionCode.NE, Label(tackyInstr.target.name))
+                )
+
+            is JumpIfZero ->
+                listOf(
+                    Cmp(Imm(0), convertVal(tackyInstr.condition)),
+                    JmpCC(ConditionCode.E, Label(tackyInstr.target.name))
+                )
+
+            is TackyCopy -> listOf(Mov(convertVal(tackyInstr.src), convertVal(tackyInstr.dest)))
+
+            is TackyJump -> listOf(Jmp(Label(tackyInstr.target.name)))
+
+            is TackyLabel -> listOf(Label(tackyInstr.name))
         }
 
     private fun convertVal(tackyVal: TackyVal): Operand =
@@ -94,5 +146,6 @@ class TackyToAsm {
         when (tackyOp) {
             TackyUnaryOP.COMPLEMENT -> AsmUnaryOp.NOT
             TackyUnaryOP.NEGATE -> AsmUnaryOp.NEG
+            else -> throw IllegalArgumentException("Cannot convert $tackyOp to a simple AsmUnaryOp.")
         }
 }

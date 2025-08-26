@@ -29,6 +29,8 @@ class PseudoEliminator {
                     is Mov -> Mov(replace(instruction.src), replace(instruction.dest))
                     is AsmUnary -> AsmUnary(instruction.op, replace(instruction.dest))
                     is AsmBinary -> AsmBinary(instruction.op, replace(instruction.src), replace(instruction.dest))
+                    is Cmp -> Cmp(replace(instruction.src), replace(instruction.dest))
+                    is SetCC -> SetCC(instruction.condition, replace(instruction.dest))
                     else -> instruction
                 }
             }
