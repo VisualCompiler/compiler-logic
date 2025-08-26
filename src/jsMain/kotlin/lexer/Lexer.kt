@@ -1,11 +1,6 @@
 package lexer
 
 import exceptions.LexicalException
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 
 sealed class TokenType {
     // keywords
@@ -87,7 +82,7 @@ data class Token(
 class Lexer(
     val source: String
 ) {
-    private val tokens = mutableListOf<Token>()
+    val tokens: MutableList<Token> = mutableListOf()
     private var current = 0
     private var start = 0
     private var line = 1
@@ -236,21 +231,5 @@ class Lexer(
         val text = source.substring(start, current)
         val column = start - lineStart + 1
         tokens.add(Token(type, text, line, column))
-    }
-
-    fun toJsonString(): String {
-        val jsonTokens =
-            tokens.map { token ->
-                JsonObject(
-                    mapOf(
-                        "line" to JsonPrimitive(token.line),
-                        "column" to JsonPrimitive(token.column),
-                        "type" to JsonPrimitive(token.type.toString()),
-                        "lexeme" to JsonPrimitive(token.lexeme)
-                    )
-                )
-            }
-
-        return Json.encodeToString(JsonArray(jsonTokens))
     }
 }

@@ -8,6 +8,7 @@ import lexer.TokenType
 class Parser {
     private val precedenceMap =
         mapOf(
+            TokenType.ASSIGN to 1,
             TokenType.OR to 5,
             TokenType.AND to 10,
             TokenType.EQUAL_TO to 30,

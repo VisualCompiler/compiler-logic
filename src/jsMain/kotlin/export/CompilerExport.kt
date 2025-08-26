@@ -1,9 +1,16 @@
+package export
+
 import assembly.AsmProgram
 import assembly.CodeEmitter
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
 import exceptions.CodeGenerationException
 import exceptions.CompilationException
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import lexer.Lexer
 import lexer.Token
 import parser.ASTNode
@@ -55,7 +62,7 @@ class CompilerExport {
                     ast = parser.parseTokens(tokens)
                     ParserOutput(
                         errors = emptyArray(),
-                        ast = ast.toJsonString()
+                        ast = ast.accept(ASTExport())
                     )
                 } catch (e: CompilationException) {
                     val error =
@@ -172,5 +179,21 @@ class CompilerExport {
             )
 
         return result.toJsonString()
+    }
+
+    fun Lexer.toJsonString(): String {
+        val jsonTokens =
+            this.tokens.map { token ->
+                JsonObject(
+                    mapOf(
+                        "line" to JsonPrimitive(token.line),
+                        "column" to JsonPrimitive(token.column),
+                        "type" to JsonPrimitive(token.type.toString()),
+                        "lexeme" to JsonPrimitive(token.lexeme)
+                    )
+                )
+            }
+
+        return Json.encodeToString(JsonArray(jsonTokens))
     }
 }
