@@ -50,7 +50,7 @@ class CodeEmitter {
             // Ret is handled by the main epilogue
             is Ret -> ""
 
-            else -> throw NotImplementedError("Emission for ${instruction::class.simpleName} not implemented.")
+            // else -> throw NotImplementedError("Emission for ${instruction::class.simpleName} not implemented.")
         }
     }
 

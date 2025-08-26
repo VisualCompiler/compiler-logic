@@ -74,32 +74,13 @@ data class Cmp(
     val dest: Operand
 ) : Instruction()
 
-enum class JumpCondition(
-    val text: String
-) {
-    E("je"), // Equal
-    NE("jne"), // Not Equal
-    L("jl"), // Less
-    LE("jle"), // Less or Equal
-    G("jg"), // Greater
-    GE("jge"), // Greater or Equal
-    Z("jz"), // Zero
-    NZ("jnz") // Not Zero
-}
-
 enum class ConditionCode { E, NE, G, GE, L, LE }
-
-data class Jcc(
-    val condition: JumpCondition,
-    val label: Label
-) : Instruction()
 
 data class SetCC(
     val condition: ConditionCode,
     val dest: Operand
 ) : Instruction() {
     // The toAsm method is not needed here if the CodeEmitter handles everything.
-    // Or, if it's required by the sealed class, it can be simple:
 }
 
 data class Label(

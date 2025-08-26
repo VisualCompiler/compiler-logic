@@ -116,8 +116,8 @@ class TackyGenVisitor : Visitor<Any> {
                 return TackyResult(instructions, resultVar)
             }
             TokenType.OR -> {
-                val trueLabel = TackyLabel("or_true")
-                val endLabel = TackyLabel("or_end")
+                val trueLabel = newLabel("or_true")
+                val endLabel = newLabel("or_end")
                 val resultVar = newTemporary()
 
                 val left = node.left.accept(this) as TackyResult

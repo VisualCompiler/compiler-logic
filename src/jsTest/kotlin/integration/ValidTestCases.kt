@@ -8,16 +8,27 @@ import assembly.AsmProgram
 import assembly.AsmUnary
 import assembly.AsmUnaryOp
 import assembly.Cdq
+import assembly.Cmp
+import assembly.ConditionCode
 import assembly.HardwareRegister
 import assembly.Idiv
 import assembly.Imm
+import assembly.Jmp
+import assembly.JmpCC
+import assembly.Label
 import assembly.Mov
 import assembly.Register
+import assembly.SetCC
 import assembly.Stack
+import tacky.JumpIfNotZero
+import tacky.JumpIfZero
 import tacky.TackyBinary
 import tacky.TackyBinaryOP
 import tacky.TackyConstant
+import tacky.TackyCopy
 import tacky.TackyFunction
+import tacky.TackyJump
+import tacky.TackyLabel
 import tacky.TackyProgram
 import tacky.TackyRet
 import tacky.TackyUnary
@@ -174,6 +185,103 @@ object ValidTestCases {
                             Mov(Stack(-24), Register(HardwareRegister.R10D)),
                             AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-28)),
                             Mov(Stack(-28), Register(HardwareRegister.EAX))
+                        )
+                    )
+                )
+            ),
+            ValidTestCase(
+                title = "Testing complex relational and logical operators with precedence and short-circuiting.",
+                // The expression is parsed as: (1 == 0) || ( (5 > 2) && (10 <= 20) )
+                code = "int main(void) { return 1 == 0 || 5 > 2 && 10 <= 20; }",
+                expectedTacky =
+                TackyProgram(
+                    TackyFunction(
+                        name = "main",
+                        body =
+                        listOf(
+                            // tmp.1 = (1 == 0)
+                            TackyBinary(TackyBinaryOP.EQUAL, TackyConstant(1), TackyConstant(0), TackyVar("tmp.1")),
+                            // if (tmp.1 != 0) goto .L_or_true_0
+                            JumpIfNotZero(TackyVar("tmp.1"), TackyLabel(".L_or_true_0")),
+                            // -- Start of the AND expression --
+                            // tmp.3 = (5 > 2)
+                            TackyBinary(TackyBinaryOP.GREATER, TackyConstant(5), TackyConstant(2), TackyVar("tmp.3")),
+                            // if (tmp.3 == 0) goto .L_and_false_2
+                            JumpIfZero(TackyVar("tmp.3"), TackyLabel(".L_and_false_2")),
+                            // tmp.4 = (10 <= 20)
+                            TackyBinary(TackyBinaryOP.LESS_EQUAL, TackyConstant(10), TackyConstant(20), TackyVar("tmp.4")),
+                            // if (tmp.4 == 0) goto .L_and_false_2
+                            JumpIfZero(TackyVar("tmp.4"), TackyLabel(".L_and_false_2")),
+                            // AND is true -> tmp.2 = 1
+                            TackyCopy(TackyConstant(1), TackyVar("tmp.2")),
+                            TackyJump(TackyLabel(".L_and_end_3")),
+                            // AND is false -> tmp.2 = 0
+                            TackyLabel(".L_and_false_2"),
+                            TackyCopy(TackyConstant(0), TackyVar("tmp.2")),
+                            // End of AND block
+                            TackyLabel(".L_and_end_3"),
+                            // -- Resume OR logic --
+                            // if (tmp.2 != 0) goto .L_or_true_0
+                            JumpIfNotZero(TackyVar("tmp.2"), TackyLabel(".L_or_true_0")),
+                            // OR is false -> tmp.0 = 0
+                            TackyCopy(TackyConstant(0), TackyVar("tmp.0")),
+                            TackyJump(TackyLabel(".L_or_end_1")),
+                            // OR is true -> tmp.0 = 1
+                            TackyLabel(".L_or_true_0"),
+                            TackyCopy(TackyConstant(1), TackyVar("tmp.0")),
+                            // End of OR block
+                            TackyLabel(".L_or_end_1"),
+                            // Final return
+                            TackyRet(TackyVar("tmp.0"))
+                        )
+                    )
+                ),
+                expectedAssembly =
+                AsmProgram(
+                    AsmFunction(
+                        name = "main",
+                        body =
+                        listOf(
+                            AllocateStack(size = 20),
+                            Mov(src = Imm(value = 1), dest = Register(name = HardwareRegister.EAX)),
+                            Cmp(src = Imm(value = 0), dest = Register(name = HardwareRegister.EAX)),
+                            Mov(src = Imm(value = 0), dest = Stack(offset = -4)),
+                            SetCC(condition = ConditionCode.E, dest = Stack(offset = -4)),
+                            // This is the first jump for the OR operation
+                            Cmp(src = Imm(value = 0), dest = Stack(offset = -4)),
+                            JmpCC(condition = ConditionCode.NE, label = Label(name = ".L_or_true_0")),
+                            // Start of the AND block
+                            Mov(src = Imm(value = 5), dest = Register(name = HardwareRegister.EAX)),
+                            Cmp(src = Imm(value = 2), dest = Register(name = HardwareRegister.EAX)),
+                            Mov(src = Imm(value = 0), dest = Stack(offset = -8)),
+                            SetCC(condition = ConditionCode.G, dest = Stack(offset = -8)),
+                            Cmp(src = Imm(value = 0), dest = Stack(offset = -8)),
+                            JmpCC(condition = ConditionCode.E, label = Label(name = ".L_and_false_2")),
+                            Mov(src = Imm(value = 10), dest = Register(name = HardwareRegister.EAX)),
+                            Cmp(src = Imm(value = 20), dest = Register(name = HardwareRegister.EAX)),
+                            Mov(src = Imm(value = 0), dest = Stack(offset = -12)),
+                            SetCC(condition = ConditionCode.LE, dest = Stack(offset = -12)),
+                            Cmp(src = Imm(value = 0), dest = Stack(offset = -12)),
+                            JmpCC(condition = ConditionCode.E, label = Label(name = ".L_and_false_2")),
+                            // AND is true path
+                            Mov(src = Imm(value = 1), dest = Stack(offset = -16)),
+                            Jmp(label = Label(name = ".L_and_end_3")),
+                            // AND is false path
+                            Label(name = ".L_and_false_2"),
+                            Mov(src = Imm(value = 0), dest = Stack(offset = -16)),
+                            Label(name = ".L_and_end_3"),
+                            // Resume OR logic, checking the result of the AND block
+                            Cmp(src = Imm(value = 0), dest = Stack(offset = -16)),
+                            JmpCC(condition = ConditionCode.NE, label = Label(name = ".L_or_true_0")),
+                            // OR is false path
+                            Mov(src = Imm(value = 0), dest = Stack(offset = -20)),
+                            Jmp(label = Label(name = ".L_or_end_1")),
+                            // OR is true path
+                            Label(name = ".L_or_true_0"),
+                            Mov(src = Imm(value = 1), dest = Stack(offset = -20)),
+                            Label(name = ".L_or_end_1"),
+                            // Final return
+                            Mov(src = Stack(offset = -20), dest = Register(name = HardwareRegister.EAX))
                         )
                     )
                 )

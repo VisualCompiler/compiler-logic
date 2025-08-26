@@ -1,10 +1,5 @@
 package tacky
 
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-
 sealed class TackyInstruction : TackyConstruct()
 
 private fun TackyUnaryOP.toSymbol(): String =
@@ -32,24 +27,6 @@ private fun TackyBinaryOP.toSymbol(): String =
 data class TackyRet(
     val value: TackyVal
 ) : TackyInstruction() {
-    override fun toJsonString(): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "value" to Json.parseToJsonElement(value.toJsonString())
-                )
-            )
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("value"),
-                    "children" to children
-                )
-            )
-        return Json.encodeToString(jsonNode)
-    }
-
     override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}return ${value.toPseudoCode()}"
 }
 
@@ -64,26 +41,6 @@ data class TackyUnary(
     val src: TackyVal,
     val dest: TackyVar
 ) : TackyInstruction() {
-    override fun toJsonString(): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "operator" to JsonPrimitive(operator.name),
-                    "src" to Json.parseToJsonElement(src.toJsonString()),
-                    "dest" to Json.parseToJsonElement(dest.toJsonString())
-                )
-            )
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("op, src, dest"),
-                    "children" to children
-                )
-            )
-        return Json.encodeToString(jsonNode)
-    }
-
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}${dest.toPseudoCode()} = ${operator.toSymbol()}${src.toPseudoCode()}"
 }
@@ -108,27 +65,6 @@ data class TackyBinary(
     val src2: TackyVal,
     val dest: TackyVar
 ) : TackyInstruction() {
-    override fun toJsonString(): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "operator" to JsonPrimitive(operator.name),
-                    "src1" to Json.parseToJsonElement(src1.toJsonString()),
-                    "src2" to Json.parseToJsonElement(src2.toJsonString()),
-                    "dest" to Json.parseToJsonElement(dest.toJsonString())
-                )
-            )
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("op, src1, src2, dest"),
-                    "children" to children
-                )
-            )
-        return Json.encodeToString(jsonNode)
-    }
-
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}${dest.toPseudoCode()} = ${src1.toPseudoCode()} ${operator.toSymbol()} ${src2.toPseudoCode()}"
 }
@@ -137,49 +73,12 @@ data class TackyCopy(
     val src: TackyVal,
     val dest: TackyVar
 ) : TackyInstruction() {
-    override fun toJsonString(): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "src" to Json.parseToJsonElement(src.toJsonString()),
-                    "dest" to Json.parseToJsonElement(dest.toJsonString())
-                )
-            )
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("src, dest"),
-                    "children" to children
-                )
-            )
-        return Json.encodeToString(jsonNode)
-    }
-
     override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}${dest.toPseudoCode()} = ${src.toPseudoCode()}"
 }
 
 data class TackyJump(
     val target: TackyLabel
 ) : TackyInstruction() {
-    override fun toJsonString(): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "target" to Json.parseToJsonElement(target.toJsonString())
-                )
-            )
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("target"),
-                    "children" to children
-                )
-            )
-        return Json.encodeToString(jsonNode)
-    }
-
     override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}goto ${target.name}"
 }
 
@@ -187,25 +86,6 @@ data class JumpIfZero(
     val condition: TackyVal,
     val target: TackyLabel
 ) : TackyInstruction() {
-    override fun toJsonString(): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "condition" to Json.parseToJsonElement(condition.toJsonString()),
-                    "target" to Json.parseToJsonElement(target.toJsonString())
-                )
-            )
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("condition, target"),
-                    "children" to children
-                )
-            )
-        return Json.encodeToString(jsonNode)
-    }
-
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}if (${condition.toPseudoCode()} == 0) goto ${target.name}"
 }
@@ -214,25 +94,6 @@ data class JumpIfNotZero(
     val condition: TackyVal,
     val target: TackyLabel
 ) : TackyInstruction() {
-    override fun toJsonString(): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "condition" to Json.parseToJsonElement(condition.toJsonString()),
-                    "target" to Json.parseToJsonElement(target.toJsonString())
-                )
-            )
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("condition, target"),
-                    "children" to children
-                )
-            )
-        return Json.encodeToString(jsonNode)
-    }
-
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}if (${condition.toPseudoCode()} != 0) goto ${target.name}"
 }

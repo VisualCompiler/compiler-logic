@@ -85,7 +85,6 @@ class CompilerExport {
 
                     println("TackyGenVisitor returned TackyProgram: $tackyProgram")
                     TackyOutput(
-                        tackyJson = tackyProgram?.toJsonString(),
                         tackyPretty = tackyProgram?.toPseudoCode(),
                         errors = emptyArray()
                     )

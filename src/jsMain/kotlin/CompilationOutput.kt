@@ -56,7 +56,6 @@ data class ParserOutput(
 @SerialName("TackyOutput")
 data class TackyOutput(
     override val stage: CompilationStage = CompilationStage.TACKY,
-    val tackyJson: String? = null,
     val tackyPretty: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
