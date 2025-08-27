@@ -30,6 +30,7 @@ import parser.Declaration
 import parser.ExpressionStatement
 import parser.Function
 import parser.IntExpression
+import parser.NullStatement
 import parser.ReturnStatement
 import parser.S
 import parser.SimpleProgram
@@ -340,6 +341,7 @@ object ValidTestCases {
                     |int a = 10 + 1;
                     |b = (a=2) * 2;
                     |return b; 
+                    |;
                     |}
                 """.trimMargin(),
                 expectedTokenList =
@@ -377,8 +379,9 @@ object ValidTestCases {
                     Token(TokenType.KEYWORD_RETURN, "return", 5, 1),
                     Token(TokenType.IDENTIFIER, "b", 5, 8),
                     Token(TokenType.SEMICOLON, ";", 5, 9),
-                    Token(TokenType.RIGHT_BRACK, "}", 6, 1),
-                    Token(TokenType.EOF, "", 6, 2)
+                    Token(TokenType.SEMICOLON, ";", 6, 1),
+                    Token(TokenType.RIGHT_BRACK, "}", 7, 1),
+                    Token(TokenType.EOF, "", 7, 2)
                 ),
                 expectedAst =
                 SimpleProgram(
@@ -420,7 +423,8 @@ object ValidTestCases {
                                 ReturnStatement(
                                     expression = VariableExpression("b.0")
                                 )
-                            )
+                            ),
+                            S(NullStatement())
                         )
                     )
                 ),
@@ -439,15 +443,8 @@ object ValidTestCases {
                             TackyRet(TackyConstant(0))
                         )
                     )
-                ),
-                expectedAssembly = null
+                )
+                // No need to test the assembly here since this feature doesn't effect the assembly generation stage
             )
         )
 }
-// <SimpleProgram(functionDefinition=Function(name=main, body=[D(declaration=Declaration(name=b, init=null)), D(declaration=Declaration(name=a, init=BinaryExpression(left=IntExpression(value=10), operator=Token(type=PLUS, lexeme=+, line=1, column=1), right=IntExpression(value=1)))), S(statement=ExpressionStatement(expression=AssignmentExpression(lvalue=VariableExpression(name=b), rvalue=BinaryExpression(left=AssignmentExpression(lvalue=VariableExpression(name=a), rvalue=IntExpression(value=2)), operator=Token(type=MULTIPLY, lexeme=*, line=1, column=1), right=IntExpression(value=2))))), S(statement=ReturnStatement(expression=VariableExpression(name=b)))]))>, actual
-// <SimpleProgram(functionDefinition=Function(name=main, body=[D(declaration=Declaration(name=b, init=null)), D(declaration=Declaration(name=a, init=BinaryExpression(left=IntExpression(value=10), operator=Token(type=PLUS, lexeme=+, line=3, column=12), right=IntExpression(value=1)))), S(statement=ExpressionStatement(expression=AssignmentExpression(lvalue=VariableExpression(name=b), rvalue=BinaryExpression(left=AssignmentExpression(lvalue=VariableExpression(name=a), rvalue=IntExpression(value=2)), operator=Token(type=MULTIPLY, lexeme=*, line=4, column=11), right=IntExpression(value=2))))), S(statement=ReturnStatement(expression=VariableExpression(name=b)))]))>.
-// <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=var.1)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=var.1)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=var.1), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyCopy(src=TackyVar(name=tmp.1), dest=TackyVar(name=var.0)), TackyRet(value=TackyVar(name=var.0))]))>, actual
-// <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=var.1)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=a)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=a), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyCopy(src=TackyVar(name=tmp.1), dest=TackyVar(name=b)), TackyRet(value=TackyVar(name=b)), TackyRet(value=TackyConstant(value=0))]))>.
-// <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=var.1)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=var.1)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=var.1), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyCopy(src=TackyVar(name=tmp.1), dest=TackyVar(name=var.0)), TackyRet(value=TackyVar(name=var.0)), TackyRet(value=TackyConstant(value=0))]))>, actual
-// <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=a)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=tmp.1), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.2)), TackyCopy(src=TackyVar(name=tmp.2), dest=TackyVar(name=tmp.3)), TackyRet(value=TackyVar(name=b)), TackyRet(value=TackyConstant(value=0))]))>.
-// AssertionError: Expected <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=a.1)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=a.1)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=a.1), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyCopy(src=TackyVar(name=tmp.1), dest=TackyVar(name=b.0)), TackyRet(value=TackyVar(name=b.0)), TackyRet(value=TackyConstant(value=0))]))>, actual <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=a)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=a)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=a), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyCopy(src=TackyVar(name=tmp.1), dest=TackyVar(name=b)), TackyRet(value=TackyVar(name=b)), TackyRet(value=TackyConstant(value=0))]))>.

@@ -129,7 +129,7 @@ class Parser {
         var first: Token? = null
         if (!tokens.isEmpty() && tokens.first().type == TokenType.KEYWORD_RETURN) {
             first = tokens.removeFirst()
-        } else if (tokens.first().type == TokenType.SEMICOLON) {
+        } else if (!tokens.isEmpty() && tokens.first().type == TokenType.SEMICOLON) {
             tokens.removeFirst()
             return NullStatement()
         }
@@ -206,5 +206,3 @@ class Parser {
         }
     }
 }
-// <SimpleProgram(functionDefinition=Function(name=main, body=[S(statement=ReturnStatement(expression=BinaryExpression(left=BinaryExpression(left=BinaryExpression(left=IntExpression(value=5), operator=Token(type=NEGATION, lexeme=-, line=2, column=14), right=IntExpression(value=3)), operator=Token(type=MULTIPLY, lexeme=*, line=2, column=19), right=IntExpression(value=4)), operator=Token(type=PLUS, lexeme=+, line=2, column=23), right=BinaryExpression(left=BinaryExpression(left=UnaryExpression(operator=Token(type=TILDE, lexeme=~, line=2, column=25), expression=UnaryExpression(operator=Token(type=NEGATION, lexeme=-, line=2, column=27), expression=IntExpression(value=5))), operator=Token(type=DIVIDE, lexeme=/, line=2, column=31), right=IntExpression(value=6)), operator=Token(type=REMAINDER, lexeme=%, line=2, column=35), right=IntExpression(value=3)))))]))>, actual
-// <SimpleProgram(functionDefinition=Function(name=main, body=[S(statement=ReturnStatement(expression=BinaryExpression(left=BinaryExpression(left=BinaryExpression(left=IntExpression(value=5), operator=Token(type=NEGATION, lexeme=-, line=2, column=14), right=IntExpression(value=3)), operator=Token(type=MULTIPLY, lexeme=*, line=2, column=19), right=IntExpression(value=4)), operator=Token(type=PLUS, lexeme=+, line=2, column=23), right=BinaryExpression(left=UnaryExpression(operator=Token(type=TILDE, lexeme=~, line=2, column=25), expression=UnaryExpression(operator=Token(type=NEGATION, lexeme=-, line=2, column=27), expression=IntExpression(value=5))), operator=Token(type=DIVIDE, lexeme=/, line=2, column=31), right=BinaryExpression(left=IntExpression(value=6), operator=Token(type=REMAINDER, lexeme=%, line=2, column=35), right=IntExpression(value=3))))))]))>.
