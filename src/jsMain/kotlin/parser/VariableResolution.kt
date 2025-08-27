@@ -69,11 +69,19 @@ class VariableResolution : Visitor<ASTNode> {
     override fun visit(node: IntExpression): ASTNode = node
 
     override fun visit(node: IfStatement): ASTNode {
-        TODO("Not yet implemented")
+        val condition = node.condition.accept(this) as Expression
+        val thenStatement = node.then.accept(this) as Statement
+        var elseStatement = node._else?.accept(this) as Statement?
+        TODO("Manage the scope in Compound statements")
+        return IfStatement(condition, thenStatement, elseStatement)
     }
 
     override fun visit(node: ConditionalExpression): ASTNode {
-        TODO("Not yet implemented")
+        val condition = node.codition.accept(this) as Expression
+        val thenExpression = node.thenExpression.accept(this) as Expression
+        val elseExpression = node.elseExpression.accept(this) as Expression
+        TODO("Manage the scope in Compound statements")
+        return ConditionalExpression(condition, thenExpression, elseExpression)
     }
 
     override fun visit(node: AssignmentExpression): ASTNode {
