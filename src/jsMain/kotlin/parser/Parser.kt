@@ -10,6 +10,7 @@ class Parser {
     private val precedenceMap =
         mapOf(
             TokenType.ASSIGN to 1,
+            TokenType.QUESTION_MARK to 3,
             TokenType.OR to 5,
             TokenType.AND to 10,
             TokenType.EQUAL_TO to 30,
@@ -127,7 +128,20 @@ class Parser {
 
     private fun parseStatement(tokens: MutableList<Token>): Statement {
         var first: Token? = null
-        if (!tokens.isEmpty() && tokens.first().type == TokenType.KEYWORD_RETURN) {
+        if (!tokens.isEmpty() && tokens.first().type == TokenType.IF) {
+            tokens.removeFirst()
+            expect(TokenType.LEFT_PAREN, tokens)
+            val condition = parseExpression(0, tokens)
+            expect(TokenType.RIGHT_PAREN, tokens)
+            val thenStatement = parseStatement(tokens)
+
+            var elseStatement: Statement? = null
+            if (tokens.firstOrNull()?.type == TokenType.ELSE) {
+                tokens.removeFirst()
+                elseStatement = parseStatement(tokens)
+            }
+            return IfStatement(condition, thenStatement, elseStatement)
+        } else if (!tokens.isEmpty() && tokens.first().type == TokenType.KEYWORD_RETURN) {
             first = tokens.removeFirst()
         } else if (!tokens.isEmpty() && tokens.first().type == TokenType.SEMICOLON) {
             tokens.removeFirst()
@@ -165,6 +179,11 @@ class Parser {
                         throw InvalidLValueException()
                     }
                     AssignmentExpression(left, right)
+                } else if (nextType == TokenType.QUESTION_MARK) {
+                    val thenExpression = parseExpression(prec, tokens)
+                    expect(TokenType.COLON, tokens)
+                    val elseExpression = parseExpression(prec, tokens)
+                    return ConditionalExpression(left, thenExpression, elseExpression)
                 } else {
                     val right = parseExpression(prec + 1, tokens)
                     BinaryExpression(

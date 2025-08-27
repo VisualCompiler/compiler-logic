@@ -4,10 +4,12 @@ import exceptions.TackyException
 import lexer.TokenType
 import parser.AssignmentExpression
 import parser.BinaryExpression
+import parser.ConditionalExpression
 import parser.D
 import parser.Declaration
 import parser.ExpressionStatement
 import parser.Function
+import parser.IfStatement
 import parser.IntExpression
 import parser.NullStatement
 import parser.ReturnStatement
@@ -159,6 +161,14 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     }
 
     override fun visit(node: IntExpression): TackyConstruct = TackyConstant(node.value)
+
+    override fun visit(node: IfStatement): TackyConstruct? {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(node: ConditionalExpression): TackyConstruct? {
+        TODO("Not yet implemented")
+    }
 
     override fun visit(node: AssignmentExpression): TackyConstruct {
         val rvalue = node.rvalue.accept(this) as TackyVal

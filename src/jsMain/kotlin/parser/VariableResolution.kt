@@ -6,11 +6,13 @@ import parser.ASTNode
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.BlockItem
+import parser.ConditionalExpression
 import parser.D
 import parser.Declaration
 import parser.Expression
 import parser.ExpressionStatement
 import parser.Function
+import parser.IfStatement
 import parser.IntExpression
 import parser.NullStatement
 import parser.ReturnStatement
@@ -65,6 +67,14 @@ class VariableResolution : Visitor<ASTNode> {
     }
 
     override fun visit(node: IntExpression): ASTNode = node
+
+    override fun visit(node: IfStatement): ASTNode {
+        TODO("Not yet implemented")
+    }
+
+    override fun visit(node: ConditionalExpression): ASTNode {
+        TODO("Not yet implemented")
+    }
 
     override fun visit(node: AssignmentExpression): ASTNode {
         val lvalue = node.lvalue.accept(this) as VariableExpression

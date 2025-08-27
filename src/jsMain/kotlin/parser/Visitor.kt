@@ -19,6 +19,10 @@ interface Visitor<T> {
 
     fun visit(node: IntExpression): T
 
+    fun visit(node: IfStatement): T
+
+    fun visit(node: ConditionalExpression): T
+
     fun visit(node: AssignmentExpression): T
 
     fun visit(node: Declaration): T
