@@ -163,11 +163,43 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     override fun visit(node: IntExpression): TackyConstruct = TackyConstant(node.value)
 
     override fun visit(node: IfStatement): TackyConstruct? {
-        TODO("Not yet implemented")
+        val endLabel = newLabel("end")
+
+        val condition = node.condition.accept(this) as TackyVal
+        if (node._else == null) {
+            currentInstructions += JumpIfZero(condition, endLabel)
+            node.then.accept(this)
+            currentInstructions += endLabel
+        } else {
+            val elseLabel = newLabel("else_label")
+            currentInstructions += JumpIfZero(condition, elseLabel)
+            node.then.accept(this)
+            currentInstructions += TackyJump(endLabel)
+            currentInstructions += elseLabel
+            node._else.accept(this)
+            currentInstructions += endLabel
+        }
+        return null
     }
 
     override fun visit(node: ConditionalExpression): TackyConstruct? {
-        TODO("Not yet implemented")
+        val resultVar = newTemporary()
+
+        val elseLabel = newLabel("cond_else")
+        val endLabel = newLabel("cond_end")
+
+        val conditionResult = node.codition.accept(this) as TackyVal
+        currentInstructions += JumpIfZero(conditionResult, elseLabel)
+
+        val thenResult = node.thenExpression.accept(this) as TackyVal
+        currentInstructions += TackyCopy(thenResult, resultVar)
+        currentInstructions += TackyJump(endLabel)
+        currentInstructions += elseLabel
+        val elseResult = node.elseExpression.accept(this) as TackyVal
+        currentInstructions += TackyCopy(elseResult, resultVar)
+        currentInstructions += endLabel
+
+        return resultVar
     }
 
     override fun visit(node: AssignmentExpression): TackyConstruct {
