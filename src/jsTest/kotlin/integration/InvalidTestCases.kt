@@ -1,6 +1,10 @@
 package integration
 
+import compiler.CompilerStage
+import exceptions.DuplicateVariableDeclaration
+import exceptions.InvalidLValueException
 import exceptions.LexicalException
+import exceptions.UndeclaredVariableException
 import exceptions.UnexpectedTokenException
 import kotlin.reflect.KClass
 
@@ -91,6 +95,21 @@ object InvalidTestCases {
                 code = "int main(void) { return || 0; }",
                 failingStage = CompilerStage.PARSER,
                 expectedException = UnexpectedTokenException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { a = 3; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = UndeclaredVariableException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { int a; int a; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = DuplicateVariableDeclaration::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { 2 = 3; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = InvalidLValueException::class
             )
         )
 }

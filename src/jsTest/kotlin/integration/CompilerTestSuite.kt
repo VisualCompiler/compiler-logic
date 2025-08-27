@@ -2,6 +2,7 @@ package integration
 
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
+import compiler.CompilerStage
 import compiler.parser.VariableResolution
 import lexer.Lexer
 import parser.Parser
@@ -13,13 +14,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-
-enum class CompilerStage {
-    LEXER,
-    PARSER,
-    TACKY,
-    ASSEMBLY
-}
 
 class CompilerTestSuite {
     private val parser = Parser()
@@ -113,27 +107,29 @@ class CompilerTestSuite {
             // Parser stage
             if (testCase.failingStage == CompilerStage.PARSER) {
                 assertFailsWith(testCase.expectedException) {
-                    Parser().parseTokens(tokens)
+                    val ast = parser.parseTokens(tokens) as SimpleProgram
+                    variableResolution.visit(ast)
                 }
                 continue
             }
-            val ast = Parser().parseTokens(tokens)
+            val ast = parser.parseTokens(tokens) as SimpleProgram
+            val transformedAst = variableResolution.visit(ast)
 
             // Tacky generation stage
             if (testCase.failingStage == CompilerStage.TACKY) {
                 assertFailsWith(testCase.expectedException) {
-                    ast.accept(TackyGenVisitor())
+                    transformedAst.accept(TackyGenVisitor())
                 }
                 continue
             }
-            val tackyProgram = ast.accept(TackyGenVisitor()) as? TackyProgram
+            val tackyProgram = transformedAst.accept(tackyGenVisitor) as TackyProgram
 
             // Assembly stage
             if (testCase.failingStage == CompilerStage.ASSEMBLY) {
                 assertFailsWith(testCase.expectedException) {
-                    val asmWithPseudos = TackyToAsm().convert(tackyProgram!!)
-                    val (asmWithStack, stackSpaceNeeded) = PseudoEliminator().eliminate(asmWithPseudos)
-                    InstructionFixer().fix(asmWithStack, stackSpaceNeeded)
+                    val asmWithPseudos = tackyToAsmConverter.convert(tackyProgram)
+                    val (asmWithStack, stackSpaceNeeded) = pseudoEliminator.eliminate(asmWithPseudos)
+                    instructionFixer.fix(asmWithStack, stackSpaceNeeded)
                 }
                 continue
             }
