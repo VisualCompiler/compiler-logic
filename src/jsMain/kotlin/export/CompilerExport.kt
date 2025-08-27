@@ -1,9 +1,17 @@
+package export
+
 import assembly.AsmProgram
 import assembly.CodeEmitter
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
+import compiler.parser.VariableResolution
 import exceptions.CodeGenerationException
-import exceptions.CompilationException
+import exceptions.CompilationExceptions
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import lexer.Lexer
 import lexer.Token
 import parser.ASTNode
@@ -19,6 +27,14 @@ class CompilerExport {
         val outputs = mutableListOf<CompilationOutput>()
         val overallErrors = mutableListOf<CompilationError>()
 
+        val parser = Parser()
+        val variableResolution = VariableResolution()
+        val tackyGenVisitor = TackyGenVisitor()
+        val tackyToAsmConverter = TackyToAsm()
+        val pseudoEliminator = PseudoEliminator()
+        val instructionFixer = InstructionFixer()
+        val codeEmitter = CodeEmitter()
+
         var tokens: List<Token>? = null
         var ast: ASTNode? = null
         var tackyProgram: TackyProgram? = null
@@ -32,7 +48,7 @@ class CompilerExport {
                     tokens = lexer.toJsonString(),
                     errors = emptyArray()
                 )
-            } catch (e: CompilationException) {
+            } catch (e: CompilationExceptions) {
                 val error =
                     CompilationError(
                         type = ErrorType.LEXICAL,
@@ -51,13 +67,13 @@ class CompilerExport {
         val parserOutput =
             if (lexerOutput.errors.isEmpty() && tokens != null) {
                 try {
-                    val parser = Parser()
                     ast = parser.parseTokens(tokens)
+                    ast = ast.accept(variableResolution)
                     ParserOutput(
                         errors = emptyArray(),
-                        ast = ast.toJsonString()
+                        ast = ast.accept(ASTExport())
                     )
-                } catch (e: CompilationException) {
+                } catch (e: CompilationExceptions) {
                     val error =
                         CompilationError(
                             type = ErrorType.SYNTAX,
@@ -79,16 +95,13 @@ class CompilerExport {
         val tackyOutput =
             if (parserOutput.errors.isEmpty() && ast != null) {
                 try {
-                    val tackyGenVisitor = TackyGenVisitor()
                     val result = ast.accept(tackyGenVisitor)
                     tackyProgram = result as? TackyProgram
-
-                    println("TackyGenVisitor returned TackyProgram: $tackyProgram")
                     TackyOutput(
                         tackyPretty = tackyProgram?.toPseudoCode(),
                         errors = emptyArray()
                     )
-                } catch (e: CompilationException) {
+                } catch (e: CompilationExceptions) {
                     val error =
                         CompilationError(
                             type = ErrorType.CODE_GENERATION,
@@ -111,16 +124,9 @@ class CompilerExport {
         val codeGeneratorOutput =
             if (tackyOutput.errors.isEmpty() && tackyProgram != null) {
                 try {
-                    val tackyToAsmConverter = TackyToAsm()
                     val asmWithPseudos = tackyToAsmConverter.convert(tackyProgram!!)
-
-                    val pseudoEliminator = PseudoEliminator()
                     val (asmWithStack, stackSpaceNeeded) = pseudoEliminator.eliminate(asmWithPseudos)
-
-                    val instructionFixer = InstructionFixer()
                     val finalAsmProgram = instructionFixer.fix(asmWithStack, stackSpaceNeeded)
-
-                    val codeEmitter = CodeEmitter()
                     val finalAssemblyString = codeEmitter.emit(finalAsmProgram as AsmProgram)
 
                     CodeGeneratorOutput(
@@ -172,5 +178,21 @@ class CompilerExport {
             )
 
         return result.toJsonString()
+    }
+
+    fun Lexer.toJsonString(): String {
+        val jsonTokens =
+            this.tokens.map { token ->
+                JsonObject(
+                    mapOf(
+                        "line" to JsonPrimitive(token.line),
+                        "column" to JsonPrimitive(token.column),
+                        "type" to JsonPrimitive(token.type.toString()),
+                        "lexeme" to JsonPrimitive(token.lexeme)
+                    )
+                )
+            }
+
+        return Json.encodeToString(JsonArray(jsonTokens))
     }
 }

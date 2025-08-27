@@ -1,3 +1,5 @@
+package export
+
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -8,9 +10,7 @@ import kotlinx.serialization.json.Json
 enum class ErrorType {
     LEXICAL,
     SYNTAX,
-    CODE_GENERATION,
-    RUNTIME,
-    GENERAL
+    CODE_GENERATION
 }
 
 @OptIn(ExperimentalJsExport::class)

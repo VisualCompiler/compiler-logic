@@ -1,7 +1,11 @@
 package integration
 
+import compiler.CompilerStage
+import exceptions.DuplicateVariableDeclaration
+import exceptions.InvalidLValueException
 import exceptions.LexicalException
-import exceptions.UnexpectedTokenSyntaxException
+import exceptions.UndeclaredVariableException
+import exceptions.UnexpectedTokenException
 import kotlin.reflect.KClass
 
 data class InvalidTestCase(
@@ -23,74 +27,89 @@ object InvalidTestCases {
             InvalidTestCase(
                 code = "int main() { return x; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { ret }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { return 5 + 3 }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { return (5 + 3; } ;",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { return --9; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             // Expression errors
             InvalidTestCase(
                 code = "int main(void) { return +; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { return * 5; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { return 5 / ; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { return 5 % ; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
                 code = "int 5;",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             // Invalid Relational/Logical Expressions ---
             InvalidTestCase(
                 code = "int main(void) { return 5 <; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { return > 10; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { return 1 &&; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { return || 0; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenSyntaxException::class
+                expectedException = UnexpectedTokenException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { a = 3; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = UndeclaredVariableException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { int a; int a; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = DuplicateVariableDeclaration::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { 2 = 3; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = InvalidLValueException::class
             )
         )
 }

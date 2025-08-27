@@ -1,13 +1,15 @@
 package parser
 
+import exceptions.InvalidLValueException
 import exceptions.UnexpectedEndOfFileException
-import exceptions.UnexpectedTokenSyntaxException
+import exceptions.UnexpectedTokenException
 import lexer.Token
 import lexer.TokenType
 
 class Parser {
     private val precedenceMap =
         mapOf(
+            TokenType.ASSIGN to 1,
             TokenType.OR to 5,
             TokenType.AND to 10,
             TokenType.EQUAL_TO to 30,
@@ -46,19 +48,45 @@ class Parser {
     }
 
     private fun parseFunction(tokens: MutableList<Token>): FunctionDefinition {
-        val first = tokens.firstOrNull()
         expect(TokenType.KEYWORD_INT, tokens)
         val name = parseIdentifier(tokens)
         expect(TokenType.LEFT_PAREN, tokens)
         expect(TokenType.KEYWORD_VOID, tokens)
         expect(TokenType.RIGHT_PAREN, tokens)
         expect(TokenType.LEFT_BRACK, tokens)
-        val body = parseStatement(tokens)
+        val body = mutableListOf<BlockItem>()
+        while (!tokens.isEmpty() && tokens.first().type != TokenType.RIGHT_BRACK) {
+            val next = parseBlockItem(tokens)
+            body.add(next)
+        }
         expect(TokenType.RIGHT_BRACK, tokens)
 
-        return SimpleFunction(
+        return Function(
             name = name,
             body = body
+        )
+    }
+
+    private fun parseBlockItem(tokens: MutableList<Token>): BlockItem =
+        if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
+            D(parseDeclaration(tokens))
+        } else {
+            S(parseStatement(tokens))
+        }
+
+    private fun parseDeclaration(tokens: MutableList<Token>): Declaration {
+        expect(TokenType.KEYWORD_INT, tokens)
+        val name = parseIdentifier(tokens)
+        var exp: Expression? = null
+        if (!tokens.isEmpty() && tokens.first().type == TokenType.ASSIGN) {
+            tokens.removeFirst()
+            exp = parseExpression(tokens = tokens)
+        }
+        expect(TokenType.SEMICOLON, tokens)
+
+        return Declaration(
+            name = name,
+            init = exp
         )
     }
 
@@ -66,10 +94,13 @@ class Parser {
         expected: TokenType,
         tokens: MutableList<Token>
     ): Token {
+        if (tokens.isEmpty()) {
+            throw UnexpectedEndOfFileException()
+        }
         val token = tokens.removeFirst()
 
         if (token.type != expected) {
-            throw UnexpectedTokenSyntaxException(
+            throw UnexpectedTokenException(
                 expected = expected.toString(),
                 actual = token.type.toString(),
                 line = token.line,
@@ -83,7 +114,7 @@ class Parser {
     private fun parseIdentifier(tokens: MutableList<Token>): String {
         val token = tokens.removeFirst()
         if (token.type != TokenType.IDENTIFIER) {
-            throw UnexpectedTokenSyntaxException(
+            throw UnexpectedTokenException(
                 expected = TokenType.IDENTIFIER.toString(),
                 actual = token.type.toString(),
                 line = token.line,
@@ -95,14 +126,23 @@ class Parser {
     }
 
     private fun parseStatement(tokens: MutableList<Token>): Statement {
-        val first = tokens.firstOrNull()
-        expect(TokenType.KEYWORD_RETURN, tokens)
+        var first: Token? = null
+        if (!tokens.isEmpty() && tokens.first().type == TokenType.KEYWORD_RETURN) {
+            first = tokens.removeFirst()
+        } else if (!tokens.isEmpty() && tokens.first().type == TokenType.SEMICOLON) {
+            tokens.removeFirst()
+            return NullStatement()
+        }
         val expression = parseExpression(tokens = tokens)
         expect(TokenType.SEMICOLON, tokens)
 
-        return ReturnStatement(
-            expression = expression
-        )
+        return if (first != null) {
+            ReturnStatement(
+                expression = expression
+            )
+        } else {
+            ExpressionStatement(expression)
+        }
     }
 
     private fun parseExpression(
@@ -112,22 +152,27 @@ class Parser {
         var left = parseFactor(tokens)
 
         while (tokens.isNotEmpty()) {
-            val nextToken = tokens.first()
-            val prec = precedenceMap[nextToken.type] ?: break
+            val nextType = tokens.first().type
+            val prec = precedenceMap[nextType] ?: break
+            if (prec < minPrec) break
 
-            if (prec < minPrec) {
-                break
-            }
-
-            val operator = tokens.removeFirst()
-            val right = parseExpression(prec + 5, tokens)
+            val op = tokens.removeFirst()
 
             left =
-                BinaryExpression(
-                    left = left,
-                    operator = operator,
-                    right = right
-                )
+                if (nextType == TokenType.ASSIGN) {
+                    val right = parseExpression(prec, tokens)
+                    if (left !is VariableExpression) {
+                        throw InvalidLValueException()
+                    }
+                    AssignmentExpression(left, right)
+                } else {
+                    val right = parseExpression(prec + 1, tokens)
+                    BinaryExpression(
+                        left = left,
+                        operator = op,
+                        right = right
+                    )
+                }
         }
         return left
     }
@@ -137,7 +182,10 @@ class Parser {
         if (nextToken.type == TokenType.INT_LITERAL) {
             nextToken = tokens.removeFirst()
             return IntExpression(value = nextToken.lexeme.toInt())
-        } else if (nextToken.type == TokenType.TILDE || nextToken.type == TokenType.NEGATION) {
+        } else if (nextToken.type == TokenType.IDENTIFIER) {
+            nextToken = tokens.removeFirst()
+            return VariableExpression(name = nextToken.lexeme)
+        } else if (nextToken.type == TokenType.TILDE || nextToken.type == TokenType.NEGATION || nextToken.type == TokenType.NOT) {
             val operator = tokens.removeFirst()
             val factor = parseFactor(tokens)
             return UnaryExpression(operator = operator, expression = factor)
@@ -148,9 +196,9 @@ class Parser {
             return expression
         } else {
             val nToken = tokens.removeFirst()
-            throw UnexpectedTokenSyntaxException(
+            throw UnexpectedTokenException(
                 expected =
-                "${TokenType.INT_LITERAL}, ${TokenType.TILDE}, ${TokenType.NEGATION}, ${TokenType.LEFT_PAREN}, ${TokenType.RIGHT_PAREN}",
+                "${TokenType.INT_LITERAL}, ${TokenType.IDENTIFIER}, unary operator, ${TokenType.LEFT_PAREN}",
                 actual = nToken.type.toString(),
                 line = nToken.line,
                 column = nToken.column
