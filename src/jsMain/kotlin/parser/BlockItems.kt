@@ -18,8 +18,6 @@ class NullStatement : Statement() {
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 
     override fun equals(other: Any?): Boolean = other is NullStatement
-
-    override fun hashCode(): Int = this::class.js.hashCode()
 }
 
 data class Declaration(
