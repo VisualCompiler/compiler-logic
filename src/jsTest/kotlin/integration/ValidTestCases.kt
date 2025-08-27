@@ -20,6 +20,21 @@ import assembly.Mov
 import assembly.Register
 import assembly.SetCC
 import assembly.Stack
+import lexer.Token
+import lexer.TokenType
+import parser.ASTNode
+import parser.AssignmentExpression
+import parser.BinaryExpression
+import parser.D
+import parser.Declaration
+import parser.ExpressionStatement
+import parser.Function
+import parser.IntExpression
+import parser.ReturnStatement
+import parser.S
+import parser.SimpleProgram
+import parser.UnaryExpression
+import parser.VariableExpression
 import tacky.JumpIfNotZero
 import tacky.JumpIfZero
 import tacky.TackyBinary
@@ -38,8 +53,8 @@ import tacky.TackyVar
 data class ValidTestCase(
     val title: String? = null,
     val code: String,
-    val expectedTokenList: List<lexer.Token>? = null,
-    val expectedAst: parser.ASTNode? = null,
+    val expectedTokenList: List<Token>? = null,
+    val expectedAst: ASTNode? = null,
     val expectedTacky: TackyProgram? = null,
     val expectedAssembly: AsmProgram? = null
 )
@@ -52,79 +67,83 @@ object ValidTestCases {
                 code = "int main(void)   \n { return (5 - 3) * 4 + ~(-5) / 6 % 3; }",
                 expectedTokenList =
                 listOf(
-                    lexer.Token(lexer.TokenType.KEYWORD_INT, "int", 1, 1),
-                    lexer.Token(lexer.TokenType.IDENTIFIER, "main", 1, 5),
-                    lexer.Token(lexer.TokenType.LEFT_PAREN, "(", 1, 9),
-                    lexer.Token(lexer.TokenType.KEYWORD_VOID, "void", 1, 10),
-                    lexer.Token(lexer.TokenType.RIGHT_PAREN, ")", 1, 14),
-                    lexer.Token(lexer.TokenType.LEFT_BRACK, "{", 2, 2),
-                    lexer.Token(lexer.TokenType.KEYWORD_RETURN, "return", 2, 4),
-                    lexer.Token(lexer.TokenType.LEFT_PAREN, "(", 2, 11),
-                    lexer.Token(lexer.TokenType.INT_LITERAL, "5", 2, 12),
-                    lexer.Token(lexer.TokenType.NEGATION, "-", 2, 14),
-                    lexer.Token(lexer.TokenType.INT_LITERAL, "3", 2, 16),
-                    lexer.Token(lexer.TokenType.RIGHT_PAREN, ")", 2, 17),
-                    lexer.Token(lexer.TokenType.MULTIPLY, "*", 2, 19),
-                    lexer.Token(lexer.TokenType.INT_LITERAL, "4", 2, 21),
-                    lexer.Token(lexer.TokenType.PLUS, "+", 2, 23),
-                    lexer.Token(lexer.TokenType.TILDE, "~", 2, 25),
-                    lexer.Token(lexer.TokenType.LEFT_PAREN, "(", 2, 26),
-                    lexer.Token(lexer.TokenType.NEGATION, "-", 2, 27),
-                    lexer.Token(lexer.TokenType.INT_LITERAL, "5", 2, 28),
-                    lexer.Token(lexer.TokenType.RIGHT_PAREN, ")", 2, 29),
-                    lexer.Token(lexer.TokenType.DIVIDE, "/", 2, 31),
-                    lexer.Token(lexer.TokenType.INT_LITERAL, "6", 2, 33),
-                    lexer.Token(lexer.TokenType.REMAINDER, "%", 2, 35),
-                    lexer.Token(lexer.TokenType.INT_LITERAL, "3", 2, 37),
-                    lexer.Token(lexer.TokenType.SEMICOLON, ";", 2, 38),
-                    lexer.Token(lexer.TokenType.RIGHT_BRACK, "}", 2, 40),
-                    lexer.Token(lexer.TokenType.EOF, "", 2, 41)
+                    Token(TokenType.KEYWORD_INT, "int", 1, 1),
+                    Token(TokenType.IDENTIFIER, "main", 1, 5),
+                    Token(TokenType.LEFT_PAREN, "(", 1, 9),
+                    Token(TokenType.KEYWORD_VOID, "void", 1, 10),
+                    Token(TokenType.RIGHT_PAREN, ")", 1, 14),
+                    Token(TokenType.LEFT_BRACK, "{", 2, 2),
+                    Token(TokenType.KEYWORD_RETURN, "return", 2, 4),
+                    Token(TokenType.LEFT_PAREN, "(", 2, 11),
+                    Token(TokenType.INT_LITERAL, "5", 2, 12),
+                    Token(TokenType.NEGATION, "-", 2, 14),
+                    Token(TokenType.INT_LITERAL, "3", 2, 16),
+                    Token(TokenType.RIGHT_PAREN, ")", 2, 17),
+                    Token(TokenType.MULTIPLY, "*", 2, 19),
+                    Token(TokenType.INT_LITERAL, "4", 2, 21),
+                    Token(TokenType.PLUS, "+", 2, 23),
+                    Token(TokenType.TILDE, "~", 2, 25),
+                    Token(TokenType.LEFT_PAREN, "(", 2, 26),
+                    Token(TokenType.NEGATION, "-", 2, 27),
+                    Token(TokenType.INT_LITERAL, "5", 2, 28),
+                    Token(TokenType.RIGHT_PAREN, ")", 2, 29),
+                    Token(TokenType.DIVIDE, "/", 2, 31),
+                    Token(TokenType.INT_LITERAL, "6", 2, 33),
+                    Token(TokenType.REMAINDER, "%", 2, 35),
+                    Token(TokenType.INT_LITERAL, "3", 2, 37),
+                    Token(TokenType.SEMICOLON, ";", 2, 38),
+                    Token(TokenType.RIGHT_BRACK, "}", 2, 40),
+                    Token(TokenType.EOF, "", 2, 41)
                 ),
                 expectedAst =
-                parser.SimpleProgram(
+                SimpleProgram(
                     functionDefinition =
-                    parser.SimpleFunction(
+                    Function(
                         name = "main",
                         body =
-                        parser.ReturnStatement(
-                            expression =
-                            parser.BinaryExpression(
-                                left =
-                                parser.BinaryExpression(
-                                    left =
-                                    parser.BinaryExpression(
-                                        left = parser.IntExpression(5),
-                                        operator = lexer.Token(lexer.TokenType.NEGATION, "-", 2, 14),
-                                        right = parser.IntExpression(3)
-                                    ),
-                                    operator = lexer.Token(lexer.TokenType.MULTIPLY, "*", 2, 19),
-                                    right = parser.IntExpression(4)
-                                ),
-                                operator = lexer.Token(lexer.TokenType.PLUS, "+", 2, 23),
-                                right =
-                                parser.BinaryExpression(
-                                    left =
-                                    parser.BinaryExpression(
+                        listOf(
+                            S(
+                                ReturnStatement(
+                                    expression =
+                                    BinaryExpression(
                                         left =
-                                        parser.UnaryExpression(
-                                            operator = lexer.Token(lexer.TokenType.TILDE, "~", 2, 25),
-                                            expression =
-                                            parser.UnaryExpression(
-                                                operator =
-                                                lexer.Token(
-                                                    lexer.TokenType.NEGATION,
-                                                    "-",
-                                                    2,
-                                                    27
-                                                ),
-                                                expression = parser.IntExpression(5)
-                                            )
+                                        BinaryExpression(
+                                            left =
+                                            BinaryExpression(
+                                                left = IntExpression(5),
+                                                operator = Token(TokenType.NEGATION, "-", 2, 14),
+                                                right = IntExpression(3)
+                                            ),
+                                            operator = Token(TokenType.MULTIPLY, "*", 2, 19),
+                                            right = IntExpression(4)
                                         ),
-                                        operator = lexer.Token(lexer.TokenType.DIVIDE, "/", 2, 31),
-                                        right = parser.IntExpression(6)
-                                    ),
-                                    operator = lexer.Token(lexer.TokenType.REMAINDER, "%", 2, 35),
-                                    right = parser.IntExpression(3)
+                                        operator = Token(TokenType.PLUS, "+", 2, 23),
+                                        right =
+                                        BinaryExpression(
+                                            left =
+                                            BinaryExpression(
+                                                left =
+                                                UnaryExpression(
+                                                    operator = Token(TokenType.TILDE, "~", 2, 25),
+                                                    expression =
+                                                    UnaryExpression(
+                                                        operator =
+                                                        Token(
+                                                            TokenType.NEGATION,
+                                                            "-",
+                                                            2,
+                                                            27
+                                                        ),
+                                                        expression = IntExpression(5)
+                                                    )
+                                                ),
+                                                operator = Token(TokenType.DIVIDE, "/", 2, 31),
+                                                right = IntExpression(6)
+                                            ),
+                                            operator = Token(TokenType.REMAINDER, "%", 2, 35),
+                                            right = IntExpression(3)
+                                        )
+                                    )
                                 )
                             )
                         )
@@ -151,7 +170,9 @@ object ValidTestCases {
                             // tmp.1 + tmp.5 -> tmp.6
                             TackyBinary(TackyBinaryOP.ADD, TackyVar("tmp.1"), TackyVar("tmp.5"), TackyVar("tmp.6")),
                             // Return tmp.6
-                            TackyRet(TackyVar("tmp.6"))
+                            TackyRet(TackyVar("tmp.6")),
+                            // Return 0
+                            TackyRet(TackyConstant(0))
                         )
                     )
                 ),
@@ -202,7 +223,8 @@ object ValidTestCases {
                             Mov(Stack(-24), Register(HardwareRegister.R10D)),
                             AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-28)),
                             // Final return
-                            Mov(Stack(-28), Register(HardwareRegister.EAX))
+                            Mov(Stack(-28), Register(HardwareRegister.EAX)),
+                            Mov(src = Imm(value = 0), dest = Register(name = HardwareRegister.EAX))
                         )
                     )
                 )
@@ -250,7 +272,8 @@ object ValidTestCases {
                             // End of OR block
                             TackyLabel(".L_or_end_1"),
                             // Final return
-                            TackyRet(TackyVar("tmp.0"))
+                            TackyRet(TackyVar("tmp.0")),
+                            TackyRet(TackyConstant(0))
                         )
                     )
                 ),
@@ -303,10 +326,128 @@ object ValidTestCases {
                             Mov(src = Imm(value = 1), dest = Stack(offset = -20)),
                             Label(name = ".L_or_end_1"),
                             // Final return tmp.0
-                            Mov(src = Stack(offset = -20), dest = Register(name = HardwareRegister.EAX))
+                            Mov(src = Stack(offset = -20), dest = Register(name = HardwareRegister.EAX)),
+                            Mov(src = Imm(value = 0), dest = Register(name = HardwareRegister.EAX))
                         )
                     )
                 )
+            ),
+            ValidTestCase(
+                title = "Local variables",
+                code =
+                """int main(void) { 
+                    |int b; 
+                    |int a = 10 + 1;
+                    |b = (a=2) * 2;
+                    |return b; 
+                    |}
+                """.trimMargin(),
+                expectedTokenList =
+                listOf(
+                    Token(TokenType.KEYWORD_INT, "int", 1, 1),
+                    Token(TokenType.IDENTIFIER, "main", 1, 5),
+                    Token(TokenType.LEFT_PAREN, "(", 1, 9),
+                    Token(TokenType.KEYWORD_VOID, "void", 1, 10),
+                    Token(TokenType.RIGHT_PAREN, ")", 1, 14),
+                    Token(TokenType.LEFT_BRACK, "{", 1, 16),
+                    // int b;
+                    Token(TokenType.KEYWORD_INT, "int", 2, 1),
+                    Token(TokenType.IDENTIFIER, "b", 2, 5),
+                    Token(TokenType.SEMICOLON, ";", 2, 6),
+                    // int a = 10 + 1;
+                    Token(TokenType.KEYWORD_INT, "int", 3, 1),
+                    Token(TokenType.IDENTIFIER, "a", 3, 5),
+                    Token(TokenType.ASSIGN, "=", 3, 7),
+                    Token(TokenType.INT_LITERAL, "10", 3, 9),
+                    Token(TokenType.PLUS, "+", 3, 12),
+                    Token(TokenType.INT_LITERAL, "1", 3, 14),
+                    Token(TokenType.SEMICOLON, ";", 3, 15),
+                    // b = (a=2) * 2;
+                    Token(TokenType.IDENTIFIER, "b", 4, 1),
+                    Token(TokenType.ASSIGN, "=", 4, 3),
+                    Token(TokenType.LEFT_PAREN, "(", 4, 5),
+                    Token(TokenType.IDENTIFIER, "a", 4, 6),
+                    Token(TokenType.ASSIGN, "=", 4, 7),
+                    Token(TokenType.INT_LITERAL, "2", 4, 8),
+                    Token(TokenType.RIGHT_PAREN, ")", 4, 9),
+                    Token(TokenType.MULTIPLY, "*", 4, 11),
+                    Token(TokenType.INT_LITERAL, "2", 4, 13),
+                    Token(TokenType.SEMICOLON, ";", 4, 14),
+                    // return b;
+                    Token(TokenType.KEYWORD_RETURN, "return", 5, 1),
+                    Token(TokenType.IDENTIFIER, "b", 5, 8),
+                    Token(TokenType.SEMICOLON, ";", 5, 9),
+                    Token(TokenType.RIGHT_BRACK, "}", 6, 1),
+                    Token(TokenType.EOF, "", 6, 2)
+                ),
+                expectedAst =
+                SimpleProgram(
+                    functionDefinition =
+                    Function(
+                        name = "main",
+                        body =
+                        listOf(
+                            D(Declaration(name = "b.0", init = null)),
+                            D(
+                                Declaration(
+                                    name = "a.1",
+                                    init =
+                                    BinaryExpression(
+                                        left = IntExpression(10),
+                                        operator = Token(TokenType.PLUS, "+", 3, 12),
+                                        right = IntExpression(1)
+                                    )
+                                )
+                            ),
+                            S(
+                                ExpressionStatement(
+                                    AssignmentExpression(
+                                        lvalue = VariableExpression("b.0"),
+                                        rvalue =
+                                        BinaryExpression(
+                                            left =
+                                            AssignmentExpression(
+                                                lvalue = VariableExpression("a.1"),
+                                                rvalue = IntExpression(2)
+                                            ),
+                                            operator = Token(TokenType.MULTIPLY, "*", 4, 11),
+                                            right = IntExpression(2)
+                                        )
+                                    )
+                                )
+                            ),
+                            S(
+                                ReturnStatement(
+                                    expression = VariableExpression("b.0")
+                                )
+                            )
+                        )
+                    )
+                ),
+                expectedTacky =
+                TackyProgram(
+                    TackyFunction(
+                        name = "main",
+                        body =
+                        listOf(
+                            TackyBinary(TackyBinaryOP.ADD, TackyConstant(10), TackyConstant(1), TackyVar("tmp.0")),
+                            TackyCopy(TackyVar("tmp.0"), TackyVar("a.1")),
+                            TackyCopy(TackyConstant(2), TackyVar("a.1")),
+                            TackyBinary(TackyBinaryOP.MULTIPLY, TackyVar("a.1"), TackyConstant(2), TackyVar("tmp.1")),
+                            TackyCopy(TackyVar("tmp.1"), TackyVar("b.0")),
+                            TackyRet(TackyVar("b.0")),
+                            TackyRet(TackyConstant(0))
+                        )
+                    )
+                ),
+                expectedAssembly = null
             )
         )
 }
+// <SimpleProgram(functionDefinition=Function(name=main, body=[D(declaration=Declaration(name=b, init=null)), D(declaration=Declaration(name=a, init=BinaryExpression(left=IntExpression(value=10), operator=Token(type=PLUS, lexeme=+, line=1, column=1), right=IntExpression(value=1)))), S(statement=ExpressionStatement(expression=AssignmentExpression(lvalue=VariableExpression(name=b), rvalue=BinaryExpression(left=AssignmentExpression(lvalue=VariableExpression(name=a), rvalue=IntExpression(value=2)), operator=Token(type=MULTIPLY, lexeme=*, line=1, column=1), right=IntExpression(value=2))))), S(statement=ReturnStatement(expression=VariableExpression(name=b)))]))>, actual
+// <SimpleProgram(functionDefinition=Function(name=main, body=[D(declaration=Declaration(name=b, init=null)), D(declaration=Declaration(name=a, init=BinaryExpression(left=IntExpression(value=10), operator=Token(type=PLUS, lexeme=+, line=3, column=12), right=IntExpression(value=1)))), S(statement=ExpressionStatement(expression=AssignmentExpression(lvalue=VariableExpression(name=b), rvalue=BinaryExpression(left=AssignmentExpression(lvalue=VariableExpression(name=a), rvalue=IntExpression(value=2)), operator=Token(type=MULTIPLY, lexeme=*, line=4, column=11), right=IntExpression(value=2))))), S(statement=ReturnStatement(expression=VariableExpression(name=b)))]))>.
+// <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=var.1)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=var.1)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=var.1), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyCopy(src=TackyVar(name=tmp.1), dest=TackyVar(name=var.0)), TackyRet(value=TackyVar(name=var.0))]))>, actual
+// <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=var.1)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=a)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=a), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyCopy(src=TackyVar(name=tmp.1), dest=TackyVar(name=b)), TackyRet(value=TackyVar(name=b)), TackyRet(value=TackyConstant(value=0))]))>.
+// <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=var.1)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=var.1)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=var.1), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyCopy(src=TackyVar(name=tmp.1), dest=TackyVar(name=var.0)), TackyRet(value=TackyVar(name=var.0)), TackyRet(value=TackyConstant(value=0))]))>, actual
+// <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=a)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=tmp.1), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.2)), TackyCopy(src=TackyVar(name=tmp.2), dest=TackyVar(name=tmp.3)), TackyRet(value=TackyVar(name=b)), TackyRet(value=TackyConstant(value=0))]))>.
+// AssertionError: Expected <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=a.1)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=a.1)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=a.1), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyCopy(src=TackyVar(name=tmp.1), dest=TackyVar(name=b.0)), TackyRet(value=TackyVar(name=b.0)), TackyRet(value=TackyConstant(value=0))]))>, actual <TackyProgram(function=TackyFunction(name=main, body=[TackyBinary(operator=ADD, src1=TackyConstant(value=10), src2=TackyConstant(value=1), dest=TackyVar(name=tmp.0)), TackyCopy(src=TackyVar(name=tmp.0), dest=TackyVar(name=a)), TackyCopy(src=TackyConstant(value=2), dest=TackyVar(name=a)), TackyBinary(operator=MULTIPLY, src1=TackyVar(name=a), src2=TackyConstant(value=2), dest=TackyVar(name=tmp.1)), TackyCopy(src=TackyVar(name=tmp.1), dest=TackyVar(name=b)), TackyRet(value=TackyVar(name=b)), TackyRet(value=TackyConstant(value=0))]))>.

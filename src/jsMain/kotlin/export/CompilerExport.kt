@@ -5,7 +5,7 @@ import assembly.CodeEmitter
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
 import exceptions.CodeGenerationException
-import exceptions.CompilationException
+import exceptions.CompilationExceptions
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -39,7 +39,7 @@ class CompilerExport {
                     tokens = lexer.toJsonString(),
                     errors = emptyArray()
                 )
-            } catch (e: CompilationException) {
+            } catch (e: CompilationExceptions) {
                 val error =
                     CompilationError(
                         type = ErrorType.LEXICAL,
@@ -64,7 +64,7 @@ class CompilerExport {
                         errors = emptyArray(),
                         ast = ast.accept(ASTExport())
                     )
-                } catch (e: CompilationException) {
+                } catch (e: CompilationExceptions) {
                     val error =
                         CompilationError(
                             type = ErrorType.SYNTAX,
@@ -95,7 +95,7 @@ class CompilerExport {
                         tackyPretty = tackyProgram?.toPseudoCode(),
                         errors = emptyArray()
                     )
-                } catch (e: CompilationException) {
+                } catch (e: CompilationExceptions) {
                     val error =
                         CompilationError(
                             type = ErrorType.CODE_GENERATION,

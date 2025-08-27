@@ -2,14 +2,17 @@ package integration
 
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
+import compiler.parser.VariableResolution
 import lexer.Lexer
 import parser.Parser
+import parser.SimpleProgram
 import tacky.TackyGenVisitor
 import tacky.TackyProgram
 import tacky.TackyToAsm
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 
 enum class CompilerStage {
     LEXER,
@@ -19,6 +22,13 @@ enum class CompilerStage {
 }
 
 class CompilerTestSuite {
+    private val parser = Parser()
+    private val tackyGenVisitor = TackyGenVisitor()
+    private val variableResolution = VariableResolution()
+    private val tackyToAsmConverter = TackyToAsm()
+    private val instructionFixer = InstructionFixer()
+    private val pseudoEliminator = PseudoEliminator()
+
     @Test
     fun testValidPrograms() {
         ValidTestCases.testCases.forEach { testCase ->
@@ -26,33 +36,63 @@ class CompilerTestSuite {
             val lexer = Lexer(testCase.code)
             val tokens = lexer.tokenize()
             if (testCase.expectedTokenList != null) {
-                assertEquals(testCase.expectedTokenList, tokens)
+                assertEquals(
+                    expected = testCase.expectedTokenList,
+                    actual = tokens,
+                    message =
+                    """
+                        |Expected:${testCase.expectedTokenList}
+                        |                  Actual:$tokens
+                    """.trimMargin()
+                )
             }
 
             // Parser stage
-            val parser = Parser()
             val ast = parser.parseTokens(tokens)
+            assertIs<SimpleProgram>(ast)
+            val transformedAst = variableResolution.visit(ast)
             if (testCase.expectedAst != null) {
-                assertEquals(testCase.expectedAst, ast)
+                assertEquals(
+                    expected = testCase.expectedAst,
+                    actual = transformedAst,
+                    message =
+                    """
+                        |Expected:${testCase.expectedAst}
+                        |                  Actual:$transformedAst
+                    """.trimMargin()
+                )
             }
 
             // Tacky generation stage
-            val tackyGenVisitor = TackyGenVisitor()
-            val tackyResult = ast.accept(tackyGenVisitor)
-            val tackyProgram = tackyResult as? TackyProgram
+            assertIs<SimpleProgram>(transformedAst)
+            val tacky = transformedAst.accept(tackyGenVisitor)
+            assertIs<TackyProgram>(tacky)
             if (testCase.expectedTacky != null) {
-                assertEquals(testCase.expectedTacky, tackyProgram)
+                assertEquals(
+                    expected = testCase.expectedTacky,
+                    actual = tacky,
+                    message =
+                    """
+                        |Expected:${testCase.expectedTacky}
+                        |                  Actual:$tacky
+                    """.trimMargin()
+                )
             }
 
             // Assembly generation stage
-            val tackyToAsmConverter = TackyToAsm()
-            val asmWithPseudos = tackyToAsmConverter.convert(tackyProgram!!)
-            val pseudoEliminator = PseudoEliminator()
+            val asmWithPseudos = tackyToAsmConverter.convert(tacky)
             val (asmWithStack, stackSpaceNeeded) = pseudoEliminator.eliminate(asmWithPseudos)
-            val instructionFixer = InstructionFixer()
             val finalAsmProgram = instructionFixer.fix(asmWithStack, stackSpaceNeeded)
             if (testCase.expectedAssembly != null) {
-                assertEquals(testCase.expectedAssembly, finalAsmProgram)
+                assertEquals(
+                    expected = testCase.expectedAssembly,
+                    actual = finalAsmProgram,
+                    message =
+                    """
+                        |Expected:${testCase.expectedAssembly}
+                        |                  Actual:$finalAsmProgram
+                    """.trimMargin()
+                )
             }
         }
     }

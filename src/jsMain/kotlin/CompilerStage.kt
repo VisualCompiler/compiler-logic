@@ -4,5 +4,5 @@ enum class CompilerStage {
     LEXER,
     PARSER,
     TACKY,
-    CODE_GENERATOR
+    ASSEMBLY
 }

@@ -10,6 +10,12 @@ data class IntExpression(
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
 
+data class VariableExpression(
+    val name: String
+) : Expression() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
 data class UnaryExpression(
     val operator: Token,
     val expression: Expression
@@ -21,6 +27,13 @@ data class BinaryExpression(
     val left: Expression,
     val operator: Token,
     val right: Expression
+) : Expression() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class AssignmentExpression(
+    val lvalue: VariableExpression,
+    val rvalue: Expression
 ) : Expression() {
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }

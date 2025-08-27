@@ -2,38 +2,18 @@ package tacky
 
 sealed class TackyInstruction : TackyConstruct()
 
-private fun TackyUnaryOP.toSymbol(): String =
-    when (this) {
-        TackyUnaryOP.NEGATE -> "-"
-        TackyUnaryOP.COMPLEMENT -> "~"
-        TackyUnaryOP.NOT -> "!"
-    }
-
-private fun TackyBinaryOP.toSymbol(): String =
-    when (this) {
-        TackyBinaryOP.ADD -> "+"
-        TackyBinaryOP.SUBTRACT -> "-"
-        TackyBinaryOP.MULTIPLY -> "*"
-        TackyBinaryOP.DIVIDE -> "/"
-        TackyBinaryOP.REMAINDER -> "%"
-        TackyBinaryOP.EQUAL -> "=="
-        TackyBinaryOP.NOT_EQUAL -> "!="
-        TackyBinaryOP.LESS -> "<"
-        TackyBinaryOP.LESS_EQUAL -> "<="
-        TackyBinaryOP.GREATER -> ">"
-        TackyBinaryOP.GREATER_EQUAL -> ">="
-    }
-
 data class TackyRet(
     val value: TackyVal
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}return ${value.toPseudoCode()}"
 }
 
-enum class TackyUnaryOP {
-    COMPLEMENT,
-    NEGATE,
-    NOT
+enum class TackyUnaryOP(
+    val text: String
+) {
+    COMPLEMENT("~"),
+    NEGATE("-"),
+    NOT("!")
 }
 
 data class TackyUnary(
@@ -42,21 +22,23 @@ data class TackyUnary(
     val dest: TackyVar
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String =
-        "${indent(indentationLevel)}${dest.toPseudoCode()} = ${operator.toSymbol()}${src.toPseudoCode()}"
+        "${indent(indentationLevel)}${dest.toPseudoCode()} = ${operator.text}${src.toPseudoCode()}"
 }
 
-enum class TackyBinaryOP {
-    ADD,
-    SUBTRACT,
-    MULTIPLY,
-    DIVIDE,
-    REMAINDER,
-    LESS,
-    GREATER,
-    LESS_EQUAL,
-    GREATER_EQUAL,
-    EQUAL,
-    NOT_EQUAL
+enum class TackyBinaryOP(
+    val text: String
+) {
+    ADD("+"),
+    SUBTRACT("-"),
+    MULTIPLY("*"),
+    DIVIDE("/"),
+    REMAINDER("%"),
+    LESS("<"),
+    GREATER(">"),
+    LESS_EQUAL("<="),
+    GREATER_EQUAL(">="),
+    EQUAL("="),
+    NOT_EQUAL("!=")
 }
 
 data class TackyBinary(
@@ -66,7 +48,7 @@ data class TackyBinary(
     val dest: TackyVar
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String =
-        "${indent(indentationLevel)}${dest.toPseudoCode()} = ${src1.toPseudoCode()} ${operator.toSymbol()} ${src2.toPseudoCode()}"
+        "${indent(indentationLevel)}${dest.toPseudoCode()} = ${src1.toPseudoCode()} ${operator.text} ${src2.toPseudoCode()}"
 }
 
 data class TackyCopy(

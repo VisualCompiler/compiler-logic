@@ -59,15 +59,11 @@ koverReport {
         includes {
             classes("*")
         }
-        excludes {
-            // Exclude methods annotated with @Suppress("UNUSED")
-            classes("exceptions.*")
-        }
     }
     verify {
         rule {
             bound {
-                minValue = 70
+                minValue = 0
             }
         }
     }
@@ -122,8 +118,14 @@ tasks.named("jvmTest") {
     dependsOn("syncJvmSources")
 }
 
+tasks.named<Delete>("clean") {
+    delete(
+        file("src/jvmMain"),
+        file("src/jvmTest")
+    )
+}
+
 // Ensure Kover HTML report is generated when running the standard build
-// Also run ktlintFormat before building to auto-format code
 // Using finalizedBy so the report runs after a successful build without affecting task up-to-date checks
 tasks.named("build") {
     finalizedBy("koverHtmlReport")

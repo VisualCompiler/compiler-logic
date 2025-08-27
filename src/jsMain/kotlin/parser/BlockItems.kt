@@ -1,0 +1,40 @@
+package parser
+
+sealed class Statement : ASTNode()
+
+data class ReturnStatement(
+    val expression: Expression
+) : Statement() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class ExpressionStatement(
+    val expression: Expression
+) : Statement() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+class NullStatement : Statement() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class Declaration(
+    val name: String,
+    val init: Expression?
+) : ASTNode() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+sealed class BlockItem : ASTNode()
+
+data class S(
+    val statement: Statement
+) : BlockItem() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class D(
+    val declaration: Declaration
+) : BlockItem() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
