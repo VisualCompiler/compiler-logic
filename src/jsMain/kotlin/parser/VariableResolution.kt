@@ -46,8 +46,8 @@ class VariableResolution : Visitor<ASTNode> {
     override fun visit(node: NullStatement): ASTNode = node
 
     override fun visit(node: Function): ASTNode {
-        val body = node.body.map { it.accept(this) }
-        return Function(node.name, body as List<BlockItem>)
+        val body = node.body.map { it.accept(this) as BlockItem }
+        return Function(node.name, body)
     }
 
     override fun visit(node: VariableExpression): ASTNode =

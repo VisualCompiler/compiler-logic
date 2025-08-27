@@ -4,6 +4,7 @@ import assembly.AsmProgram
 import assembly.CodeEmitter
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
+import compiler.parser.VariableResolution
 import exceptions.CodeGenerationException
 import exceptions.CompilationExceptions
 import kotlinx.serialization.encodeToString
@@ -25,6 +26,14 @@ class CompilerExport {
     fun exportCompilationResults(code: String): String {
         val outputs = mutableListOf<CompilationOutput>()
         val overallErrors = mutableListOf<CompilationError>()
+
+        val parser = Parser()
+        val variableResolution = VariableResolution()
+        val tackyGenVisitor = TackyGenVisitor()
+        val tackyToAsmConverter = TackyToAsm()
+        val pseudoEliminator = PseudoEliminator()
+        val instructionFixer = InstructionFixer()
+        val codeEmitter = CodeEmitter()
 
         var tokens: List<Token>? = null
         var ast: ASTNode? = null
@@ -58,8 +67,8 @@ class CompilerExport {
         val parserOutput =
             if (lexerOutput.errors.isEmpty() && tokens != null) {
                 try {
-                    val parser = Parser()
                     ast = parser.parseTokens(tokens)
+                    ast = ast.accept(variableResolution)
                     ParserOutput(
                         errors = emptyArray(),
                         ast = ast.accept(ASTExport())
@@ -86,11 +95,8 @@ class CompilerExport {
         val tackyOutput =
             if (parserOutput.errors.isEmpty() && ast != null) {
                 try {
-                    val tackyGenVisitor = TackyGenVisitor()
                     val result = ast.accept(tackyGenVisitor)
                     tackyProgram = result as? TackyProgram
-
-                    println("TackyGenVisitor returned TackyProgram: $tackyProgram")
                     TackyOutput(
                         tackyPretty = tackyProgram?.toPseudoCode(),
                         errors = emptyArray()
@@ -118,16 +124,9 @@ class CompilerExport {
         val codeGeneratorOutput =
             if (tackyOutput.errors.isEmpty() && tackyProgram != null) {
                 try {
-                    val tackyToAsmConverter = TackyToAsm()
                     val asmWithPseudos = tackyToAsmConverter.convert(tackyProgram!!)
-
-                    val pseudoEliminator = PseudoEliminator()
                     val (asmWithStack, stackSpaceNeeded) = pseudoEliminator.eliminate(asmWithPseudos)
-
-                    val instructionFixer = InstructionFixer()
                     val finalAsmProgram = instructionFixer.fix(asmWithStack, stackSpaceNeeded)
-
-                    val codeEmitter = CodeEmitter()
                     val finalAssemblyString = codeEmitter.emit(finalAsmProgram as AsmProgram)
 
                     CodeGeneratorOutput(
