@@ -28,6 +28,19 @@ class IfStatement(
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
 
+class GotoStatement(
+    val label: String
+) : Statement() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+class LabeledStatement(
+    val label: String,
+    val statement: Statement
+) : Statement() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
 data class Declaration(
     val name: String,
     val init: Expression?

@@ -9,8 +9,10 @@ import parser.D
 import parser.Declaration
 import parser.ExpressionStatement
 import parser.Function
+import parser.GotoStatement
 import parser.IfStatement
 import parser.IntExpression
+import parser.LabeledStatement
 import parser.NullStatement
 import parser.ReturnStatement
 import parser.S
@@ -200,6 +202,18 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         currentInstructions += endLabel
 
         return resultVar
+    }
+
+    override fun visit(node: GotoStatement): TackyConstruct? {
+        currentInstructions += TackyJump(TackyLabel(node.label))
+        return null
+    }
+
+    override fun visit(node: LabeledStatement): TackyConstruct? {
+        val label = newLabel(node.label)
+        node.statement.accept(this)
+        currentInstructions += TackyLabel(label.name)
+        return null
     }
 
     override fun visit(node: AssignmentExpression): TackyConstruct {

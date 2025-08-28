@@ -128,6 +128,7 @@ class Parser {
 
     private fun parseStatement(tokens: MutableList<Token>): Statement {
         var first: Token? = null
+        val secondToken = if (tokens.size > 1) tokens[1] else null
         if (!tokens.isEmpty() && tokens.first().type == TokenType.IF) {
             tokens.removeFirst()
             expect(TokenType.LEFT_PAREN, tokens)
@@ -146,6 +147,16 @@ class Parser {
         } else if (!tokens.isEmpty() && tokens.first().type == TokenType.SEMICOLON) {
             tokens.removeFirst()
             return NullStatement()
+        } else if (!tokens.isEmpty() && tokens.first().type == TokenType.GOTO) {
+            tokens.removeFirst()
+            val label = parseIdentifier(tokens)
+            expect(TokenType.SEMICOLON, tokens)
+            return GotoStatement(label)
+        } else if (first?.type == TokenType.IDENTIFIER && secondToken?.type == TokenType.COLON) {
+            val labelName = parseIdentifier(tokens)
+            expect(TokenType.COLON, tokens)
+            val statement = parseStatement(tokens)
+            return LabeledStatement(labelName, statement)
         }
         val expression = parseExpression(tokens = tokens)
         expect(TokenType.SEMICOLON, tokens)

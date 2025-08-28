@@ -12,8 +12,10 @@ import parser.Declaration
 import parser.Expression
 import parser.ExpressionStatement
 import parser.Function
+import parser.GotoStatement
 import parser.IfStatement
 import parser.IntExpression
+import parser.LabeledStatement
 import parser.NullStatement
 import parser.ReturnStatement
 import parser.S
@@ -82,6 +84,13 @@ class VariableResolution : Visitor<ASTNode> {
         val elseExpression = node.elseExpression.accept(this) as Expression
         TODO("Manage the scope in Compound statements")
         return ConditionalExpression(condition, thenExpression, elseExpression)
+    }
+
+    override fun visit(node: GotoStatement): ASTNode = node
+
+    override fun visit(node: LabeledStatement): ASTNode {
+        val statement = node.statement.accept(this) as Statement
+        return LabeledStatement(node.label, statement)
     }
 
     override fun visit(node: AssignmentExpression): ASTNode {

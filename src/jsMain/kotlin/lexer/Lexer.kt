@@ -16,6 +16,8 @@ sealed class TokenType {
 
     object ELSE : TokenType()
 
+    object GOTO : TokenType()
+
     // literals
     object INT_LITERAL : TokenType()
 
@@ -103,7 +105,8 @@ class Lexer(
             "void" to TokenType.KEYWORD_VOID,
             "return" to TokenType.KEYWORD_RETURN,
             "if" to TokenType.IF,
-            "else" to TokenType.ELSE
+            "else" to TokenType.ELSE,
+            "goto" to TokenType.GOTO
         )
 
     fun tokenize(): List<Token> {
