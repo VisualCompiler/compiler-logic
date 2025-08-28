@@ -1,68 +1,51 @@
 package integration
 
-import assembly.InstructionFixer
-import assembly.PseudoEliminator
+import assembly.AsmProgram
 import compiler.CompilerStage
-import compiler.parser.LabelAnalysis
-import compiler.parser.VariableResolution
-import lexer.Lexer
-import parser.Parser
+import compiler.CompilerWorkflow
 import parser.SimpleProgram
-import tacky.TackyGenVisitor
 import tacky.TackyProgram
-import tacky.TackyToAsm
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 
 class CompilerTestSuite {
-    private val parser = Parser()
-    private val tackyGenVisitor = TackyGenVisitor()
-
-    // private val variableResolution = VariableResolution()
-    private val tackyToAsmConverter = TackyToAsm()
-    private val instructionFixer = InstructionFixer()
-    private val pseudoEliminator = PseudoEliminator()
-
     @Test
     fun testValidPrograms() {
-        ValidTestCases.testCases.forEach { testCase ->
-            // Lexer stage
-            val lexer = Lexer(testCase.code)
-            val tokens = lexer.tokenize()
+        ValidTestCases.testCases.forEachIndexed { index, testCase ->
+            val tokens = CompilerWorkflow.take(testCase.code)
             if (testCase.expectedTokenList != null) {
                 assertEquals(
                     expected = testCase.expectedTokenList,
                     actual = tokens,
                     message =
                     """
+                        |Test case $index failed with:
                         |Expected:${testCase.expectedTokenList}
-                        |                  Actual:$tokens
+                        |Actual:  $tokens
                     """.trimMargin()
                 )
             }
 
             // Parser stage
-            val ast = parser.parseTokens(tokens)
+            val ast = CompilerWorkflow.take(tokens)
             assertIs<SimpleProgram>(ast)
-            val variableResolution = VariableResolution()
-            val transformedAst = variableResolution.visit(ast)
             if (testCase.expectedAst != null) {
                 assertEquals(
                     expected = testCase.expectedAst,
-                    actual = transformedAst,
+                    actual = ast,
                     message =
                     """
+                        |Test case $index failed with:
                         |Expected:${testCase.expectedAst}
-                        |                  Actual:$transformedAst
+                        |Actual:  $ast
                     """.trimMargin()
                 )
             }
 
             // Tacky generation stage
-            assertIs<SimpleProgram>(transformedAst)
-            val tacky = transformedAst.accept(tackyGenVisitor)
+            val tacky = CompilerWorkflow.take(ast)
             assertIs<TackyProgram>(tacky)
             if (testCase.expectedTacky != null) {
                 assertEquals(
@@ -70,24 +53,25 @@ class CompilerTestSuite {
                     actual = tacky,
                     message =
                     """
+                        |Test case $index failed with: 
                         |Expected:${testCase.expectedTacky}
-                        |                  Actual:$tacky
+                        |Actual:  $tacky
                     """.trimMargin()
                 )
             }
 
             // Assembly generation stage
-            val asmWithPseudos = tackyToAsmConverter.convert(tacky)
-            val (asmWithStack, stackSpaceNeeded) = pseudoEliminator.eliminate(asmWithPseudos)
-            val finalAsmProgram = instructionFixer.fix(asmWithStack, stackSpaceNeeded)
+            val asm = CompilerWorkflow.take(tacky)
+            assertIs<AsmProgram>(asm)
             if (testCase.expectedAssembly != null) {
                 assertEquals(
                     expected = testCase.expectedAssembly,
-                    actual = finalAsmProgram,
+                    actual = asm,
                     message =
                     """
+                        |Test case $index failed with: 
                         |Expected:${testCase.expectedAssembly}
-                        |                  Actual:$finalAsmProgram
+                        |Actual:  $asm
                     """.trimMargin()
                 )
             }
@@ -96,47 +80,35 @@ class CompilerTestSuite {
 
     @Test
     fun testInvalidPrograms() {
-        for (testCase in InvalidTestCases.testCases) {
-            // Lexer stage
-            val lexer = Lexer(testCase.code)
-            if (testCase.failingStage == CompilerStage.LEXER) {
-                assertFailsWith(testCase.expectedException) {
-                    lexer.tokenize()
+        for (i in InvalidTestCases.testCases.indices) {
+            if (InvalidTestCases.testCases[i].failingStage == CompilerStage.LEXER) {
+                assertFailsWith(InvalidTestCases.testCases[i].expectedException, "Test case $i failed with: ") {
+                    CompilerWorkflow.take(InvalidTestCases.testCases[i].code)
                 }
                 continue
             }
-            val tokens = lexer.tokenize()
+            val tokens = CompilerWorkflow.take(InvalidTestCases.testCases[i].code)
 
-            // Parser stage
-            if (testCase.failingStage == CompilerStage.PARSER) {
-                assertFailsWith(testCase.expectedException) {
-                    val labelAnalysis = LabelAnalysis()
-                    val variableResolution = VariableResolution()
-                    val ast = parser.parseTokens(tokens) as SimpleProgram
-                    labelAnalysis.analyze(ast)
-                    variableResolution.visit(ast)
+            if (InvalidTestCases.testCases[i].failingStage == CompilerStage.PARSER) {
+                assertFailsWith(InvalidTestCases.testCases[i].expectedException, "Test case $i failed with: ") {
+                    CompilerWorkflow.take(tokens)
                 }
                 continue
             }
-            val ast = parser.parseTokens(tokens) as SimpleProgram
-            val variableResolution = VariableResolution()
-            val transformedAst = variableResolution.visit(ast)
+            val ast = CompilerWorkflow.take(tokens) as SimpleProgram
 
-            // Tacky generation stage
-            if (testCase.failingStage == CompilerStage.TACKY) {
-                assertFailsWith(testCase.expectedException) {
-                    transformedAst.accept(TackyGenVisitor())
+            if (InvalidTestCases.testCases[i].failingStage == CompilerStage.TACKY) {
+                assertFailsWith(InvalidTestCases.testCases[i].expectedException, "Test case $i failed with: ") {
+                    CompilerWorkflow.take(ast)
                 }
                 continue
             }
-            val tackyProgram = transformedAst.accept(tackyGenVisitor) as TackyProgram
+            val tackyProgram = CompilerWorkflow.take(ast) as TackyProgram
 
             // Assembly stage
-            if (testCase.failingStage == CompilerStage.ASSEMBLY) {
-                assertFailsWith(testCase.expectedException) {
-                    val asmWithPseudos = tackyToAsmConverter.convert(tackyProgram)
-                    val (asmWithStack, stackSpaceNeeded) = pseudoEliminator.eliminate(asmWithPseudos)
-                    instructionFixer.fix(asmWithStack, stackSpaceNeeded)
+            if (InvalidTestCases.testCases[i].failingStage == CompilerStage.ASSEMBLY) {
+                assertFailsWith(InvalidTestCases.testCases[i].expectedException, message = "Test case $i failed with: ") {
+                    CompilerWorkflow.take(tackyProgram)
                 }
                 continue
             }
