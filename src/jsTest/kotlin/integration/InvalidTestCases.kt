@@ -3,6 +3,7 @@ package integration
 import compiler.CompilerStage
 import exceptions.DuplicateVariableDeclaration
 import exceptions.InvalidLValueException
+import exceptions.InvalidStatementException
 import exceptions.LexicalException
 import exceptions.UndeclaredVariableException
 import exceptions.UnexpectedTokenException
@@ -25,9 +26,9 @@ object InvalidTestCases {
             ),
             // Parser errors
             InvalidTestCase(
-                code = "int main() { return x; }",
+                code = "int main(void) { return x; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenException::class
+                expectedException = UndeclaredVariableException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { ret }",

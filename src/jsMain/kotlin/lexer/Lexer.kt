@@ -10,6 +10,16 @@ sealed class TokenType {
 
     object KEYWORD_RETURN : TokenType()
 
+    object KEYWORD_DO : TokenType()
+
+    object KEYWORD_WHILE : TokenType()
+
+    object KEYWORD_FOR : TokenType()
+
+    object KEYWORD_BREAK : TokenType()
+
+    object KEYWORD_CONTINUE : TokenType()
+
     object IDENTIFIER : TokenType()
 
     object IF : TokenType()
@@ -106,7 +116,12 @@ class Lexer(
             "return" to TokenType.KEYWORD_RETURN,
             "if" to TokenType.IF,
             "else" to TokenType.ELSE,
-            "goto" to TokenType.GOTO
+            "goto" to TokenType.GOTO,
+            "while" to TokenType.KEYWORD_WHILE,
+            "for" to TokenType.KEYWORD_FOR,
+            "break" to TokenType.KEYWORD_BREAK,
+            "continue" to TokenType.KEYWORD_CONTINUE,
+            "do" to TokenType.KEYWORD_DO
         )
 
     fun tokenize(): List<Token> {

@@ -6,14 +6,21 @@ import parser.ASTNode
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.BlockItem
+import parser.BreakStatement
 import parser.ConditionalExpression
+import parser.ContinueStatement
 import parser.D
 import parser.Declaration
+import parser.DoWhileStatement
 import parser.Expression
 import parser.ExpressionStatement
+import parser.ForInit
+import parser.ForStatement
 import parser.Function
 import parser.GotoStatement
 import parser.IfStatement
+import parser.InitDeclaration
+import parser.InitExpression
 import parser.IntExpression
 import parser.LabeledStatement
 import parser.NullStatement
@@ -24,6 +31,7 @@ import parser.Statement
 import parser.UnaryExpression
 import parser.VariableExpression
 import parser.Visitor
+import parser.WhileStatement
 
 class VariableResolution : Visitor<ASTNode> {
     private var tempCounter = 0
@@ -33,6 +41,9 @@ class VariableResolution : Visitor<ASTNode> {
     private val variableMap = mutableMapOf<String, String>()
 
     override fun visit(node: SimpleProgram): ASTNode {
+        // Reset state for each program to avoid leaking declarations across compilations
+        variableMap.clear()
+        tempCounter = 0
         val function = node.functionDefinition.accept(this) as Function
         return SimpleProgram(function)
     }
@@ -48,6 +59,45 @@ class VariableResolution : Visitor<ASTNode> {
     }
 
     override fun visit(node: NullStatement): ASTNode = node
+
+    override fun visit(node: BreakStatement): ASTNode = node
+
+    override fun visit(node: ContinueStatement): ASTNode = node
+
+    override fun visit(node: WhileStatement): ASTNode {
+        val cond = node.condition.accept(this) as Expression
+        val newBody = node.body.accept(this) as Statement
+        return WhileStatement(cond, newBody, node.label)
+    }
+
+    override fun visit(node: DoWhileStatement): ASTNode {
+        val cond = node.condition.accept(this) as Expression
+        val newBody = node.body.accept(this) as Statement
+        return DoWhileStatement(cond, newBody, node.label)
+    }
+
+    override fun visit(node: ForStatement): ASTNode {
+        // Create a new inner scope for the for-loop header variables
+        val saved = variableMap.toMutableMap()
+        val newInit = node.init.accept(this) as ForInit
+        val newCond = node.condition?.accept(this) as Expression?
+        val newPost = node.post?.accept(this) as Expression?
+        val newBody = node.body.accept(this) as Statement
+        // Restore the outer scope so header declarations are not visible outside
+        variableMap.clear()
+        variableMap.putAll(saved)
+        return ForStatement(newInit, newCond, newPost, newBody, node.label)
+    }
+
+    override fun visit(node: InitDeclaration): ASTNode {
+        val newDecl = node.declaration.accept(this) as Declaration
+        return InitDeclaration(newDecl)
+    }
+
+    override fun visit(node: InitExpression): ASTNode {
+        val newExp = node.expression?.accept(this) as Expression?
+        return InitExpression(newExp)
+    }
 
     override fun visit(node: Function): ASTNode {
         val body = node.body.map { it.accept(this) as BlockItem }
@@ -73,7 +123,7 @@ class VariableResolution : Visitor<ASTNode> {
     override fun visit(node: IfStatement): ASTNode {
         val condition = node.condition.accept(this) as Expression
         val thenStatement = node.then.accept(this) as Statement
-        var elseStatement = node._else?.accept(this) as Statement?
+        val elseStatement = node._else?.accept(this) as Statement?
         return IfStatement(condition, thenStatement, elseStatement)
     }
 

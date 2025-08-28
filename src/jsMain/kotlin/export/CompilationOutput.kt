@@ -76,8 +76,8 @@ data class CodeGeneratorOutput(
 data class CompilationError(
     val type: ErrorType,
     val message: String,
-    val line: Int,
-    val column: Int
+    val line: Int?,
+    val column: Int?
 )
 
 @OptIn(ExperimentalJsExport::class)

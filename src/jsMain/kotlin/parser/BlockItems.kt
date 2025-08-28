@@ -18,6 +18,60 @@ class NullStatement : Statement() {
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 
     override fun equals(other: Any?): Boolean = other is NullStatement
+
+    override fun hashCode(): Int = this::class.hashCode()
+}
+
+data class BreakStatement(
+    var label: String = ""
+) : Statement() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class ContinueStatement(
+    var label: String = ""
+) : Statement() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class WhileStatement(
+    val condition: Expression,
+    val body: Statement,
+    var label: String = ""
+) : Statement() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class DoWhileStatement(
+    val condition: Expression,
+    val body: Statement,
+    var label: String = ""
+) : Statement() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class ForStatement(
+    val init: ForInit,
+    val condition: Expression?,
+    val post: Expression?,
+    val body: Statement,
+    var label: String = ""
+) : Statement() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+sealed class ForInit : ASTNode()
+
+data class InitDeclaration(
+    val declaration: Declaration
+) : ForInit() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class InitExpression(
+    val expression: Expression?
+) : ForInit() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
 
 class IfStatement(
