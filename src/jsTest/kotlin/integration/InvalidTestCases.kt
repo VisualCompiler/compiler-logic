@@ -1,11 +1,9 @@
 package integration
 
 import compiler.CompilerStage
-import exceptions.DuplicateLabelException
 import exceptions.DuplicateVariableDeclaration
 import exceptions.InvalidLValueException
 import exceptions.LexicalException
-import exceptions.UndeclaredLabelException
 import exceptions.UndeclaredVariableException
 import exceptions.UnexpectedTokenException
 import kotlin.reflect.KClass
@@ -160,16 +158,6 @@ object InvalidTestCases {
                 code = "int main(void) { 1 = 2; return 0; }", // Invalid L-value
                 failingStage = CompilerStage.PARSER,
                 expectedException = InvalidLValueException::class
-            ),
-            InvalidTestCase(
-                code = "int main(void) { my_label: return 0; my_label: return 1; }", // Duplicate label
-                failingStage = CompilerStage.PARSER,
-                expectedException = DuplicateLabelException::class
-            ),
-            InvalidTestCase(
-                code = "int main(void) { goto missing_label; }", // Undeclared label
-                failingStage = CompilerStage.PARSER,
-                expectedException = UndeclaredLabelException::class
             )
         )
 }

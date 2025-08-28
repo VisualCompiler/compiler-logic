@@ -76,13 +76,13 @@ class CompilerExport {
                         errors = emptyArray(),
                         ast = ast.accept(ASTExport())
                     )
-                } catch (e: CompilationExceptions) {
+                } catch (e: Exception) {
                     val error =
                         CompilationError(
                             type = ErrorType.SYNTAX,
                             message = e.message ?: "Unknown syntax error",
-                            line = e.line ?: -1,
-                            column = e.column ?: -1
+                            line = (e as? CompilationExceptions)?.line ?: -1,
+                            column = (e as? CompilationExceptions)?.column ?: -1
                         )
                     overallErrors.add(error)
                     ParserOutput(
