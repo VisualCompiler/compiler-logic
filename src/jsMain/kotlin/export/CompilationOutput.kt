@@ -1,5 +1,6 @@
 package export
 
+import compiler.CompilerStage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -7,26 +8,9 @@ import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
-enum class ErrorType {
-    LEXICAL,
-    SYNTAX,
-    CODE_GENERATION
-}
-
-@OptIn(ExperimentalJsExport::class)
-@JsExport
-enum class CompilationStage {
-    LEXER,
-    PARSER,
-    TACKY,
-    CODE_GENERATOR
-}
-
-@OptIn(ExperimentalJsExport::class)
-@JsExport
 @Serializable
 sealed class CompilationOutput {
-    abstract val stage: CompilationStage
+    abstract val stage: String
     abstract val errors: Array<CompilationError>
 }
 
@@ -35,7 +19,7 @@ sealed class CompilationOutput {
 @Serializable
 @SerialName("LexerOutput")
 data class LexerOutput(
-    override val stage: CompilationStage = CompilationStage.LEXER,
+    override val stage: String = CompilerStage.LEXER.name.lowercase(),
     val tokens: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
@@ -45,7 +29,7 @@ data class LexerOutput(
 @Serializable
 @SerialName("ParserOutput")
 data class ParserOutput(
-    override val stage: CompilationStage = CompilationStage.PARSER,
+    override val stage: String = CompilerStage.PARSER.name.lowercase(),
     val ast: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
@@ -55,7 +39,7 @@ data class ParserOutput(
 @Serializable
 @SerialName("TackyOutput")
 data class TackyOutput(
-    override val stage: CompilationStage = CompilationStage.TACKY,
+    override val stage: String = CompilerStage.TACKY.name.lowercase(),
     val tackyPretty: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
@@ -63,9 +47,9 @@ data class TackyOutput(
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 @Serializable
-@SerialName("CodeGeneratorOutput")
-data class CodeGeneratorOutput(
-    override val stage: CompilationStage = CompilationStage.CODE_GENERATOR,
+@SerialName("AssemblyOutput")
+data class AssemblyOutput(
+    override val stage: String = CompilerStage.ASSEMBLY.name.lowercase(),
     val assembly: String? = null,
     override val errors: Array<CompilationError>
 ) : CompilationOutput()
@@ -74,10 +58,10 @@ data class CodeGeneratorOutput(
 @JsExport
 @Serializable
 data class CompilationError(
-    val type: ErrorType,
+    val stage: String = "undefined",
     val message: String,
-    val line: Int?,
-    val column: Int?
+    val line: Int,
+    val column: Int
 )
 
 @OptIn(ExperimentalJsExport::class)
