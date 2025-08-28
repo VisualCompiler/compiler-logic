@@ -159,6 +159,16 @@ object InvalidTestCases {
                 code = "int main(void) { 1 = 2; return 0; }", // Invalid L-value
                 failingStage = CompilerStage.PARSER,
                 expectedException = InvalidLValueException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { break; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = InvalidStatementException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { continue; }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = InvalidStatementException::class
             )
         )
 }
