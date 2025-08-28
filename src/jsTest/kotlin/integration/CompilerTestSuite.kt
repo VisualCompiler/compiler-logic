@@ -18,7 +18,8 @@ import kotlin.test.assertIs
 class CompilerTestSuite {
     private val parser = Parser()
     private val tackyGenVisitor = TackyGenVisitor()
-    private val variableResolution = VariableResolution()
+
+    // private val variableResolution = VariableResolution()
     private val tackyToAsmConverter = TackyToAsm()
     private val instructionFixer = InstructionFixer()
     private val pseudoEliminator = PseudoEliminator()
@@ -44,6 +45,7 @@ class CompilerTestSuite {
             // Parser stage
             val ast = parser.parseTokens(tokens)
             assertIs<SimpleProgram>(ast)
+            val variableResolution = VariableResolution()
             val transformedAst = variableResolution.visit(ast)
             if (testCase.expectedAst != null) {
                 assertEquals(
@@ -107,12 +109,14 @@ class CompilerTestSuite {
             // Parser stage
             if (testCase.failingStage == CompilerStage.PARSER) {
                 assertFailsWith(testCase.expectedException) {
+                    val variableResolution = VariableResolution()
                     val ast = parser.parseTokens(tokens) as SimpleProgram
                     variableResolution.visit(ast)
                 }
                 continue
             }
             val ast = parser.parseTokens(tokens) as SimpleProgram
+            val variableResolution = VariableResolution()
             val transformedAst = variableResolution.visit(ast)
 
             // Tacky generation stage

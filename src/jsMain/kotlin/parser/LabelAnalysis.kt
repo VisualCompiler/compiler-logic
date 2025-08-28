@@ -23,7 +23,7 @@ import parser.VariableExpression
 import parser.Visitor
 
 class LabelCollector : Visitor<Unit> {
-    val definedLabels = mutableSetOf<String>()
+    val definedLabels: MutableSet<String> = mutableSetOf<String>()
 
     override fun visit(node: LabeledStatement) {
         if (!definedLabels.add(node.label)) {

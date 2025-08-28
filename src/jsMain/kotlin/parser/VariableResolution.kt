@@ -74,7 +74,6 @@ class VariableResolution : Visitor<ASTNode> {
         val condition = node.condition.accept(this) as Expression
         val thenStatement = node.then.accept(this) as Statement
         var elseStatement = node._else?.accept(this) as Statement?
-        TODO("Manage the scope in Compound statements")
         return IfStatement(condition, thenStatement, elseStatement)
     }
 
@@ -82,7 +81,6 @@ class VariableResolution : Visitor<ASTNode> {
         val condition = node.codition.accept(this) as Expression
         val thenExpression = node.thenExpression.accept(this) as Expression
         val elseExpression = node.elseExpression.accept(this) as Expression
-        TODO("Manage the scope in Compound statements")
         return ConditionalExpression(condition, thenExpression, elseExpression)
     }
 

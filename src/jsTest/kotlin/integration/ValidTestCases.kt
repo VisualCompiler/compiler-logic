@@ -191,7 +191,6 @@ object ValidTestCases {
                             // Note: We use R10D here because the destination of the MOV is a register
                             Mov(Stack(-4), Register(HardwareRegister.R10D)),
                             Mov(Register(HardwareRegister.R10D), Stack(-8)),
-                            // --- THIS IS THE KEY CHANGE ---
                             // The fixer sees `imul Imm(4), Stack(-8)` and replaces it
                             Mov(Stack(-8), Register(HardwareRegister.R11D)), // Load dest
                             AsmBinary(AsmBinaryOp.MUL, Imm(4), Register(HardwareRegister.R11D)), // Multiply
@@ -207,14 +206,14 @@ object ValidTestCases {
                             // Block for tmp.4 = tmp.3 / 6
                             Mov(Stack(-16), Register(HardwareRegister.EAX)),
                             Cdq,
-                            // FIXER: The Idiv(Imm(6)) will be fixed here
+                            // The Idiv(Imm(6)) will be fixed here
                             Mov(Imm(6), Register(HardwareRegister.R10D)),
                             Idiv(Register(HardwareRegister.R10D)),
                             Mov(Register(HardwareRegister.EAX), Stack(-20)),
                             // Block for tmp.5 = tmp.4 % 3
                             Mov(Stack(-20), Register(HardwareRegister.EAX)),
                             Cdq,
-                            // FIXER: The Idiv(Imm(3)) will be fixed here
+                            // The Idiv(Imm(3)) will be fixed here
                             Mov(Imm(3), Register(HardwareRegister.R10D)),
                             Idiv(Register(HardwareRegister.R10D)),
                             Mov(Register(HardwareRegister.EDX), Stack(-24)),
@@ -445,6 +444,153 @@ object ValidTestCases {
                     )
                 )
                 // No need to test the assembly here since this feature doesn't effect the assembly generation stage
+            ),
+            // --- Test Case for an IF-ELSE statement ---
+            ValidTestCase(
+                title = "Testing an if-else statement.",
+                code =
+                """
+                    int main(void) {
+                        int a = 0;
+                        if (a == 0)
+                            return 10;
+                        else
+                            return 20;
+                    }
+                """.trimIndent(),
+                expectedTacky =
+                TackyProgram(
+                    TackyFunction(
+                        name = "main",
+                        body =
+                        listOf(
+                            // int a = 0;
+                            TackyCopy(TackyConstant(0), TackyVar("a.0")),
+                            // tmp.0 = a == 0
+                            TackyBinary(TackyBinaryOP.EQUAL, TackyVar("a.0"), TackyConstant(0), TackyVar("tmp.0")),
+                            // if (tmp.0 == 0) goto .L_else_label_1
+                            JumpIfZero(TackyVar("tmp.0"), TackyLabel(".L_else_label_1")),
+                            // then block: return 10;
+                            TackyRet(TackyConstant(10)),
+                            // goto .L_end_0;
+                            TackyJump(TackyLabel(".L_end_0")),
+                            // else block
+                            TackyLabel(".L_else_label_1"),
+                            TackyRet(TackyConstant(20)),
+                            // end of if
+                            TackyLabel(".L_end_0"),
+                            TackyRet(TackyConstant(0))
+                        )
+                    )
+                ),
+                expectedAssembly =
+                AsmProgram(
+                    AsmFunction(
+                        name = "main",
+                        body =
+                        listOf(
+                            AllocateStack(8),
+                            // int a = 0;
+                            Mov(Imm(0), Stack(-4)),
+                            // tmp.0 = a == 0;
+                            Cmp(Imm(0), Stack(-4)),
+                            Mov(Imm(0), Stack(-8)),
+                            SetCC(ConditionCode.E, Stack(-8)),
+                            // if (tmp.0 == 0) goto .L_else_label_1
+                            Cmp(Imm(0), Stack(-8)),
+                            JmpCC(ConditionCode.E, Label(".L_else_label_1")),
+                            // return 10;
+                            Mov(Imm(10), Register(HardwareRegister.EAX)),
+                            Jmp(Label(".L_end_0")),
+                            // .L_else_label_1:
+                            Label(".L_else_label_1"),
+                            // return 20;
+                            Mov(Imm(20), Register(HardwareRegister.EAX)),
+                            // .L_end_0:
+                            Label(".L_end_0"),
+                            // The extra return 0
+                            Mov(Imm(0), Register(HardwareRegister.EAX))
+                        )
+                    )
+                )
+            ),
+// --- Test Case for GOTO and LABELS ---
+            ValidTestCase(
+                title = "Testing goto and labeled statements.",
+                code =
+                """
+                    int main(void) {
+                        int a = 0;
+                    start:
+                        a = a + 1;
+                        if (a < 3)
+                            goto start;
+                        return a;
+                    }
+                """.trimIndent(),
+                expectedTacky =
+                TackyProgram(
+                    TackyFunction(
+                        name = "main",
+                        body =
+                        listOf(
+                            // int a = 0;
+                            TackyCopy(TackyConstant(0), TackyVar("a.0")),
+                            // start:
+                            TackyLabel("start"),
+                            // tmp.0 = a + 1;
+                            TackyBinary(TackyBinaryOP.ADD, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.0")),
+                            // a = tmp.1
+                            TackyCopy(TackyVar("tmp.0"), TackyVar("a.0")),
+                            // tmp.2 = a < 3
+                            TackyBinary(TackyBinaryOP.LESS, TackyVar("a.0"), TackyConstant(3), TackyVar("tmp.1")),
+                            // if (tmp.2 == 0) goto .L_if_end_0;
+                            JumpIfZero(TackyVar("tmp.1"), TackyLabel(".L_end_0")),
+                            // goto start;
+                            TackyJump(TackyLabel("start")),
+                            // end of if
+                            TackyLabel(".L_end_0"),
+                            // return a;
+                            TackyRet(TackyVar("a.0")),
+                            TackyRet(TackyConstant(0))
+                        )
+                    )
+                ),
+                expectedAssembly =
+                AsmProgram(
+                    AsmFunction(
+                        name = "main",
+                        body =
+                        listOf(
+                            AllocateStack(12), // For a, tmp.1, tmp.2
+                            // a = 0
+                            Mov(Imm(0), Stack(-4)),
+                            // start:
+                            Label("start"),
+                            // tmp.1 = a + 1
+                            Mov(Stack(-4), Register(HardwareRegister.R10D)),
+                            Mov(Register(HardwareRegister.R10D), Stack(-8)),
+                            AsmBinary(AsmBinaryOp.ADD, Imm(1), Stack(-8)),
+                            // a = tmp.1
+                            Mov(Stack(-8), Register(HardwareRegister.R10D)),
+                            Mov(Register(HardwareRegister.R10D), Stack(-4)),
+                            // tmp.2 = a < 3
+                            Cmp(Imm(3), Stack(-4)),
+                            Mov(Imm(0), Stack(-12)),
+                            SetCC(ConditionCode.L, Stack(-12)),
+                            // if (tmp.2 == 0) goto .L_if_end_0
+                            Cmp(Imm(0), Stack(-12)),
+                            JmpCC(ConditionCode.E, Label(".L_end_0")),
+                            // goto start
+                            Jmp(Label("start")),
+                            // .L_if_end_0:
+                            Label(".L_end_0"),
+                            // return a
+                            Mov(Stack(-4), Register(HardwareRegister.EAX)),
+                            Mov(src = Imm(value = 0), dest = Register(name = HardwareRegister.EAX))
+                        )
+                    )
+                )
             )
         )
 }

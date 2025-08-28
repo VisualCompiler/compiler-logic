@@ -127,46 +127,65 @@ class Parser {
     }
 
     private fun parseStatement(tokens: MutableList<Token>): Statement {
-        var first: Token? = null
-        val secondToken = if (tokens.size > 1) tokens[1] else null
-        if (!tokens.isEmpty() && tokens.first().type == TokenType.IF) {
-            tokens.removeFirst()
-            expect(TokenType.LEFT_PAREN, tokens)
-            val condition = parseExpression(0, tokens)
-            expect(TokenType.RIGHT_PAREN, tokens)
-            val thenStatement = parseStatement(tokens)
+        val first = tokens.firstOrNull()
+        val second = if (tokens.size > 1) tokens[1] else null
 
-            var elseStatement: Statement? = null
-            if (tokens.firstOrNull()?.type == TokenType.ELSE) {
-                tokens.removeFirst()
-                elseStatement = parseStatement(tokens)
+        return when {
+            // if-statement
+            first?.type == TokenType.IF -> {
+                tokens.removeFirst() // consume 'if'
+                expect(TokenType.LEFT_PAREN, tokens)
+                val condition = parseExpression(0, tokens)
+                expect(TokenType.RIGHT_PAREN, tokens)
+                val thenBranch = parseStatement(tokens)
+
+                val elseBranch =
+                    if (tokens.firstOrNull()?.type == TokenType.ELSE) {
+                        tokens.removeFirst()
+                        parseStatement(tokens)
+                    } else {
+                        null
+                    }
+
+                IfStatement(condition, thenBranch, elseBranch)
             }
-            return IfStatement(condition, thenStatement, elseStatement)
-        } else if (!tokens.isEmpty() && tokens.first().type == TokenType.KEYWORD_RETURN) {
-            first = tokens.removeFirst()
-        } else if (!tokens.isEmpty() && tokens.first().type == TokenType.SEMICOLON) {
-            tokens.removeFirst()
-            return NullStatement()
-        } else if (!tokens.isEmpty() && tokens.first().type == TokenType.GOTO) {
-            tokens.removeFirst()
-            val label = parseIdentifier(tokens)
-            expect(TokenType.SEMICOLON, tokens)
-            return GotoStatement(label)
-        } else if (first?.type == TokenType.IDENTIFIER && secondToken?.type == TokenType.COLON) {
-            val labelName = parseIdentifier(tokens)
-            expect(TokenType.COLON, tokens)
-            val statement = parseStatement(tokens)
-            return LabeledStatement(labelName, statement)
-        }
-        val expression = parseExpression(tokens = tokens)
-        expect(TokenType.SEMICOLON, tokens)
 
-        return if (first != null) {
-            ReturnStatement(
-                expression = expression
-            )
-        } else {
-            ExpressionStatement(expression)
+            // return-statement
+            first?.type == TokenType.KEYWORD_RETURN -> {
+                tokens.removeFirst() // consume 'return'
+                val expr = parseExpression(0, tokens)
+                expect(TokenType.SEMICOLON, tokens)
+                ReturnStatement(expr)
+            }
+
+            // empty statement ;
+            first?.type == TokenType.SEMICOLON -> {
+                tokens.removeFirst()
+                NullStatement()
+            }
+
+            // goto-statement
+            first?.type == TokenType.GOTO -> {
+                tokens.removeFirst() // consume 'goto'
+                val label = parseIdentifier(tokens)
+                expect(TokenType.SEMICOLON, tokens)
+                GotoStatement(label)
+            }
+
+            // label: statement
+            first?.type == TokenType.IDENTIFIER && second?.type == TokenType.COLON -> {
+                val labelName = parseIdentifier(tokens)
+                expect(TokenType.COLON, tokens)
+                val stmt = parseStatement(tokens)
+                LabeledStatement(labelName, stmt)
+            }
+
+            // expression statement (default case)
+            else -> {
+                val expr = parseExpression(0, tokens)
+                expect(TokenType.SEMICOLON, tokens)
+                ExpressionStatement(expr)
+            }
         }
     }
 

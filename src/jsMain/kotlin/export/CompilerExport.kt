@@ -4,6 +4,7 @@ import assembly.AsmProgram
 import assembly.CodeEmitter
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
+import compiler.parser.LabelAnalysis
 import compiler.parser.VariableResolution
 import exceptions.CodeGenerationException
 import exceptions.CompilationExceptions
@@ -29,6 +30,7 @@ class CompilerExport {
 
         val parser = Parser()
         val variableResolution = VariableResolution()
+        val labelAnalysis = LabelAnalysis()
         val tackyGenVisitor = TackyGenVisitor()
         val tackyToAsmConverter = TackyToAsm()
         val pseudoEliminator = PseudoEliminator()
@@ -68,6 +70,7 @@ class CompilerExport {
             if (lexerOutput.errors.isEmpty() && tokens != null) {
                 try {
                     ast = parser.parseTokens(tokens)
+                    labelAnalysis.analyze(ast)
                     ast = ast.accept(variableResolution)
                     ParserOutput(
                         errors = emptyArray(),
