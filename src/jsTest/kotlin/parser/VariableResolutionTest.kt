@@ -16,17 +16,19 @@ class VariableResolutionTest {
                 Function(
                     name = "main",
                     body =
-                    listOf(
-                        D(Declaration(name = "a", init = null)),
-                        S(
-                            ExpressionStatement(
-                                AssignmentExpression(
-                                    lvalue = VariableExpression("a"),
-                                    rvalue = IntExpression(1)
+                    Block(
+                        listOf(
+                            D(Declaration(name = "a", init = null)),
+                            S(
+                                ExpressionStatement(
+                                    AssignmentExpression(
+                                        lvalue = VariableExpression("a"),
+                                        rvalue = IntExpression(1)
+                                    )
                                 )
-                            )
-                        ),
-                        S(ReturnStatement(expression = VariableExpression("a")))
+                            ),
+                            S(ReturnStatement(expression = VariableExpression("a")))
+                        )
                     )
                 )
             )
@@ -39,17 +41,19 @@ class VariableResolutionTest {
                 Function(
                     name = "main",
                     body =
-                    listOf(
-                        D(Declaration(name = "a.0", init = null)),
-                        S(
-                            ExpressionStatement(
-                                AssignmentExpression(
-                                    lvalue = VariableExpression("a.0"),
-                                    rvalue = IntExpression(1)
+                    Block(
+                        listOf(
+                            D(Declaration(name = "a.0", init = null)),
+                            S(
+                                ExpressionStatement(
+                                    AssignmentExpression(
+                                        lvalue = VariableExpression("a.0"),
+                                        rvalue = IntExpression(1)
+                                    )
                                 )
-                            )
-                        ),
-                        S(ReturnStatement(expression = VariableExpression("a.0")))
+                            ),
+                            S(ReturnStatement(expression = VariableExpression("a.0")))
+                        )
                     )
                 )
             )
@@ -65,9 +69,11 @@ class VariableResolutionTest {
                 Function(
                     name = "main",
                     body =
-                    listOf(
-                        D(Declaration(name = "a", init = null)),
-                        D(Declaration(name = "a", init = null))
+                    Block(
+                        listOf(
+                            D(Declaration(name = "a", init = null)),
+                            D(Declaration(name = "a", init = null))
+                        )
                     )
                 )
             )
@@ -85,8 +91,10 @@ class VariableResolutionTest {
                 Function(
                     name = "main",
                     body =
-                    listOf(
-                        S(ReturnStatement(expression = VariableExpression("x")))
+                    Block(
+                        listOf(
+                            S(ReturnStatement(expression = VariableExpression("x")))
+                        )
                     )
                 )
             )

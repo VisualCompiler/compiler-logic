@@ -4,7 +4,9 @@ import exceptions.TackyException
 import lexer.TokenType
 import parser.AssignmentExpression
 import parser.BinaryExpression
+import parser.Block
 import parser.BreakStatement
+import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
@@ -169,7 +171,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         val functionName = node.name
 
         currentInstructions.clear()
-        node.body.forEach { it.accept(this) }
+        node.body.accept(this)
         // Return 0 to guarantee successful termination
         currentInstructions.add(TackyRet(TackyConstant(0)))
         val instructionList = currentInstructions.toList()
@@ -311,6 +313,16 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
 
     override fun visit(node: D): TackyConstruct? {
         node.declaration.accept(this)
+        return null
+    }
+
+    override fun visit(node: Block): TackyConstruct? {
+        node.block.forEach { it.accept(this) }
+        return null
+    }
+
+    override fun visit(node: CompoundStatement): TackyConstruct? {
+        node.block.accept(this)
         return null
     }
 }

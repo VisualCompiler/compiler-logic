@@ -5,7 +5,9 @@ import exceptions.UndeclaredLabelException
 import parser.ASTNode
 import parser.AssignmentExpression
 import parser.BinaryExpression
+import parser.Block
 import parser.BreakStatement
+import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
@@ -50,7 +52,7 @@ class LabelCollector : Visitor<Unit> {
     }
 
     override fun visit(node: Function) {
-        node.body.forEach { it.accept(this) }
+        node.body.accept(this)
     }
 
     override fun visit(node: VariableExpression) {
@@ -119,6 +121,14 @@ class LabelCollector : Visitor<Unit> {
     }
 
     override fun visit(node: GotoStatement) {}
+
+    override fun visit(node: Block) {
+        node.block.forEach { it.accept(this) }
+    }
+
+    override fun visit(node: CompoundStatement) {
+        node.block.accept(this)
+    }
 }
 
 private class GotoValidator(
@@ -136,7 +146,7 @@ private class GotoValidator(
     }
 
     override fun visit(node: Function) {
-        node.body.forEach { it.accept(this) }
+        node.body.accept(this)
     }
 
     override fun visit(node: VariableExpression) {
@@ -212,6 +222,14 @@ private class GotoValidator(
 
     override fun visit(node: InitExpression) {
         node.expression?.accept(this)
+    }
+
+    override fun visit(node: Block) {
+        node.block.forEach { it.accept(this) }
+    }
+
+    override fun visit(node: CompoundStatement) {
+        node.block.accept(this)
     }
 }
 

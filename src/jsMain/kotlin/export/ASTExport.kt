@@ -7,7 +7,9 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import parser.AssignmentExpression
 import parser.BinaryExpression
+import parser.Block
 import parser.BreakStatement
+import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
@@ -228,7 +230,7 @@ class ASTExport : Visitor<String> {
             JsonObject(
                 mapOf(
                     "name" to JsonPrimitive(node.name),
-                    "body" to JsonArray(node.body.map { Json.decodeFromString(it.accept(this)) })
+                    "body" to JsonPrimitive(node.body.accept(this))
                 )
             )
 
@@ -469,6 +471,46 @@ class ASTExport : Visitor<String> {
                 mapOf(
                     "type" to JsonPrimitive(this::class.simpleName),
                     "label" to JsonPrimitive("declaration"),
+                    "children" to children
+                )
+            )
+
+        return Json.encodeToString(jsonNode)
+    }
+
+    override fun visit(node: Block): String {
+        val children =
+            JsonObject(
+                mapOf(
+                    "block" to JsonPrimitive(node.block.map { it.accept(this) }.joinToString(","))
+                )
+            )
+
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive("Block"),
+                    "label" to JsonPrimitive("block items"),
+                    "children" to children
+                )
+            )
+
+        return Json.encodeToString(jsonNode)
+    }
+
+    override fun visit(node: CompoundStatement): String {
+        val children =
+            JsonObject(
+                mapOf(
+                    "block" to JsonPrimitive(node.block.accept(this))
+                )
+            )
+
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive("CompoundStatement"),
+                    "label" to JsonPrimitive("compound statement"),
                     "children" to children
                 )
             )

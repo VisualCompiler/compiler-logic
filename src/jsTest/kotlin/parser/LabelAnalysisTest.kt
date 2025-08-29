@@ -11,27 +11,28 @@ class LabelAnalysisTest {
     private val labelAnalysis = LabelAnalysis()
 
     @Test
-    fun `test valid labels and gotos`() {
+    fun `test valid labels and gotos complete successfully`() {
         // Arrange: A program with a forward jump and a backward jump.
         val ast: ASTNode =
             SimpleProgram(
                 functionDefinition =
                 Function(
                     name = "main",
-                    body =
-                    listOf(
-                        S(GotoStatement("end")),
-                        S(
-                            LabeledStatement(
-                                label = "start",
-                                statement = ExpressionStatement(IntExpression(1))
-                            )
-                        ),
-                        S(GotoStatement("start")),
-                        S(
-                            LabeledStatement(
-                                label = "end",
-                                statement = ReturnStatement(IntExpression(0))
+                    body = Block(
+                        listOf(
+                            S(GotoStatement("end")),
+                            S(
+                                LabeledStatement(
+                                    label = "start",
+                                    statement = ExpressionStatement(IntExpression(1))
+                                )
+                            ),
+                            S(GotoStatement("start")),
+                            S(
+                                LabeledStatement(
+                                    label = "end",
+                                    statement = ReturnStatement(IntExpression(0))
+                                )
                             )
                         )
                     )
@@ -52,18 +53,19 @@ class LabelAnalysisTest {
                 functionDefinition =
                 Function(
                     name = "main",
-                    body =
-                    listOf(
-                        S(
-                            LabeledStatement(
-                                label = "my_label",
-                                statement = NullStatement()
-                            )
-                        ),
-                        S(
-                            LabeledStatement(
-                                label = "my_label",
-                                statement = ReturnStatement(IntExpression(0))
+                    body = Block(
+                        listOf(
+                            S(
+                                LabeledStatement(
+                                    label = "my_label",
+                                    statement = NullStatement()
+                                )
+                            ),
+                            S(
+                                LabeledStatement(
+                                    label = "my_label",
+                                    statement = ReturnStatement(IntExpression(0))
+                                )
                             )
                         )
                     )
@@ -84,10 +86,11 @@ class LabelAnalysisTest {
                 functionDefinition =
                 Function(
                     name = "main",
-                    body =
-                    listOf(
-                        S(GotoStatement("missing_label")),
-                        S(ReturnStatement(IntExpression(0)))
+                    body = Block(
+                        listOf(
+                            S(GotoStatement("missing_label")),
+                            S(ReturnStatement(IntExpression(0)))
+                        )
                     )
                 )
             )
@@ -106,36 +109,25 @@ class LabelAnalysisTest {
                 functionDefinition =
                 Function(
                     name = "main",
-                    body =
-                    listOf(
-                        S(
-                            IfStatement(
-                                condition = IntExpression(1),
-                                then = (
-                                    LabeledStatement(
-                                        label = "then_branch",
-                                        statement = GotoStatement("end")
-                                    )
+                    body = Block(
+                        listOf(
+                            S(
+                                IfStatement(
+                                    condition = IntExpression(1),
+                                    then = LabeledStatement(
+                                        label = "nested_label",
+                                        statement = ReturnStatement(IntExpression(1))
                                     ),
-                                _else = (
-                                    LabeledStatement(
-                                        label = "else_branch",
-                                        statement = GotoStatement("end")
-                                    )
-                                    )
-                            )
-                        ),
-                        S(
-                            LabeledStatement(
-                                label = "end",
-                                statement = ReturnStatement(IntExpression(0))
-                            )
+                                    _else = null
+                                )
+                            ),
+                            S(GotoStatement("nested_label"))
                         )
                     )
                 )
             )
 
-        // Act & Assert: This should complete successfully.
+        // Act & Assert: This should complete successfully without throwing an exception.
         labelAnalysis.analyze(ast)
         assertTrue(true, "Analysis of nested labels should complete successfully.")
     }
