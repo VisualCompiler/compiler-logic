@@ -97,7 +97,9 @@ data class Token(
     val lexeme: String,
     val line: Int,
     val column: Int
-)
+) {
+    override fun equals(other: Any?): Boolean = other is Token && other.type == this.type && other.lexeme == this.lexeme
+}
 
 class Lexer(
     val source: String

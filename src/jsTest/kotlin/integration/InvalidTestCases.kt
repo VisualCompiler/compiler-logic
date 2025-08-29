@@ -93,7 +93,7 @@ object InvalidTestCases {
                 expectedException = UnexpectedTokenException::class
             ),
             InvalidTestCase(
-                code = "int main(void) { return || 0; }",
+                code = "int main(void) { return || 0;",
                 failingStage = CompilerStage.PARSER,
                 expectedException = UnexpectedTokenException::class
             ),
@@ -169,6 +169,11 @@ object InvalidTestCases {
                 code = "int main(void) { continue; }",
                 failingStage = CompilerStage.PARSER,
                 expectedException = InvalidStatementException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { int a = 10; { int a = 5; int a = 10; } }",
+                failingStage = CompilerStage.PARSER,
+                expectedException = DuplicateVariableDeclaration::class
             )
         )
 }

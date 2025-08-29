@@ -3,7 +3,9 @@ package compiler.parser
 import exceptions.InvalidStatementException
 import parser.AssignmentExpression
 import parser.BinaryExpression
+import parser.Block
 import parser.BreakStatement
+import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
@@ -98,7 +100,7 @@ class LoopLabeling : Visitor<Unit> {
     }
 
     override fun visit(node: Function) {
-        node.body.forEach { it.accept(this) }
+        node.body.accept(this)
     }
 
     override fun visit(node: VariableExpression) {
@@ -150,5 +152,13 @@ class LoopLabeling : Visitor<Unit> {
 
     override fun visit(node: D) {
         node.declaration.accept(this)
+    }
+
+    override fun visit(node: Block) {
+        node.block.forEach { it.accept(this) }
+    }
+
+    override fun visit(node: CompoundStatement) {
+        node.block.accept(this)
     }
 }

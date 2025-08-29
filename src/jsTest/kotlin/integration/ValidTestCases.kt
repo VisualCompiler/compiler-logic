@@ -25,6 +25,8 @@ import lexer.TokenType
 import parser.ASTNode
 import parser.AssignmentExpression
 import parser.BinaryExpression
+import parser.Block
+import parser.CompoundStatement
 import parser.D
 import parser.Declaration
 import parser.ExpressionStatement
@@ -102,47 +104,49 @@ object ValidTestCases {
                     Function(
                         name = "main",
                         body =
-                        listOf(
-                            S(
-                                ReturnStatement(
-                                    expression =
-                                    BinaryExpression(
-                                        left =
-                                        BinaryExpression(
-                                            left =
-                                            BinaryExpression(
-                                                left = IntExpression(5),
-                                                operator = Token(TokenType.NEGATION, "-", 2, 14),
-                                                right = IntExpression(3)
-                                            ),
-                                            operator = Token(TokenType.MULTIPLY, "*", 2, 19),
-                                            right = IntExpression(4)
-                                        ),
-                                        operator = Token(TokenType.PLUS, "+", 2, 23),
-                                        right =
+                        Block(
+                            listOf(
+                                S(
+                                    ReturnStatement(
+                                        expression =
                                         BinaryExpression(
                                             left =
                                             BinaryExpression(
                                                 left =
-                                                UnaryExpression(
-                                                    operator = Token(TokenType.TILDE, "~", 2, 25),
-                                                    expression =
-                                                    UnaryExpression(
-                                                        operator =
-                                                        Token(
-                                                            TokenType.NEGATION,
-                                                            "-",
-                                                            2,
-                                                            27
-                                                        ),
-                                                        expression = IntExpression(5)
-                                                    )
+                                                BinaryExpression(
+                                                    left = IntExpression(5),
+                                                    operator = Token(TokenType.NEGATION, "-", 2, 14),
+                                                    right = IntExpression(3)
                                                 ),
-                                                operator = Token(TokenType.DIVIDE, "/", 2, 31),
-                                                right = IntExpression(6)
+                                                operator = Token(TokenType.MULTIPLY, "*", 2, 19),
+                                                right = IntExpression(4)
                                             ),
-                                            operator = Token(TokenType.REMAINDER, "%", 2, 35),
-                                            right = IntExpression(3)
+                                            operator = Token(TokenType.PLUS, "+", 2, 23),
+                                            right =
+                                            BinaryExpression(
+                                                left =
+                                                BinaryExpression(
+                                                    left =
+                                                    UnaryExpression(
+                                                        operator = Token(TokenType.TILDE, "~", 2, 25),
+                                                        expression =
+                                                        UnaryExpression(
+                                                            operator =
+                                                            Token(
+                                                                TokenType.NEGATION,
+                                                                "-",
+                                                                2,
+                                                                27
+                                                            ),
+                                                            expression = IntExpression(5)
+                                                        )
+                                                    ),
+                                                    operator = Token(TokenType.DIVIDE, "/", 2, 31),
+                                                    right = IntExpression(6)
+                                                ),
+                                                operator = Token(TokenType.REMAINDER, "%", 2, 35),
+                                                right = IntExpression(3)
+                                            )
                                         )
                                     )
                                 )
@@ -388,42 +392,44 @@ object ValidTestCases {
                     Function(
                         name = "main",
                         body =
-                        listOf(
-                            D(Declaration(name = "b.0", init = null)),
-                            D(
-                                Declaration(
-                                    name = "a.1",
-                                    init =
-                                    BinaryExpression(
-                                        left = IntExpression(10),
-                                        operator = Token(TokenType.PLUS, "+", 3, 12),
-                                        right = IntExpression(1)
-                                    )
-                                )
-                            ),
-                            S(
-                                ExpressionStatement(
-                                    AssignmentExpression(
-                                        lvalue = VariableExpression("b.0"),
-                                        rvalue =
+                        Block(
+                            listOf(
+                                D(Declaration(name = "b.0", init = null)),
+                                D(
+                                    Declaration(
+                                        name = "a.1",
+                                        init =
                                         BinaryExpression(
-                                            left =
-                                            AssignmentExpression(
-                                                lvalue = VariableExpression("a.1"),
-                                                rvalue = IntExpression(2)
-                                            ),
-                                            operator = Token(TokenType.MULTIPLY, "*", 4, 11),
-                                            right = IntExpression(2)
+                                            left = IntExpression(10),
+                                            operator = Token(TokenType.PLUS, "+", 3, 12),
+                                            right = IntExpression(1)
                                         )
                                     )
-                                )
-                            ),
-                            S(
-                                ReturnStatement(
-                                    expression = VariableExpression("b.0")
-                                )
-                            ),
-                            S(NullStatement())
+                                ),
+                                S(
+                                    ExpressionStatement(
+                                        AssignmentExpression(
+                                            lvalue = VariableExpression("b.0"),
+                                            rvalue =
+                                            BinaryExpression(
+                                                left =
+                                                AssignmentExpression(
+                                                    lvalue = VariableExpression("a.1"),
+                                                    rvalue = IntExpression(2)
+                                                ),
+                                                operator = Token(TokenType.MULTIPLY, "*", 4, 11),
+                                                right = IntExpression(2)
+                                            )
+                                        )
+                                    )
+                                ),
+                                S(
+                                    ReturnStatement(
+                                        expression = VariableExpression("b.0")
+                                    )
+                                ),
+                                S(NullStatement())
+                            )
                         )
                     )
                 ),
@@ -593,12 +599,14 @@ object ValidTestCases {
                 )
             ),
             ValidTestCase(
-                title = "Testing loop statements",
+                title = "Testing loop statements with blocks",
                 code =
                 """int main(void) { 
                     |int a = 10;
-                    |while(a > 0)
+                    |while(a > 0) {
+                    |   int a = 2;
                     |   a = a - 1;
+                    |}
                     |for(int i = 0; i < 10; i = i + 1) 
                     |   a = a + 1;
                     |for(;a > 0;)
@@ -630,47 +638,38 @@ object ValidTestCases {
                     Token(TokenType.GREATER, ">", 3, 9),
                     Token(TokenType.INT_LITERAL, "0", 3, 11),
                     Token(TokenType.RIGHT_PAREN, ")", 3, 12),
-                    // a = a - 1;
-                    Token(TokenType.IDENTIFIER, "a", 4, 4),
-                    Token(TokenType.ASSIGN, "=", 4, 6),
+                    // { int a = 2; a = a - 1; }
+                    Token(TokenType.LEFT_BRACK, "{", 3, 14),
+                    Token(TokenType.KEYWORD_INT, "int", 4, 4),
                     Token(TokenType.IDENTIFIER, "a", 4, 8),
-                    Token(TokenType.NEGATION, "-", 4, 10),
-                    Token(TokenType.INT_LITERAL, "1", 4, 12),
+                    Token(TokenType.ASSIGN, "=", 4, 10),
+                    Token(TokenType.INT_LITERAL, "2", 4, 12),
                     Token(TokenType.SEMICOLON, ";", 4, 13),
+                    Token(TokenType.IDENTIFIER, "a", 5, 4),
+                    Token(TokenType.ASSIGN, "=", 5, 6),
+                    Token(TokenType.IDENTIFIER, "a", 5, 8),
+                    Token(TokenType.NEGATION, "-", 5, 10),
+                    Token(TokenType.INT_LITERAL, "1", 5, 12),
+                    Token(TokenType.SEMICOLON, ";", 5, 13),
+                    Token(TokenType.RIGHT_BRACK, "}", 6, 1),
                     // for(int i = 0; i < 10; i = i + 1)
-                    Token(TokenType.KEYWORD_FOR, "for", 5, 1),
-                    Token(TokenType.LEFT_PAREN, "(", 5, 4),
-                    Token(TokenType.KEYWORD_INT, "int", 5, 5),
-                    Token(TokenType.IDENTIFIER, "i", 5, 9),
-                    Token(TokenType.ASSIGN, "=", 5, 11),
-                    Token(TokenType.INT_LITERAL, "0", 5, 13),
-                    Token(TokenType.SEMICOLON, ";", 5, 14),
-                    Token(TokenType.IDENTIFIER, "i", 5, 16),
-                    Token(TokenType.LESS, "<", 5, 18),
-                    Token(TokenType.INT_LITERAL, "10", 5, 20),
-                    Token(TokenType.SEMICOLON, ";", 5, 22),
-                    Token(TokenType.IDENTIFIER, "i", 5, 24),
-                    Token(TokenType.ASSIGN, "=", 5, 26),
-                    Token(TokenType.IDENTIFIER, "i", 5, 28),
-                    Token(TokenType.PLUS, "+", 5, 30),
-                    Token(TokenType.INT_LITERAL, "1", 5, 32),
-                    Token(TokenType.RIGHT_PAREN, ")", 5, 33),
-                    // a = a + 1;
-                    Token(TokenType.IDENTIFIER, "a", 6, 4),
-                    Token(TokenType.ASSIGN, "=", 6, 6),
-                    Token(TokenType.IDENTIFIER, "a", 6, 8),
-                    Token(TokenType.PLUS, "+", 6, 10),
-                    Token(TokenType.INT_LITERAL, "1", 6, 12),
-                    Token(TokenType.SEMICOLON, ";", 6, 13),
-                    // for(;a > 0;)
                     Token(TokenType.KEYWORD_FOR, "for", 7, 1),
                     Token(TokenType.LEFT_PAREN, "(", 7, 4),
-                    Token(TokenType.SEMICOLON, ";", 7, 5),
-                    Token(TokenType.IDENTIFIER, "a", 7, 6),
-                    Token(TokenType.GREATER, ">", 7, 8),
-                    Token(TokenType.INT_LITERAL, "0", 7, 10),
-                    Token(TokenType.SEMICOLON, ";", 7, 11),
-                    Token(TokenType.RIGHT_PAREN, ")", 7, 12),
+                    Token(TokenType.KEYWORD_INT, "int", 7, 5),
+                    Token(TokenType.IDENTIFIER, "i", 7, 9),
+                    Token(TokenType.ASSIGN, "=", 7, 11),
+                    Token(TokenType.INT_LITERAL, "0", 7, 13),
+                    Token(TokenType.SEMICOLON, ";", 7, 14),
+                    Token(TokenType.IDENTIFIER, "i", 7, 16),
+                    Token(TokenType.LESS, "<", 7, 18),
+                    Token(TokenType.INT_LITERAL, "10", 7, 20),
+                    Token(TokenType.SEMICOLON, ";", 7, 22),
+                    Token(TokenType.IDENTIFIER, "i", 7, 24),
+                    Token(TokenType.ASSIGN, "=", 7, 26),
+                    Token(TokenType.IDENTIFIER, "i", 7, 28),
+                    Token(TokenType.PLUS, "+", 7, 30),
+                    Token(TokenType.INT_LITERAL, "1", 7, 32),
+                    Token(TokenType.RIGHT_PAREN, ")", 7, 33),
                     // a = a + 1;
                     Token(TokenType.IDENTIFIER, "a", 8, 4),
                     Token(TokenType.ASSIGN, "=", 8, 6),
@@ -678,8 +677,15 @@ object ValidTestCases {
                     Token(TokenType.PLUS, "+", 8, 10),
                     Token(TokenType.INT_LITERAL, "1", 8, 12),
                     Token(TokenType.SEMICOLON, ";", 8, 13),
-                    // do
-                    Token(TokenType.KEYWORD_DO, "do", 9, 1),
+                    // for(;a > 0;)
+                    Token(TokenType.KEYWORD_FOR, "for", 9, 1),
+                    Token(TokenType.LEFT_PAREN, "(", 9, 4),
+                    Token(TokenType.SEMICOLON, ";", 9, 5),
+                    Token(TokenType.IDENTIFIER, "a", 9, 6),
+                    Token(TokenType.GREATER, ">", 9, 8),
+                    Token(TokenType.INT_LITERAL, "0", 9, 10),
+                    Token(TokenType.SEMICOLON, ";", 9, 11),
+                    Token(TokenType.RIGHT_PAREN, ")", 9, 12),
                     // a = a + 1;
                     Token(TokenType.IDENTIFIER, "a", 10, 4),
                     Token(TokenType.ASSIGN, "=", 10, 6),
@@ -687,20 +693,29 @@ object ValidTestCases {
                     Token(TokenType.PLUS, "+", 10, 10),
                     Token(TokenType.INT_LITERAL, "1", 10, 12),
                     Token(TokenType.SEMICOLON, ";", 10, 13),
+                    // do
+                    Token(TokenType.KEYWORD_DO, "do", 11, 1),
+                    // a = a + 1;
+                    Token(TokenType.IDENTIFIER, "a", 12, 4),
+                    Token(TokenType.ASSIGN, "=", 12, 6),
+                    Token(TokenType.IDENTIFIER, "a", 12, 8),
+                    Token(TokenType.PLUS, "+", 12, 10),
+                    Token(TokenType.INT_LITERAL, "1", 12, 12),
+                    Token(TokenType.SEMICOLON, ";", 12, 13),
                     // while(a > 0);
-                    Token(TokenType.KEYWORD_WHILE, "while", 11, 1),
-                    Token(TokenType.LEFT_PAREN, "(", 11, 6),
-                    Token(TokenType.IDENTIFIER, "a", 11, 7),
-                    Token(TokenType.GREATER, ">", 11, 9),
-                    Token(TokenType.INT_LITERAL, "0", 11, 11),
-                    Token(TokenType.RIGHT_PAREN, ")", 11, 12),
-                    Token(TokenType.SEMICOLON, ";", 11, 13),
+                    Token(TokenType.KEYWORD_WHILE, "while", 13, 1),
+                    Token(TokenType.LEFT_PAREN, "(", 13, 6),
+                    Token(TokenType.IDENTIFIER, "a", 13, 7),
+                    Token(TokenType.GREATER, ">", 13, 9),
+                    Token(TokenType.INT_LITERAL, "0", 13, 11),
+                    Token(TokenType.RIGHT_PAREN, ")", 13, 12),
+                    Token(TokenType.SEMICOLON, ";", 13, 13),
                     // return 0;
-                    Token(TokenType.KEYWORD_RETURN, "return", 12, 1),
-                    Token(TokenType.INT_LITERAL, "0", 12, 8),
-                    Token(TokenType.SEMICOLON, ";", 12, 9),
-                    Token(TokenType.RIGHT_BRACK, "}", 13, 1),
-                    Token(TokenType.EOF, "", 13, 2)
+                    Token(TokenType.KEYWORD_RETURN, "return", 14, 1),
+                    Token(TokenType.INT_LITERAL, "0", 14, 8),
+                    Token(TokenType.SEMICOLON, ";", 14, 9),
+                    Token(TokenType.RIGHT_BRACK, "}", 15, 1),
+                    Token(TokenType.EOF, "", 15, 2)
                 ),
                 expectedAst =
                 SimpleProgram(
@@ -708,120 +723,131 @@ object ValidTestCases {
                     Function(
                         name = "main",
                         body =
-                        listOf(
-                            D(Declaration(name = "a.0", init = IntExpression(10))),
-                            S(
-                                parser.WhileStatement(
-                                    condition =
-                                    BinaryExpression(
-                                        left = VariableExpression("a.0"),
-                                        operator = Token(TokenType.GREATER, ">", 3, 9),
-                                        right = IntExpression(0)
-                                    ),
-                                    body =
-                                    ExpressionStatement(
-                                        AssignmentExpression(
-                                            lvalue = VariableExpression("a.0"),
-                                            rvalue =
-                                            BinaryExpression(
-                                                left = VariableExpression("a.0"),
-                                                operator = Token(TokenType.NEGATION, "-", 4, 10),
-                                                right = IntExpression(1)
-                                            )
-                                        )
-                                    ),
-                                    label = "loop.0"
-                                )
-                            ),
-                            S(
-                                parser.ForStatement(
-                                    init =
-                                    parser.InitDeclaration(
-                                        Declaration(name = "i.1", init = IntExpression(0))
-                                    ),
-                                    condition =
-                                    BinaryExpression(
-                                        left = VariableExpression("i.1"),
-                                        operator = Token(TokenType.LESS, "<", 5, 18),
-                                        right = IntExpression(10)
-                                    ),
-                                    post =
-                                    AssignmentExpression(
-                                        lvalue = VariableExpression("i.1"),
-                                        rvalue =
+                        Block(
+                            listOf(
+                                D(Declaration(name = "a.0", init = IntExpression(10))),
+                                S(
+                                    parser.WhileStatement(
+                                        condition =
                                         BinaryExpression(
-                                            left = VariableExpression("i.1"),
-                                            operator = Token(TokenType.PLUS, "+", 5, 30),
-                                            right = IntExpression(1)
-                                        )
-                                    ),
-                                    body =
-                                    ExpressionStatement(
+                                            left = VariableExpression("a.0"),
+                                            operator = Token(TokenType.GREATER, ">", 3, 9),
+                                            right = IntExpression(0)
+                                        ),
+                                        body =
+                                        CompoundStatement(
+                                            Block(
+                                                listOf(
+                                                    D(Declaration(name = "a.1", init = IntExpression(2))),
+                                                    S(
+                                                        ExpressionStatement(
+                                                            AssignmentExpression(
+                                                                lvalue = VariableExpression("a.1"),
+                                                                rvalue =
+                                                                BinaryExpression(
+                                                                    left = VariableExpression("a.1"),
+                                                                    operator = Token(TokenType.NEGATION, "-", 5, 10),
+                                                                    right = IntExpression(1)
+                                                                )
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        ),
+                                        label = "loop.0"
+                                    )
+                                ),
+                                S(
+                                    parser.ForStatement(
+                                        init =
+                                        parser.InitDeclaration(
+                                            Declaration(name = "i.2", init = IntExpression(0))
+                                        ),
+                                        condition =
+                                        BinaryExpression(
+                                            left = VariableExpression("i.2"),
+                                            operator = Token(TokenType.LESS, "<", 5, 18),
+                                            right = IntExpression(10)
+                                        ),
+                                        post =
                                         AssignmentExpression(
-                                            lvalue = VariableExpression("a.0"),
+                                            lvalue = VariableExpression("i.2"),
                                             rvalue =
                                             BinaryExpression(
-                                                left = VariableExpression("a.0"),
-                                                operator = Token(TokenType.PLUS, "+", 6, 10),
+                                                left = VariableExpression("i.2"),
+                                                operator = Token(TokenType.PLUS, "+", 5, 30),
                                                 right = IntExpression(1)
                                             )
-                                        )
-                                    ),
-                                    label = "loop.1"
-                                )
-                            ),
-                            S(
-                                parser.ForStatement(
-                                    init =
-                                    parser.InitExpression(
-                                        expression = null
-                                    ),
-                                    condition =
-                                    BinaryExpression(
-                                        left = VariableExpression("a.0"),
-                                        operator = Token(TokenType.GREATER, ">", 7, 8),
-                                        right = IntExpression(0)
-                                    ),
-                                    post = null,
-                                    body =
-                                    ExpressionStatement(
-                                        AssignmentExpression(
-                                            lvalue = VariableExpression("a.0"),
-                                            rvalue =
-                                            BinaryExpression(
-                                                left = VariableExpression("a.0"),
-                                                operator = Token(TokenType.PLUS, "+", 8, 10),
-                                                right = IntExpression(1)
+                                        ),
+                                        body =
+                                        ExpressionStatement(
+                                            AssignmentExpression(
+                                                lvalue = VariableExpression("a.0"),
+                                                rvalue =
+                                                BinaryExpression(
+                                                    left = VariableExpression("a.0"),
+                                                    operator = Token(TokenType.PLUS, "+", 6, 10),
+                                                    right = IntExpression(1)
+                                                )
                                             )
-                                        )
-                                    ),
-                                    label = "loop.2"
-                                )
-                            ),
-                            S(
-                                parser.DoWhileStatement(
-                                    condition =
-                                    BinaryExpression(
-                                        left = VariableExpression("a.0"),
-                                        operator = Token(TokenType.GREATER, ">", 11, 9),
-                                        right = IntExpression(0)
-                                    ),
-                                    body =
-                                    ExpressionStatement(
-                                        AssignmentExpression(
-                                            lvalue = VariableExpression("a.0"),
-                                            rvalue =
-                                            BinaryExpression(
-                                                left = VariableExpression("a.0"),
-                                                operator = Token(TokenType.PLUS, "+", 10, 10),
-                                                right = IntExpression(1)
+                                        ),
+                                        label = "loop.1"
+                                    )
+                                ),
+                                S(
+                                    parser.ForStatement(
+                                        init =
+                                        parser.InitExpression(
+                                            expression = null
+                                        ),
+                                        condition =
+                                        BinaryExpression(
+                                            left = VariableExpression("a.0"),
+                                            operator = Token(TokenType.GREATER, ">", 7, 8),
+                                            right = IntExpression(0)
+                                        ),
+                                        post = null,
+                                        body =
+                                        ExpressionStatement(
+                                            AssignmentExpression(
+                                                lvalue = VariableExpression("a.0"),
+                                                rvalue =
+                                                BinaryExpression(
+                                                    left = VariableExpression("a.0"),
+                                                    operator = Token(TokenType.PLUS, "+", 8, 10),
+                                                    right = IntExpression(1)
+                                                )
                                             )
-                                        )
-                                    ),
-                                    label = "loop.3"
-                                )
-                            ),
-                            S(ReturnStatement(expression = IntExpression(0)))
+                                        ),
+                                        label = "loop.2"
+                                    )
+                                ),
+                                S(
+                                    parser.DoWhileStatement(
+                                        condition =
+                                        BinaryExpression(
+                                            left = VariableExpression("a.0"),
+                                            operator = Token(TokenType.GREATER, ">", 11, 9),
+                                            right = IntExpression(0)
+                                        ),
+                                        body =
+                                        ExpressionStatement(
+                                            AssignmentExpression(
+                                                lvalue = VariableExpression("a.0"),
+                                                rvalue =
+                                                BinaryExpression(
+                                                    left = VariableExpression("a.0"),
+                                                    operator = Token(TokenType.PLUS, "+", 10, 10),
+                                                    right = IntExpression(1)
+                                                )
+                                            )
+                                        ),
+                                        label = "loop.3"
+                                    )
+                                ),
+                                S(ReturnStatement(expression = IntExpression(0)))
+                            )
                         )
                     )
                 ),
@@ -837,23 +863,24 @@ object ValidTestCases {
                             TackyLabel("continue_loop.0"),
                             TackyBinary(TackyBinaryOP.GREATER, TackyVar("a.0"), TackyConstant(0), TackyVar("tmp.0")),
                             JumpIfZero(TackyVar("tmp.0"), TackyLabel("break_loop.0")),
+                            TackyCopy(src = TackyConstant(value = 2), dest = TackyVar(name = "a.1")),
                             // a.0 = a.0 - 1
-                            TackyBinary(TackyBinaryOP.SUBTRACT, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.1")),
-                            TackyCopy(TackyVar("tmp.1"), TackyVar("a.0")),
+                            TackyBinary(TackyBinaryOP.SUBTRACT, TackyVar("a.1"), TackyConstant(1), TackyVar("tmp.1")),
+                            TackyCopy(TackyVar("tmp.1"), TackyVar("a.1")),
                             TackyJump(TackyLabel("continue_loop.0")),
                             TackyLabel("break_loop.0"),
-                            // for (int i.1 = 0; i.1 < 10; i.1 = i.1 + 1) ... label loop.1
-                            TackyCopy(TackyConstant(0), TackyVar("i.1")),
+                            // for (int i.2 = 0; i.2 < 10; i.2 = i.2 + 1) ... label loop.1
+                            TackyCopy(TackyConstant(0), TackyVar("i.2")),
                             TackyLabel("start_loop.1"),
-                            TackyBinary(TackyBinaryOP.LESS, TackyVar("i.1"), TackyConstant(10), TackyVar("tmp.2")),
+                            TackyBinary(TackyBinaryOP.LESS, TackyVar("i.2"), TackyConstant(10), TackyVar("tmp.2")),
                             JumpIfZero(TackyVar("tmp.2"), TackyLabel("break_loop.1")),
                             // body: a.0 = a.0 + 1
                             TackyBinary(TackyBinaryOP.ADD, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.3")),
                             TackyCopy(TackyVar("tmp.3"), TackyVar("a.0")),
                             TackyLabel("continue_loop.1"),
-                            // post: i.1 = i.1 + 1
-                            TackyBinary(TackyBinaryOP.ADD, TackyVar("i.1"), TackyConstant(1), TackyVar("tmp.4")),
-                            TackyCopy(TackyVar("tmp.4"), TackyVar("i.1")),
+                            // post: i.2 = i.2 + 1
+                            TackyBinary(TackyBinaryOP.ADD, TackyVar("i.2"), TackyConstant(1), TackyVar("tmp.4")),
+                            TackyCopy(TackyVar("tmp.4"), TackyVar("i.2")),
                             TackyJump(TackyLabel("start_loop.1")),
                             TackyLabel("break_loop.1"),
                             // for (; a.0 > 0;) ... label loop.2

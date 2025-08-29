@@ -115,3 +115,15 @@ data class D(
 ) : BlockItem() {
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
+
+data class CompoundStatement(
+    val block: Block
+) : Statement() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class Block(
+    val block: List<BlockItem>
+) : ASTNode() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}

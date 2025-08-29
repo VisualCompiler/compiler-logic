@@ -53,17 +53,21 @@ class Parser {
         expect(TokenType.KEYWORD_VOID, tokens)
         expect(TokenType.RIGHT_PAREN, tokens)
         expect(TokenType.LEFT_BRACK, tokens)
-        val body = mutableListOf<BlockItem>()
-        while (!tokens.isEmpty() && tokens.first().type != TokenType.RIGHT_BRACK) {
-            val next = parseBlockItem(tokens)
-            body.add(next)
-        }
+        val body = parseBlock(tokens)
         expect(TokenType.RIGHT_BRACK, tokens)
 
         return Function(
             name = name,
             body = body
         )
+    }
+
+    private fun parseBlock(tokens: MutableList<Token>): Block {
+        val body = mutableListOf<BlockItem>()
+        while (tokens.firstOrNull()?.type != TokenType.RIGHT_BRACK) {
+            body.add(parseBlockItem(tokens))
+        }
+        return Block(body)
     }
 
     private fun parseBlockItem(tokens: MutableList<Token>): BlockItem =
@@ -209,6 +213,12 @@ class Parser {
                     post = post,
                     body = body
                 )
+            }
+            TokenType.LEFT_BRACK -> {
+                tokens.removeFirst()
+                val body = parseBlock(tokens)
+                expect(TokenType.RIGHT_BRACK, tokens)
+                return CompoundStatement(body)
             }
             else -> {
                 val expression = parseOptionalExpression(tokens = tokens, followedByType = TokenType.SEMICOLON)

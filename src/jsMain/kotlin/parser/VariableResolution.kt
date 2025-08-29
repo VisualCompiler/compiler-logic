@@ -5,8 +5,10 @@ import exceptions.UndeclaredVariableException
 import parser.ASTNode
 import parser.AssignmentExpression
 import parser.BinaryExpression
+import parser.Block
 import parser.BlockItem
 import parser.BreakStatement
+import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
@@ -38,7 +40,12 @@ class VariableResolution : Visitor<ASTNode> {
 
     private fun newTemporary(name: String): String = "$name.${tempCounter++}"
 
-    private val variableMap = mutableMapOf<String, String>()
+    private val variableMap = mutableMapOf<String, VariableMapEntry>()
+
+    data class VariableMapEntry(
+        val name: String,
+        val fromCurrentBlock: Boolean = false
+    )
 
     override fun visit(node: SimpleProgram): ASTNode {
         // Reset state for each program to avoid leaking declarations across compilations
@@ -100,12 +107,12 @@ class VariableResolution : Visitor<ASTNode> {
     }
 
     override fun visit(node: Function): ASTNode {
-        val body = node.body.map { it.accept(this) as BlockItem }
+        val body = node.body.accept(this) as Block
         return Function(node.name, body)
     }
 
     override fun visit(node: VariableExpression): ASTNode =
-        VariableExpression(variableMap[node.name] ?: throw UndeclaredVariableException())
+        VariableExpression(variableMap[node.name]?.name ?: throw UndeclaredVariableException())
 
     override fun visit(node: UnaryExpression): ASTNode {
         val exp = node.expression.accept(this) as Expression
@@ -148,11 +155,11 @@ class VariableResolution : Visitor<ASTNode> {
     }
 
     override fun visit(node: Declaration): ASTNode {
-        if (node.name in variableMap) {
+        if (node.name in variableMap && variableMap[node.name]!!.fromCurrentBlock) {
             throw DuplicateVariableDeclaration()
         }
         val uniqueName = newTemporary(node.name)
-        variableMap[node.name] = uniqueName
+        variableMap[node.name] = VariableMapEntry(uniqueName, true)
         val init = node.init?.accept(this)
         return Declaration(uniqueName, init as Expression?)
     }
@@ -165,5 +172,16 @@ class VariableResolution : Visitor<ASTNode> {
     override fun visit(node: D): ASTNode {
         val declaration = node.declaration.accept(this) as Declaration
         return D(declaration)
+    }
+
+    override fun visit(node: Block): ASTNode = Block(node.block.map { it.accept(this) as BlockItem })
+
+    override fun visit(node: CompoundStatement): ASTNode {
+        val saved = variableMap.toMutableMap()
+        variableMap.map { (name, entry) -> name to VariableMapEntry(entry.name) }.toMap(variableMap)
+        val block = node.block.accept(this) as Block
+        variableMap.clear()
+        variableMap.putAll(saved)
+        return CompoundStatement(block)
     }
 }

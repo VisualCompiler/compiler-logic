@@ -48,4 +48,8 @@ interface Visitor<T> {
     fun visit(node: S): T
 
     fun visit(node: D): T
+
+    fun visit(node: Block): T
+
+    fun visit(node: CompoundStatement): T
 }
