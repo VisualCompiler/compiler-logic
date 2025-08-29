@@ -9,6 +9,20 @@ interface Visitor<T> {
 
     fun visit(node: NullStatement): T
 
+    fun visit(node: BreakStatement): T
+
+    fun visit(node: ContinueStatement): T
+
+    fun visit(node: WhileStatement): T
+
+    fun visit(node: DoWhileStatement): T
+
+    fun visit(node: ForStatement): T
+
+    fun visit(node: InitDeclaration): T
+
+    fun visit(node: InitExpression): T
+
     fun visit(node: Function): T
 
     fun visit(node: VariableExpression): T

@@ -30,12 +30,10 @@ class Parser {
         val tokenSet = tokens.toMutableList()
         val ast = parseProgram(tokenSet)
 
-        val lastToken = tokenSet.removeFirst()
+        // After a full program is parsed, we must be at EOF
+        expect(TokenType.EOF, tokenSet)
         if (!tokenSet.isEmpty()) {
-            throw UnexpectedEndOfFileException(
-                line = lastToken.line,
-                column = lastToken.column
-            )
+            throw UnexpectedEndOfFileException()
         }
         return ast
     }
@@ -127,66 +125,105 @@ class Parser {
     }
 
     private fun parseStatement(tokens: MutableList<Token>): Statement {
-        val first = tokens.firstOrNull()
-        val second = if (tokens.size > 1) tokens[1] else null
-
-        return when {
-            // if-statement
-            first?.type == TokenType.IF -> {
-                tokens.removeFirst() // consume 'if'
-                expect(TokenType.LEFT_PAREN, tokens)
-                val condition = parseExpression(0, tokens)
-                expect(TokenType.RIGHT_PAREN, tokens)
-                val thenBranch = parseStatement(tokens)
-
-                val elseBranch =
-                    if (tokens.firstOrNull()?.type == TokenType.ELSE) {
-                        tokens.removeFirst()
-                        parseStatement(tokens)
-                    } else {
-                        null
-                    }
-
-                IfStatement(condition, thenBranch, elseBranch)
-            }
-
-            // return-statement
-            first?.type == TokenType.KEYWORD_RETURN -> {
-                tokens.removeFirst() // consume 'return'
-                val expr = parseExpression(0, tokens)
-                expect(TokenType.SEMICOLON, tokens)
-                ReturnStatement(expr)
-            }
-
-            // empty statement ;
-            first?.type == TokenType.SEMICOLON -> {
+        val firstToken = tokens.firstOrNull() ?: throw UnexpectedEndOfFileException()
+        val secondToken = if (tokens.size > 1) tokens[1] else null
+        when (firstToken.type) {
+            TokenType.IF -> {
                 tokens.removeFirst()
-                NullStatement()
+                expect(TokenType.LEFT_PAREN, tokens)
+                val condition = parseExpression(tokens = tokens)
+                expect(TokenType.RIGHT_PAREN, tokens)
+                val thenStatement = parseStatement(tokens)
+                var elseStatement: Statement? = null
+                if (tokens.firstOrNull()?.type == TokenType.ELSE) {
+                    tokens.removeFirst()
+                    elseStatement = parseStatement(tokens)
+                }
+                return IfStatement(condition, thenStatement, elseStatement)
             }
-
-            // goto-statement
-            first?.type == TokenType.GOTO -> {
-                tokens.removeFirst() // consume 'goto'
+            TokenType.KEYWORD_RETURN -> {
+                tokens.removeFirst()
+                val expression = parseExpression(tokens = tokens)
+                expect(TokenType.SEMICOLON, tokens)
+                return ReturnStatement(
+                    expression = expression
+                )
+            }
+            TokenType.GOTO -> {
+                tokens.removeFirst()
                 val label = parseIdentifier(tokens)
                 expect(TokenType.SEMICOLON, tokens)
-                GotoStatement(label)
+                return GotoStatement(label)
             }
-
-            // label: statement
-            first?.type == TokenType.IDENTIFIER && second?.type == TokenType.COLON -> {
-                val labelName = parseIdentifier(tokens)
-                expect(TokenType.COLON, tokens)
-                val stmt = parseStatement(tokens)
-                LabeledStatement(labelName, stmt)
+            TokenType.IDENTIFIER -> {
+                // Handle labeled statements: IDENTIFIER followed by COLON
+                if (secondToken?.type == TokenType.COLON) {
+                    val labelName = parseIdentifier(tokens)
+                    expect(TokenType.COLON, tokens)
+                    val statement = parseStatement(tokens)
+                    return LabeledStatement(labelName, statement)
+                } else {
+                    // Not a label: parse as expression statement by delegating to default branch
+                    val expression = parseOptionalExpression(tokens = tokens, followedByType = TokenType.SEMICOLON)
+                    return if (expression != null) ExpressionStatement(expression) else NullStatement()
+                }
             }
-
-            // expression statement (default case)
-            else -> {
-                val expr = parseExpression(0, tokens)
+            TokenType.KEYWORD_BREAK -> {
+                tokens.removeFirst()
                 expect(TokenType.SEMICOLON, tokens)
-                ExpressionStatement(expr)
+                return BreakStatement()
+            }
+            TokenType.KEYWORD_CONTINUE -> {
+                tokens.removeFirst()
+                expect(TokenType.SEMICOLON, tokens)
+                return ContinueStatement()
+            }
+            TokenType.KEYWORD_WHILE -> {
+                tokens.removeFirst()
+                expect(TokenType.LEFT_PAREN, tokens)
+                val condition = parseExpression(tokens = tokens)
+                expect(TokenType.RIGHT_PAREN, tokens)
+                val body = parseStatement(tokens)
+                return WhileStatement(condition, body)
+            }
+            TokenType.KEYWORD_DO -> {
+                tokens.removeFirst()
+                val body = parseStatement(tokens)
+                expect(TokenType.KEYWORD_WHILE, tokens)
+                expect(TokenType.LEFT_PAREN, tokens)
+                val condition = parseExpression(tokens = tokens)
+                expect(TokenType.RIGHT_PAREN, tokens)
+                expect(TokenType.SEMICOLON, tokens)
+                return DoWhileStatement(condition, body)
+            }
+            TokenType.KEYWORD_FOR -> {
+                tokens.removeFirst()
+                expect(TokenType.LEFT_PAREN, tokens)
+                val init = parseForInit(tokens)
+                val condition = parseOptionalExpression(tokens = tokens, followedByType = TokenType.SEMICOLON)
+                val post = parseOptionalExpression(tokens = tokens, followedByType = TokenType.RIGHT_PAREN)
+                val body = parseStatement(tokens)
+                return ForStatement(
+                    init = init,
+                    condition = condition,
+                    post = post,
+                    body = body
+                )
+            }
+            else -> {
+                val expression = parseOptionalExpression(tokens = tokens, followedByType = TokenType.SEMICOLON)
+                return if (expression != null) ExpressionStatement(expression) else NullStatement()
             }
         }
+    }
+
+    private fun parseForInit(tokens: MutableList<Token>): ForInit {
+        if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
+            val declaration = parseDeclaration(tokens)
+            return InitDeclaration(declaration)
+        }
+        val expression = parseOptionalExpression(tokens = tokens, followedByType = TokenType.SEMICOLON)
+        return InitExpression(expression)
     }
 
     private fun parseExpression(
@@ -203,55 +240,79 @@ class Parser {
             val op = tokens.removeFirst()
 
             left =
-                if (nextType == TokenType.ASSIGN) {
-                    val right = parseExpression(prec, tokens)
-                    if (left !is VariableExpression) {
-                        throw InvalidLValueException()
+                when (nextType) {
+                    TokenType.ASSIGN -> {
+                        if (left !is VariableExpression) {
+                            throw InvalidLValueException()
+                        }
+                        val right = parseExpression(prec, tokens)
+                        AssignmentExpression(left, right)
                     }
-                    AssignmentExpression(left, right)
-                } else if (nextType == TokenType.QUESTION_MARK) {
-                    val thenExpression = parseExpression(prec, tokens)
-                    expect(TokenType.COLON, tokens)
-                    val elseExpression = parseExpression(prec, tokens)
-                    return ConditionalExpression(left, thenExpression, elseExpression)
-                } else {
-                    val right = parseExpression(prec + 1, tokens)
-                    BinaryExpression(
-                        left = left,
-                        operator = op,
-                        right = right
-                    )
+                    TokenType.QUESTION_MARK -> {
+                        val thenExpression = parseExpression(prec, tokens)
+                        expect(TokenType.COLON, tokens)
+                        val elseExpression = parseExpression(prec, tokens)
+                        return ConditionalExpression(left, thenExpression, elseExpression)
+                    }
+                    else -> {
+                        val right = parseExpression(prec + 1, tokens)
+                        BinaryExpression(
+                            left = left,
+                            operator = op,
+                            right = right
+                        )
+                    }
                 }
         }
         return left
     }
 
+    private fun parseOptionalExpression(
+        minPrec: Int = 0,
+        tokens: MutableList<Token>,
+        followedByType: TokenType
+    ): Expression? {
+        if (tokens.first().type == followedByType) {
+            expect(followedByType, tokens)
+            return null
+        }
+        val expression = parseExpression(minPrec, tokens)
+        expect(followedByType, tokens)
+        return expression
+    }
+
     private fun parseFactor(tokens: MutableList<Token>): Expression {
         var nextToken = tokens.first()
-        if (nextToken.type == TokenType.INT_LITERAL) {
-            nextToken = tokens.removeFirst()
-            return IntExpression(value = nextToken.lexeme.toInt())
-        } else if (nextToken.type == TokenType.IDENTIFIER) {
-            nextToken = tokens.removeFirst()
-            return VariableExpression(name = nextToken.lexeme)
-        } else if (nextToken.type == TokenType.TILDE || nextToken.type == TokenType.NEGATION || nextToken.type == TokenType.NOT) {
-            val operator = tokens.removeFirst()
-            val factor = parseFactor(tokens)
-            return UnaryExpression(operator = operator, expression = factor)
-        } else if (nextToken.type == TokenType.LEFT_PAREN) {
-            expect(TokenType.LEFT_PAREN, tokens)
-            val expression = parseExpression(tokens = tokens)
-            expect(TokenType.RIGHT_PAREN, tokens)
-            return expression
-        } else {
-            val nToken = tokens.removeFirst()
-            throw UnexpectedTokenException(
-                expected =
-                "${TokenType.INT_LITERAL}, ${TokenType.IDENTIFIER}, unary operator, ${TokenType.LEFT_PAREN}",
-                actual = nToken.type.toString(),
-                line = nToken.line,
-                column = nToken.column
-            )
+        when (nextToken.type) {
+            TokenType.INT_LITERAL -> {
+                nextToken = tokens.removeFirst()
+                return IntExpression(value = nextToken.lexeme.toInt())
+            }
+            TokenType.IDENTIFIER -> {
+                nextToken = tokens.removeFirst()
+                return VariableExpression(name = nextToken.lexeme)
+            }
+            TokenType.TILDE, TokenType.NEGATION, TokenType.NOT -> {
+                val operator = tokens.removeFirst()
+                val factor = parseFactor(tokens)
+                return UnaryExpression(operator = operator, expression = factor)
+            }
+            TokenType.LEFT_PAREN -> {
+                expect(TokenType.LEFT_PAREN, tokens)
+                val expression = parseExpression(tokens = tokens)
+                expect(TokenType.RIGHT_PAREN, tokens)
+                return expression
+            }
+            else -> {
+                val nToken = tokens.removeFirst()
+                throw UnexpectedTokenException(
+                    expected =
+                    "${TokenType.INT_LITERAL}, ${TokenType.IDENTIFIER}, unary operator, ${TokenType.LEFT_PAREN}",
+                    actual = nToken.type.toString(),
+                    line = nToken.line,
+                    column = nToken.column
+                )
+            }
         }
     }
 }

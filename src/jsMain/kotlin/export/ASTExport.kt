@@ -7,13 +7,19 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import parser.AssignmentExpression
 import parser.BinaryExpression
+import parser.BreakStatement
 import parser.ConditionalExpression
+import parser.ContinueStatement
 import parser.D
 import parser.Declaration
+import parser.DoWhileStatement
 import parser.ExpressionStatement
+import parser.ForStatement
 import parser.Function
 import parser.GotoStatement
 import parser.IfStatement
+import parser.InitDeclaration
+import parser.InitExpression
 import parser.IntExpression
 import parser.LabeledStatement
 import parser.NullStatement
@@ -23,6 +29,7 @@ import parser.SimpleProgram
 import parser.UnaryExpression
 import parser.VariableExpression
 import parser.Visitor
+import parser.WhileStatement
 
 class ASTExport : Visitor<String> {
     override fun visit(node: SimpleProgram): String {
@@ -94,6 +101,125 @@ class ASTExport : Visitor<String> {
                 )
             )
 
+        return Json.encodeToString(jsonNode)
+    }
+
+    override fun visit(node: BreakStatement): String {
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(this::class.simpleName),
+                    "label" to JsonPrimitive("break")
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+
+    override fun visit(node: ContinueStatement): String {
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(this::class.simpleName),
+                    "label" to JsonPrimitive("continue")
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+
+    override fun visit(node: WhileStatement): String {
+        val children =
+            JsonObject(
+                mapOf(
+                    "condition" to JsonPrimitive(node.condition.accept(this)),
+                    "body" to JsonArray(Json.decodeFromString(node.body.accept(this)))
+                )
+            )
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(this::class.simpleName),
+                    "label" to JsonPrimitive("while"),
+                    "children" to children
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+
+    override fun visit(node: DoWhileStatement): String {
+        val children =
+            JsonObject(
+                mapOf(
+                    "body" to JsonArray(Json.decodeFromString(node.body.accept(this))),
+                    "condition" to JsonPrimitive(node.condition.accept(this))
+                )
+            )
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(this::class.simpleName),
+                    "label" to JsonPrimitive("do while"),
+                    "children" to children
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+
+    override fun visit(node: ForStatement): String {
+        val childrenMap =
+            mutableMapOf<String, kotlinx.serialization.json.JsonElement>(
+                "init" to JsonPrimitive(node.init.accept(this))
+            )
+        if (node.condition != null) {
+            childrenMap["condition"] = JsonPrimitive(node.condition.accept(this))
+        }
+        if (node.post != null) {
+            childrenMap["post"] = JsonPrimitive(node.post.accept(this))
+        }
+        childrenMap["body"] = JsonPrimitive(node.body.accept(this))
+        val children = JsonObject(childrenMap)
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(this::class.simpleName),
+                    "label" to JsonPrimitive("for"),
+                    "children" to children
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+
+    override fun visit(node: InitDeclaration): String {
+        val children =
+            JsonObject(
+                mapOf(
+                    "declaration" to JsonPrimitive(node.declaration.accept(this))
+                )
+            )
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(this::class.simpleName),
+                    "label" to JsonPrimitive("init declaration"),
+                    "children" to children
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+
+    override fun visit(node: InitExpression): String {
+        val childrenMap = mutableMapOf<String, kotlinx.serialization.json.JsonElement>()
+        if (node.expression != null) {
+            childrenMap["expression"] = JsonPrimitive(node.expression.accept(this))
+        }
+        val children = JsonObject(childrenMap)
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(this::class.simpleName),
+                    "label" to JsonPrimitive("init expression"),
+                    "children" to children
+                )
+            )
         return Json.encodeToString(jsonNode)
     }
 

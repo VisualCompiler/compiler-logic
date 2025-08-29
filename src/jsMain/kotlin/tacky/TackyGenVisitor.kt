@@ -4,13 +4,19 @@ import exceptions.TackyException
 import lexer.TokenType
 import parser.AssignmentExpression
 import parser.BinaryExpression
+import parser.BreakStatement
 import parser.ConditionalExpression
+import parser.ContinueStatement
 import parser.D
 import parser.Declaration
+import parser.DoWhileStatement
 import parser.ExpressionStatement
+import parser.ForStatement
 import parser.Function
 import parser.GotoStatement
 import parser.IfStatement
+import parser.InitDeclaration
+import parser.InitExpression
 import parser.IntExpression
 import parser.LabeledStatement
 import parser.NullStatement
@@ -20,6 +26,7 @@ import parser.SimpleProgram
 import parser.UnaryExpression
 import parser.VariableExpression
 import parser.Visitor
+import parser.WhileStatement
 
 class TackyGenVisitor : Visitor<TackyConstruct?> {
     private var tempCounter = 0
@@ -91,7 +98,72 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         return result
     }
 
-    override fun visit(node: NullStatement): TackyConstruct = TackyConstant(0)
+    override fun visit(node: NullStatement): TackyConstruct? = null
+
+    override fun visit(node: BreakStatement): TackyConstruct? {
+        val breakLabel = TackyLabel("break_${node.label}")
+        currentInstructions += TackyJump(breakLabel)
+        return null
+    }
+
+    override fun visit(node: ContinueStatement): TackyConstruct? {
+        val continueLabel = TackyLabel("continue_${node.label}")
+        currentInstructions += TackyJump(continueLabel)
+        return null
+    }
+
+    override fun visit(node: WhileStatement): TackyConstruct? {
+        val continueLabel = TackyLabel("continue_${node.label}")
+        val breakLabel = TackyLabel("break_${node.label}")
+        currentInstructions += continueLabel
+        val condition = node.condition.accept(this) as TackyVal
+        currentInstructions += JumpIfZero(condition, breakLabel)
+        node.body.accept(this)
+        currentInstructions += TackyJump(continueLabel)
+        currentInstructions += breakLabel
+        return null
+    }
+
+    override fun visit(node: DoWhileStatement): TackyConstruct? {
+        val startLabel = TackyLabel("start_${node.label}")
+        val continueLabel = TackyLabel("continue_${node.label}")
+        val breakLabel = TackyLabel("break_${node.label}")
+        currentInstructions += startLabel
+        node.body.accept(this)
+        currentInstructions += continueLabel
+        val condition = node.condition.accept(this) as TackyVal
+        currentInstructions += JumpIfNotZero(condition, startLabel)
+        currentInstructions += breakLabel
+        return null
+    }
+
+    override fun visit(node: ForStatement): TackyConstruct? {
+        val startLabel = TackyLabel("start_${node.label}")
+        val continueLabel = TackyLabel("continue_${node.label}")
+        val breakLabel = TackyLabel("break_${node.label}")
+        node.init.accept(this)
+        currentInstructions += startLabel
+        if (node.condition != null) {
+            val condition = node.condition.accept(this) as TackyVal
+            currentInstructions += JumpIfZero(condition, breakLabel)
+        }
+        node.body.accept(this)
+        currentInstructions += continueLabel
+        node.post?.accept(this)
+        currentInstructions += TackyJump(startLabel)
+        currentInstructions += breakLabel
+        return null
+    }
+
+    override fun visit(node: InitDeclaration): TackyConstruct? {
+        node.declaration.accept(this)
+        return null
+    }
+
+    override fun visit(node: InitExpression): TackyConstruct? {
+        node.expression?.accept(this)
+        return null
+    }
 
     override fun visit(node: Function): TackyConstruct {
         val functionName = node.name

@@ -5,13 +5,19 @@ import exceptions.UndeclaredLabelException
 import parser.ASTNode
 import parser.AssignmentExpression
 import parser.BinaryExpression
+import parser.BreakStatement
 import parser.ConditionalExpression
+import parser.ContinueStatement
 import parser.D
 import parser.Declaration
+import parser.DoWhileStatement
 import parser.ExpressionStatement
+import parser.ForStatement
 import parser.Function
 import parser.GotoStatement
 import parser.IfStatement
+import parser.InitDeclaration
+import parser.InitExpression
 import parser.IntExpression
 import parser.LabeledStatement
 import parser.NullStatement
@@ -21,6 +27,7 @@ import parser.SimpleProgram
 import parser.UnaryExpression
 import parser.VariableExpression
 import parser.Visitor
+import parser.WhileStatement
 
 class LabelCollector : Visitor<Unit> {
     val definedLabels: MutableSet<String> = mutableSetOf<String>()
@@ -77,6 +84,39 @@ class LabelCollector : Visitor<Unit> {
     override fun visit(node: ExpressionStatement) {}
 
     override fun visit(node: NullStatement) {}
+
+    override fun visit(node: BreakStatement) {
+        // No labels to collect
+    }
+
+    override fun visit(node: ContinueStatement) {
+        // No labels to collect
+    }
+
+    override fun visit(node: WhileStatement) {
+        node.body.accept(this)
+        node.condition.accept(this)
+    }
+
+    override fun visit(node: DoWhileStatement) {
+        node.body.accept(this)
+        node.condition.accept(this)
+    }
+
+    override fun visit(node: ForStatement) {
+        node.init.accept(this)
+        node.condition?.accept(this)
+        node.post?.accept(this)
+        node.body.accept(this)
+    }
+
+    override fun visit(node: InitDeclaration) {
+        node.declaration.accept(this)
+    }
+
+    override fun visit(node: InitExpression) {
+        node.expression?.accept(this)
+    }
 
     override fun visit(node: GotoStatement) {}
 }
@@ -140,6 +180,39 @@ private class GotoValidator(
     override fun visit(node: ExpressionStatement) {}
 
     override fun visit(node: NullStatement) {}
+
+    override fun visit(node: BreakStatement) {
+        // No goto statements to validate
+    }
+
+    override fun visit(node: ContinueStatement) {
+        // No goto statements to validate
+    }
+
+    override fun visit(node: WhileStatement) {
+        node.body.accept(this)
+        node.condition.accept(this)
+    }
+
+    override fun visit(node: DoWhileStatement) {
+        node.body.accept(this)
+        node.condition.accept(this)
+    }
+
+    override fun visit(node: ForStatement) {
+        node.init.accept(this)
+        node.condition?.accept(this)
+        node.post?.accept(this)
+        node.body.accept(this)
+    }
+
+    override fun visit(node: InitDeclaration) {
+        node.declaration.accept(this)
+    }
+
+    override fun visit(node: InitExpression) {
+        node.expression?.accept(this)
+    }
 }
 
 class LabelAnalysis {

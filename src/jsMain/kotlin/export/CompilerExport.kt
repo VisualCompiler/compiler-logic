@@ -2,24 +2,16 @@ package export
 
 import assembly.AsmProgram
 import assembly.CodeEmitter
-import assembly.InstructionFixer
-import assembly.PseudoEliminator
-import compiler.parser.LabelAnalysis
-import compiler.parser.VariableResolution
-import exceptions.CodeGenerationException
-import exceptions.CompilationExceptions
+import compiler.CompilerStage
+import compiler.CompilerWorkflow
+import exceptions.CompilationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import lexer.Lexer
-import lexer.Token
-import parser.ASTNode
-import parser.Parser
-import tacky.TackyGenVisitor
 import tacky.TackyProgram
-import tacky.TackyToAsm
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
@@ -27,151 +19,76 @@ class CompilerExport {
     fun exportCompilationResults(code: String): String {
         val outputs = mutableListOf<CompilationOutput>()
         val overallErrors = mutableListOf<CompilationError>()
-
-        val parser = Parser()
-        val variableResolution = VariableResolution()
-        val labelAnalysis = LabelAnalysis()
-        val tackyGenVisitor = TackyGenVisitor()
-        val tackyToAsmConverter = TackyToAsm()
-        val pseudoEliminator = PseudoEliminator()
-        val instructionFixer = InstructionFixer()
         val codeEmitter = CodeEmitter()
-
-        var tokens: List<Token>? = null
-        var ast: ASTNode? = null
-        var tackyProgram: TackyProgram? = null
-
-        // Lexing
-        val lexerOutput =
-            try {
-                val lexer = Lexer(code)
-                tokens = lexer.tokenize()
+        try {
+            val tokens = CompilerWorkflow.take(code)
+            val lexer = Lexer(code)
+            outputs.add(
                 LexerOutput(
                     tokens = lexer.toJsonString(),
                     errors = emptyArray()
                 )
-            } catch (e: CompilationExceptions) {
-                val error =
-                    CompilationError(
-                        type = ErrorType.LEXICAL,
-                        message = e.message ?: "Unknown lexical error",
-                        line = e.line ?: -1,
-                        column = e.column ?: -1
-                    )
-                overallErrors.add(error)
-                LexerOutput(
-                    errors = arrayOf(error)
-                )
-            }
-        outputs.add(lexerOutput)
-
-        // Parsing (only if lexer succeeded)
-        val parserOutput =
-            if (lexerOutput.errors.isEmpty() && tokens != null) {
-                try {
-                    ast = parser.parseTokens(tokens)
-                    labelAnalysis.analyze(ast)
-                    ast = ast.accept(variableResolution)
-                    ParserOutput(
-                        errors = emptyArray(),
-                        ast = ast.accept(ASTExport())
-                    )
-                } catch (e: CompilationExceptions) {
-                    val error =
-                        CompilationError(
-                            type = ErrorType.SYNTAX,
-                            message = e.message ?: "Unknown syntax error",
-                            line = e.line ?: -1,
-                            column = e.column ?: -1
-                        )
-                    overallErrors.add(error)
-                    ParserOutput(
-                        errors = arrayOf(error)
-                    )
-                }
-            } else {
+            )
+            val ast = CompilerWorkflow.take(tokens)
+            outputs.add(
                 ParserOutput(
-                    errors = emptyArray()
+                    errors = emptyArray(),
+                    ast = ast.accept(ASTExport())
                 )
-            }
-        outputs.add(parserOutput)
-        val tackyOutput =
-            if (parserOutput.errors.isEmpty() && ast != null) {
-                try {
-                    val result = ast.accept(tackyGenVisitor)
-                    tackyProgram = result as? TackyProgram
-                    TackyOutput(
-                        tackyPretty = tackyProgram?.toPseudoCode(),
-                        errors = emptyArray()
-                    )
-                } catch (e: CompilationExceptions) {
-                    val error =
-                        CompilationError(
-                            type = ErrorType.CODE_GENERATION,
-                            message = e.message ?: "Unknown tacky generation error",
-                            line = e.line ?: -1,
-                            column = e.column ?: -1
-                        )
-                    overallErrors.add(error)
-                    TackyOutput(
-                        errors = arrayOf(error)
-                    )
-                }
-            } else {
+            )
+            val tacky = CompilerWorkflow.take(ast)
+            val tackyProgram = tacky as? TackyProgram
+            outputs.add(
                 TackyOutput(
+                    tackyPretty = tackyProgram?.toPseudoCode(),
                     errors = emptyArray()
                 )
-            }
-        outputs.add(tackyOutput)
-        // Code generation
-        val codeGeneratorOutput =
-            if (tackyOutput.errors.isEmpty() && tackyProgram != null) {
-                try {
-                    val asmWithPseudos = tackyToAsmConverter.convert(tackyProgram!!)
-                    val (asmWithStack, stackSpaceNeeded) = pseudoEliminator.eliminate(asmWithPseudos)
-                    val finalAsmProgram = instructionFixer.fix(asmWithStack, stackSpaceNeeded)
-                    val finalAssemblyString = codeEmitter.emit(finalAsmProgram as AsmProgram)
-
-                    CodeGeneratorOutput(
-                        errors = emptyArray(),
-                        assembly = finalAssemblyString
-                    )
-
-                    CodeGeneratorOutput(
-                        errors = emptyArray(),
-                        assembly = finalAssemblyString
-                    )
-                } catch (e: CodeGenerationException) {
-                    val error =
-                        CompilationError(
-                            type = ErrorType.CODE_GENERATION,
-                            message = e.message ?: "Unknown code generation error",
-                            line = e.line ?: -1,
-                            column = e.column ?: -1
-                        )
-                    overallErrors.add(error)
-                    CodeGeneratorOutput(
-                        errors = arrayOf(error)
-                    )
-                } catch (e: Exception) {
-                    val error =
-                        CompilationError(
-                            type = ErrorType.CODE_GENERATION,
-                            message = e.message ?: "Unknown code generation error",
-                            line = -1,
-                            column = -1
-                        )
-                    overallErrors.add(error)
-                    CodeGeneratorOutput(
-                        errors = arrayOf(error)
-                    )
+            )
+            val asm = CompilerWorkflow.take(tacky)
+            val finalAssemblyString = codeEmitter.emit(asm as AsmProgram)
+            outputs.add(
+                AssemblyOutput(
+                    errors = emptyArray(),
+                    assembly = finalAssemblyString
+                )
+            )
+        } catch (e: CompilationException) {
+            val stage =
+                when {
+                    outputs.isEmpty() -> CompilerStage.LEXER
+                    outputs.size == 1 -> CompilerStage.PARSER
+                    outputs.size == 2 -> CompilerStage.TACKY
+                    else -> CompilerStage.ASSEMBLY
                 }
-            } else {
-                CodeGeneratorOutput(
-                    errors = emptyArray()
+            val error =
+                CompilationError(
+                    stage = stage.name.lowercase(),
+                    message = e.message ?: "Unknown ${stage.name.lowercase()} error",
+                    line = e.line ?: -1,
+                    column = e.column ?: -1
                 )
+            overallErrors.add(error)
+            when (stage) {
+                CompilerStage.LEXER -> outputs.add(LexerOutput(errors = arrayOf(error)))
+                CompilerStage.PARSER -> outputs.add(ParserOutput(errors = arrayOf(error)))
+                CompilerStage.TACKY -> outputs.add(TackyOutput(errors = arrayOf(error)))
+                CompilerStage.ASSEMBLY -> outputs.add(AssemblyOutput(errors = arrayOf(error)))
             }
-        outputs.add(codeGeneratorOutput)
+        } catch (e: Exception) {
+            // Fallback for any unexpected runtime errors
+            val error =
+                CompilationError(
+                    message = e.message ?: "Unknown error",
+                    line = -1,
+                    column = -1
+                )
+            overallErrors.add(error)
+            // ensure we return four stages
+            while (outputs.size < 3) {
+                outputs.add(ParserOutput(errors = emptyArray()))
+            }
+            outputs.add(AssemblyOutput(errors = arrayOf(error)))
+        }
 
         val result =
             CompilationResult(
