@@ -3,6 +3,7 @@ package integration
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
 import compiler.CompilerStage
+import compiler.parser.LabelAnalysis
 import compiler.parser.VariableResolution
 import lexer.Lexer
 import parser.Parser
@@ -109,8 +110,10 @@ class CompilerTestSuite {
             // Parser stage
             if (testCase.failingStage == CompilerStage.PARSER) {
                 assertFailsWith(testCase.expectedException) {
+                    val labelAnalysis = LabelAnalysis()
                     val variableResolution = VariableResolution()
                     val ast = parser.parseTokens(tokens) as SimpleProgram
+                    labelAnalysis.analyze(ast)
                     variableResolution.visit(ast)
                 }
                 continue

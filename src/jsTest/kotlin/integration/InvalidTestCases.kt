@@ -146,7 +146,7 @@ object InvalidTestCases {
             // Semantic Errors (caught after parsing)
             InvalidTestCase(
                 code = "int main(void) { int a; int a; return a; }", // Duplicate variable
-                failingStage = CompilerStage.PARSER, // Thrown by VariableResolution, caught in the Parser stage
+                failingStage = CompilerStage.PARSER,
                 expectedException = DuplicateVariableDeclaration::class
             ),
             InvalidTestCase(

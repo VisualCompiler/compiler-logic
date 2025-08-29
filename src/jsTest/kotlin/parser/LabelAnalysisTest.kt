@@ -16,26 +16,26 @@ class LabelAnalysisTest {
         val ast: ASTNode =
             SimpleProgram(
                 functionDefinition =
-                    Function(
-                        name = "main",
-                        body =
-                            listOf(
-                                S(GotoStatement("end")),
-                                S(
-                                    LabeledStatement(
-                                        label = "start",
-                                        statement = ExpressionStatement(IntExpression(1))
-                                    )
-                                ),
-                                S(GotoStatement("start")),
-                                S(
-                                    LabeledStatement(
-                                        label = "end",
-                                        statement = ReturnStatement(IntExpression(0))
-                                    )
-                                )
+                Function(
+                    name = "main",
+                    body =
+                    listOf(
+                        S(GotoStatement("end")),
+                        S(
+                            LabeledStatement(
+                                label = "start",
+                                statement = ExpressionStatement(IntExpression(1))
                             )
+                        ),
+                        S(GotoStatement("start")),
+                        S(
+                            LabeledStatement(
+                                label = "end",
+                                statement = ReturnStatement(IntExpression(0))
+                            )
+                        )
                     )
+                )
             )
 
         // Act & Assert: This should complete successfully without throwing an exception.
@@ -50,24 +50,24 @@ class LabelAnalysisTest {
         val ast: ASTNode =
             SimpleProgram(
                 functionDefinition =
-                    Function(
-                        name = "main",
-                        body =
-                            listOf(
-                                S(
-                                    LabeledStatement(
-                                        label = "my_label",
-                                        statement = NullStatement()
-                                    )
-                                ),
-                                S(
-                                    LabeledStatement(
-                                        label = "my_label",
-                                        statement = ReturnStatement(IntExpression(0))
-                                    )
-                                )
+                Function(
+                    name = "main",
+                    body =
+                    listOf(
+                        S(
+                            LabeledStatement(
+                                label = "my_label",
+                                statement = NullStatement()
                             )
+                        ),
+                        S(
+                            LabeledStatement(
+                                label = "my_label",
+                                statement = ReturnStatement(IntExpression(0))
+                            )
+                        )
                     )
+                )
             )
 
         // Act & Assert: Expect the analysis to fail with the specific exception.
@@ -82,14 +82,14 @@ class LabelAnalysisTest {
         val ast: ASTNode =
             SimpleProgram(
                 functionDefinition =
-                    Function(
-                        name = "main",
-                        body =
-                            listOf(
-                                S(GotoStatement("missing_label")),
-                                S(ReturnStatement(IntExpression(0)))
-                            )
+                Function(
+                    name = "main",
+                    body =
+                    listOf(
+                        S(GotoStatement("missing_label")),
+                        S(ReturnStatement(IntExpression(0)))
                     )
+                )
             )
 
         // Act & Assert: Expect the analysis to fail with the specific exception.
@@ -104,35 +104,35 @@ class LabelAnalysisTest {
         val ast: ASTNode =
             SimpleProgram(
                 functionDefinition =
-                    Function(
-                        name = "main",
-                        body =
-                            listOf(
-                                S(
-                                    IfStatement(
-                                        condition = IntExpression(1),
-                                        then = (
-                                            LabeledStatement(
-                                                label = "then_branch",
-                                                statement = GotoStatement("end")
-                                            )
-                                        ),
-                                        _else = (
-                                            LabeledStatement(
-                                                label = "else_branch",
-                                                statement = GotoStatement("end")
-                                            )
-                                        )
-                                    )
-                                ),
-                                S(
+                Function(
+                    name = "main",
+                    body =
+                    listOf(
+                        S(
+                            IfStatement(
+                                condition = IntExpression(1),
+                                then = (
                                     LabeledStatement(
-                                        label = "end",
-                                        statement = ReturnStatement(IntExpression(0))
+                                        label = "then_branch",
+                                        statement = GotoStatement("end")
                                     )
-                                )
+                                    ),
+                                _else = (
+                                    LabeledStatement(
+                                        label = "else_branch",
+                                        statement = GotoStatement("end")
+                                    )
+                                    )
                             )
+                        ),
+                        S(
+                            LabeledStatement(
+                                label = "end",
+                                statement = ReturnStatement(IntExpression(0))
+                            )
+                        )
                     )
+                )
             )
 
         // Act & Assert: This should complete successfully.

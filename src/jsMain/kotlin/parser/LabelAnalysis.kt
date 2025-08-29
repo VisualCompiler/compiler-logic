@@ -144,8 +144,6 @@ private class GotoValidator(
 
 class LabelAnalysis {
     fun analyze(ast: ASTNode) {
-        console.log("[LabelAnalysis] Starting analysis on AST: $ast")
-
         val collector = LabelCollector()
         ast.accept(collector)
 

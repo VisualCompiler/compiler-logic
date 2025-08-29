@@ -1,7 +1,7 @@
 plugins {
     kotlin("multiplatform") version "2.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "11.3.2"
-    id("org.jetbrains.kotlinx.kover") version "0.7.6"
+    id("org.jetbrains.kotlinx.kover") version "0.9.1"
     kotlin("plugin.serialization") version "2.2.0"
 }
 
@@ -54,21 +54,6 @@ kotlin {
     }
 }
 
-koverReport {
-    filters {
-        includes {
-            classes("*")
-        }
-    }
-    verify {
-        rule {
-            bound {
-                minValue = 0
-            }
-        }
-    }
-}
-
 // Task to automatically sync JVM sources from JS sources
 tasks.register("syncJvmSources") {
     group = "build"
@@ -103,6 +88,11 @@ tasks.register("syncJvmSources") {
     }
 }
 
+// Ensure syncJvmSources runs before any compilation tasks
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    dependsOn("syncJvmSources")
+}
+
 listOf(
     "runKtlintCheckOverJsMainSourceSet",
     "runKtlintCheckOverJsTestSourceSet",
@@ -118,6 +108,16 @@ tasks.named("jvmTest") {
     dependsOn("syncJvmSources")
 }
 
+// Also make jsTest depend on syncJvmSources to ensure consistency
+tasks.named("jsTest") {
+    dependsOn("syncJvmSources")
+}
+
+// Also make jsTest depend on syncJvmSources to ensure consistency
+tasks.named("jsTest") {
+    dependsOn("syncJvmSources")
+}
+
 tasks.named<Delete>("clean") {
     delete(
         file("src/jvmMain"),
@@ -125,8 +125,18 @@ tasks.named<Delete>("clean") {
     )
 }
 
-// Ensure Kover HTML report is generated when running the standard build
-// Using finalizedBy so the report runs after a successful build without affecting task up-to-date checks
+// Ensure tests run and Kover HTML report is generated when running the standard build
 tasks.named("build") {
+    dependsOn("jsTest", "jvmTest")
     finalizedBy("koverHtmlReport")
+}
+
+// Ensure koverHtmlReport depends on test execution to have coverage data
+tasks.named("koverHtmlReport") {
+    dependsOn("jsTest", "jvmTest")
+}
+
+// Ensure koverHtmlReport depends on test execution to have coverage data
+tasks.named("koverHtmlReport") {
+    dependsOn("jsTest", "jvmTest")
 }
