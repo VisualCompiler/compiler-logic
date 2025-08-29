@@ -6,12 +6,16 @@ import parser.ASTNode
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.BlockItem
+import parser.ConditionalExpression
 import parser.D
 import parser.Declaration
 import parser.Expression
 import parser.ExpressionStatement
 import parser.Function
+import parser.GotoStatement
+import parser.IfStatement
 import parser.IntExpression
+import parser.LabeledStatement
 import parser.NullStatement
 import parser.ReturnStatement
 import parser.S
@@ -65,6 +69,27 @@ class VariableResolution : Visitor<ASTNode> {
     }
 
     override fun visit(node: IntExpression): ASTNode = node
+
+    override fun visit(node: IfStatement): ASTNode {
+        val condition = node.condition.accept(this) as Expression
+        val thenStatement = node.then.accept(this) as Statement
+        var elseStatement = node._else?.accept(this) as Statement?
+        return IfStatement(condition, thenStatement, elseStatement)
+    }
+
+    override fun visit(node: ConditionalExpression): ASTNode {
+        val condition = node.codition.accept(this) as Expression
+        val thenExpression = node.thenExpression.accept(this) as Expression
+        val elseExpression = node.elseExpression.accept(this) as Expression
+        return ConditionalExpression(condition, thenExpression, elseExpression)
+    }
+
+    override fun visit(node: GotoStatement): ASTNode = node
+
+    override fun visit(node: LabeledStatement): ASTNode {
+        val statement = node.statement.accept(this) as Statement
+        return LabeledStatement(node.label, statement)
+    }
 
     override fun visit(node: AssignmentExpression): ASTNode {
         val lvalue = node.lvalue.accept(this) as VariableExpression

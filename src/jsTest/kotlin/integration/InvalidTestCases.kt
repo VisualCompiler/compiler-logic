@@ -110,6 +110,54 @@ object InvalidTestCases {
                 code = "int main(void) { 2 = 3; }",
                 failingStage = CompilerStage.PARSER,
                 expectedException = InvalidLValueException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { if (1) return; else }", // 'else' without a statement
+                failingStage = CompilerStage.PARSER,
+                expectedException = UnexpectedTokenException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { if 1 return 1; }", // Missing parentheses around condition
+                failingStage = CompilerStage.PARSER,
+                expectedException = UnexpectedTokenException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { else return 1; }", // 'else' without a preceding 'if'
+                failingStage = CompilerStage.PARSER,
+                expectedException = UnexpectedTokenException::class
+            ),
+            // Syntax Errors for Conditional Operator (? :)
+            InvalidTestCase(
+                code = "int main(void) { return 1 ? 2; }", // Missing the ':' part
+                failingStage = CompilerStage.PARSER,
+                expectedException = UnexpectedTokenException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { return 1 : 2; }", // Missing the '?' part
+                failingStage = CompilerStage.PARSER,
+                expectedException = UnexpectedTokenException::class
+            ),
+            // Syntax Errors for GOTO and LABELS
+            InvalidTestCase(
+                code = "int main(void) { goto ; }", // 'goto' without a label identifier
+                failingStage = CompilerStage.PARSER,
+                expectedException = UnexpectedTokenException::class
+            ),
+            // Semantic Errors (caught after parsing)
+            InvalidTestCase(
+                code = "int main(void) { int a; int a; return a; }", // Duplicate variable
+                failingStage = CompilerStage.PARSER,
+                expectedException = DuplicateVariableDeclaration::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { return a; }", // Undeclared variable
+                failingStage = CompilerStage.PARSER,
+                expectedException = UndeclaredVariableException::class
+            ),
+            InvalidTestCase(
+                code = "int main(void) { 1 = 2; return 0; }", // Invalid L-value
+                failingStage = CompilerStage.PARSER,
+                expectedException = InvalidLValueException::class
             )
         )
 }

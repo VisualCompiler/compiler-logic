@@ -12,6 +12,12 @@ sealed class TokenType {
 
     object IDENTIFIER : TokenType()
 
+    object IF : TokenType()
+
+    object ELSE : TokenType()
+
+    object GOTO : TokenType()
+
     // literals
     object INT_LITERAL : TokenType()
 
@@ -64,6 +70,10 @@ sealed class TokenType {
 
     object RIGHT_BRACK : TokenType()
 
+    object QUESTION_MARK : TokenType()
+
+    object COLON : TokenType()
+
     // Special token for End of File
     object EOF : TokenType()
 
@@ -93,7 +103,10 @@ class Lexer(
         mapOf(
             "int" to TokenType.KEYWORD_INT,
             "void" to TokenType.KEYWORD_VOID,
-            "return" to TokenType.KEYWORD_RETURN
+            "return" to TokenType.KEYWORD_RETURN,
+            "if" to TokenType.IF,
+            "else" to TokenType.ELSE,
+            "goto" to TokenType.GOTO
         )
 
     fun tokenize(): List<Token> {
@@ -130,6 +143,8 @@ class Lexer(
             '%' -> addToken(TokenType.REMAINDER)
             '*' -> addToken(TokenType.MULTIPLY)
             '/' -> addToken(TokenType.DIVIDE)
+            '?' -> addToken(TokenType.QUESTION_MARK)
+            ':' -> addToken(TokenType.COLON)
 
             '~' -> addToken(TokenType.TILDE)
             '-' -> {

@@ -50,6 +50,18 @@ class UndeclaredVariableException(
     column: Int? = null
 ) : CompilationExceptions(CompilerStage.PARSER, "Variable is used before being declared", line, column)
 
+class UndeclaredLabelException(
+    label: String,
+    line: Int? = null,
+    column: Int? = null
+) : CompilationExceptions(CompilerStage.PARSER, "Goto target '$label' is not defined.", line, column)
+
+class DuplicateLabelException(
+    label: String,
+    line: Int? = null,
+    column: Int? = null
+) : CompilationExceptions(CompilerStage.PARSER, "Label '$label' is already defined.", line, column)
+
 class InvalidLValueException(
     line: Int? = null,
     column: Int? = null

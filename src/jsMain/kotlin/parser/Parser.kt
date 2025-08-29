@@ -10,6 +10,7 @@ class Parser {
     private val precedenceMap =
         mapOf(
             TokenType.ASSIGN to 1,
+            TokenType.QUESTION_MARK to 3,
             TokenType.OR to 5,
             TokenType.AND to 10,
             TokenType.EQUAL_TO to 30,
@@ -126,22 +127,65 @@ class Parser {
     }
 
     private fun parseStatement(tokens: MutableList<Token>): Statement {
-        var first: Token? = null
-        if (!tokens.isEmpty() && tokens.first().type == TokenType.KEYWORD_RETURN) {
-            first = tokens.removeFirst()
-        } else if (!tokens.isEmpty() && tokens.first().type == TokenType.SEMICOLON) {
-            tokens.removeFirst()
-            return NullStatement()
-        }
-        val expression = parseExpression(tokens = tokens)
-        expect(TokenType.SEMICOLON, tokens)
+        val first = tokens.firstOrNull()
+        val second = if (tokens.size > 1) tokens[1] else null
 
-        return if (first != null) {
-            ReturnStatement(
-                expression = expression
-            )
-        } else {
-            ExpressionStatement(expression)
+        return when {
+            // if-statement
+            first?.type == TokenType.IF -> {
+                tokens.removeFirst() // consume 'if'
+                expect(TokenType.LEFT_PAREN, tokens)
+                val condition = parseExpression(0, tokens)
+                expect(TokenType.RIGHT_PAREN, tokens)
+                val thenBranch = parseStatement(tokens)
+
+                val elseBranch =
+                    if (tokens.firstOrNull()?.type == TokenType.ELSE) {
+                        tokens.removeFirst()
+                        parseStatement(tokens)
+                    } else {
+                        null
+                    }
+
+                IfStatement(condition, thenBranch, elseBranch)
+            }
+
+            // return-statement
+            first?.type == TokenType.KEYWORD_RETURN -> {
+                tokens.removeFirst() // consume 'return'
+                val expr = parseExpression(0, tokens)
+                expect(TokenType.SEMICOLON, tokens)
+                ReturnStatement(expr)
+            }
+
+            // empty statement ;
+            first?.type == TokenType.SEMICOLON -> {
+                tokens.removeFirst()
+                NullStatement()
+            }
+
+            // goto-statement
+            first?.type == TokenType.GOTO -> {
+                tokens.removeFirst() // consume 'goto'
+                val label = parseIdentifier(tokens)
+                expect(TokenType.SEMICOLON, tokens)
+                GotoStatement(label)
+            }
+
+            // label: statement
+            first?.type == TokenType.IDENTIFIER && second?.type == TokenType.COLON -> {
+                val labelName = parseIdentifier(tokens)
+                expect(TokenType.COLON, tokens)
+                val stmt = parseStatement(tokens)
+                LabeledStatement(labelName, stmt)
+            }
+
+            // expression statement (default case)
+            else -> {
+                val expr = parseExpression(0, tokens)
+                expect(TokenType.SEMICOLON, tokens)
+                ExpressionStatement(expr)
+            }
         }
     }
 
@@ -165,6 +209,11 @@ class Parser {
                         throw InvalidLValueException()
                     }
                     AssignmentExpression(left, right)
+                } else if (nextType == TokenType.QUESTION_MARK) {
+                    val thenExpression = parseExpression(prec, tokens)
+                    expect(TokenType.COLON, tokens)
+                    val elseExpression = parseExpression(prec, tokens)
+                    return ConditionalExpression(left, thenExpression, elseExpression)
                 } else {
                     val right = parseExpression(prec + 1, tokens)
                     BinaryExpression(

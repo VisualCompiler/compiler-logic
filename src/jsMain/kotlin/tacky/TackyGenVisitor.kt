@@ -4,11 +4,15 @@ import exceptions.TackyException
 import lexer.TokenType
 import parser.AssignmentExpression
 import parser.BinaryExpression
+import parser.ConditionalExpression
 import parser.D
 import parser.Declaration
 import parser.ExpressionStatement
 import parser.Function
+import parser.GotoStatement
+import parser.IfStatement
 import parser.IntExpression
+import parser.LabeledStatement
 import parser.NullStatement
 import parser.ReturnStatement
 import parser.S
@@ -70,6 +74,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     override fun visit(node: SimpleProgram): TackyConstruct {
         // Reset counter for test assertions
         tempCounter = 0
+        labelCounter = 0
         val tackyFunction = node.functionDefinition.accept(this) as TackyFunction
         return TackyProgram(tackyFunction)
     }
@@ -159,6 +164,58 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     }
 
     override fun visit(node: IntExpression): TackyConstruct = TackyConstant(node.value)
+
+    override fun visit(node: IfStatement): TackyConstruct? {
+        val endLabel = newLabel("end")
+
+        val condition = node.condition.accept(this) as TackyVal
+        if (node._else == null) {
+            currentInstructions += JumpIfZero(condition, endLabel)
+            node.then.accept(this)
+            currentInstructions += endLabel
+        } else {
+            val elseLabel = newLabel("else_label")
+            currentInstructions += JumpIfZero(condition, elseLabel)
+            node.then.accept(this)
+            currentInstructions += TackyJump(endLabel)
+            currentInstructions += elseLabel
+            node._else.accept(this)
+            currentInstructions += endLabel
+        }
+        return null
+    }
+
+    override fun visit(node: ConditionalExpression): TackyConstruct? {
+        val resultVar = newTemporary()
+
+        val elseLabel = newLabel("cond_else")
+        val endLabel = newLabel("cond_end")
+
+        val conditionResult = node.codition.accept(this) as TackyVal
+        currentInstructions += JumpIfZero(conditionResult, elseLabel)
+
+        val thenResult = node.thenExpression.accept(this) as TackyVal
+        currentInstructions += TackyCopy(thenResult, resultVar)
+        currentInstructions += TackyJump(endLabel)
+        currentInstructions += elseLabel
+        val elseResult = node.elseExpression.accept(this) as TackyVal
+        currentInstructions += TackyCopy(elseResult, resultVar)
+        currentInstructions += endLabel
+
+        return resultVar
+    }
+
+    override fun visit(node: GotoStatement): TackyConstruct? {
+        currentInstructions += TackyJump(TackyLabel(node.label))
+        return null
+    }
+
+    override fun visit(node: LabeledStatement): TackyConstruct? {
+        // val label = newLabel(node.label)
+        currentInstructions += TackyLabel(node.label)
+        node.statement.accept(this)
+        return null
+    }
 
     override fun visit(node: AssignmentExpression): TackyConstruct {
         val rvalue = node.rvalue.accept(this) as TackyVal

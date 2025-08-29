@@ -37,3 +37,11 @@ data class AssignmentExpression(
 ) : Expression() {
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
+
+data class ConditionalExpression(
+    val codition: Expression,
+    val thenExpression: Expression,
+    val elseExpression: Expression
+) : Expression() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
