@@ -44,6 +44,12 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
 
     private val currentInstructions = mutableListOf<TackyInstruction>()
 
+    fun reset() {
+        tempCounter = 0
+        labelCounter = 0
+        currentInstructions.clear()
+    }
+
     private fun convertUnaryOp(tokenType: TokenType): TackyUnaryOP {
         if (tokenType == TokenType.TILDE) {
             return TackyUnaryOP.COMPLEMENT

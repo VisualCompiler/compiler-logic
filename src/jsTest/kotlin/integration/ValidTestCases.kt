@@ -18,6 +18,7 @@ import assembly.JmpCC
 import assembly.Label
 import assembly.Mov
 import assembly.Register
+import assembly.Ret
 import assembly.SetCC
 import assembly.Stack
 import lexer.Token
@@ -231,7 +232,8 @@ object ValidTestCases {
                                 Mov(Stack(-24), Register(HardwareRegister.R10D)),
                                 AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-28)),
                                 // return tmp.6
-                                Mov(Stack(-28), Register(HardwareRegister.EAX))
+                                Mov(Stack(-28), Register(HardwareRegister.EAX)),
+                                Ret
                                 // The implicit return 0
                             )
                         )
@@ -251,40 +253,40 @@ object ValidTestCases {
                             args = emptyList(), // No parameters for main
                             body =
                             listOf(
-                                // tmp.0 = (1 == 0)
-                                TackyBinary(TackyBinaryOP.EQUAL, TackyConstant(1), TackyConstant(0), TackyVar("tmp.0")),
-                                // if (tmp.0 != 0) goto .L_or_true_0
-                                JumpIfNotZero(TackyVar("tmp.0"), TackyLabel(".L_or_true_0")),
+                                // tmp.1 = (1 == 0)
+                                TackyBinary(TackyBinaryOP.EQUAL, TackyConstant(1), TackyConstant(0), TackyVar("tmp.1")),
+                                // if (tmp.1 != 0) goto .L_or_true_0
+                                JumpIfNotZero(TackyVar("tmp.1"), TackyLabel(".L_or_true_0")),
                                 // -- Start of the AND expression --
-                                // tmp.2 = (5 > 2)
-                                TackyBinary(TackyBinaryOP.GREATER, TackyConstant(5), TackyConstant(2), TackyVar("tmp.2")),
-                                // if (tmp.2 == 0) goto .L_and_false_2
-                                JumpIfZero(TackyVar("tmp.2"), TackyLabel(".L_and_false_2")),
-                                // tmp.3 = (10 <= 20)
-                                TackyBinary(TackyBinaryOP.LESS_EQUAL, TackyConstant(10), TackyConstant(20), TackyVar("tmp.3")),
+                                // tmp.3 = (5 > 2)
+                                TackyBinary(TackyBinaryOP.GREATER, TackyConstant(5), TackyConstant(2), TackyVar("tmp.3")),
                                 // if (tmp.3 == 0) goto .L_and_false_2
                                 JumpIfZero(TackyVar("tmp.3"), TackyLabel(".L_and_false_2")),
-                                // AND is true -> tmp.1 = 1
-                                TackyCopy(TackyConstant(1), TackyVar("tmp.1")),
+                                // tmp.4 = (10 <= 20)
+                                TackyBinary(TackyBinaryOP.LESS_EQUAL, TackyConstant(10), TackyConstant(20), TackyVar("tmp.4")),
+                                // if (tmp.4 == 0) goto .L_and_false_2
+                                JumpIfZero(TackyVar("tmp.4"), TackyLabel(".L_and_false_2")),
+                                // AND is true -> tmp.2 = 1
+                                TackyCopy(TackyConstant(1), TackyVar("tmp.2")),
                                 TackyJump(TackyLabel(".L_and_end_3")),
-                                // AND is false -> tmp.1 = 0
+                                // AND is false -> tmp.2 = 0
                                 TackyLabel(".L_and_false_2"),
-                                TackyCopy(TackyConstant(0), TackyVar("tmp.1")),
+                                TackyCopy(TackyConstant(0), TackyVar("tmp.2")),
                                 // End of AND block
                                 TackyLabel(".L_and_end_3"),
                                 // -- Resume OR logic --
-                                // if (tmp.1 != 0) goto .L_or_true_0
-                                JumpIfNotZero(TackyVar("tmp.1"), TackyLabel(".L_or_true_0")),
-                                // OR is false -> tmp.4 = 0 (using a new final temp)
-                                TackyCopy(TackyConstant(0), TackyVar("tmp.4")),
+                                // if (tmp.2 != 0) goto .L_or_true_0
+                                JumpIfNotZero(TackyVar("tmp.2"), TackyLabel(".L_or_true_0")),
+                                // OR is false -> tmp.0 = 0 (using a new final temp)
+                                TackyCopy(TackyConstant(0), TackyVar("tmp.0")),
                                 TackyJump(TackyLabel(".L_or_end_1")),
-                                // OR is true -> tmp.4 = 1
+                                // OR is true -> tmp.0 = 1
                                 TackyLabel(".L_or_true_0"),
-                                TackyCopy(TackyConstant(1), TackyVar("tmp.4")),
+                                TackyCopy(TackyConstant(1), TackyVar("tmp.0")),
                                 // End of OR block
                                 TackyLabel(".L_or_end_1"),
                                 // Final return
-                                TackyRet(TackyVar("tmp.4"))
+                                TackyRet(TackyVar("tmp.0"))
                             )
                         )
                     )
@@ -299,42 +301,42 @@ object ValidTestCases {
                             body =
                             listOf(
                                 AllocateStack(32), // 20 rounded up to 16 is 32
-                                // tmp.0 = (1 == 0)
-                                Mov(Imm(1), Register(HardwareRegister.EAX)),
-                                Cmp(Imm(0), Register(HardwareRegister.EAX)),
+                                // tmp.1 = (1 == 0)
+                                Mov(Imm(1), Register(HardwareRegister.R11D)),
+                                Cmp(Imm(0), Register(HardwareRegister.R11D)),
                                 Mov(Imm(0), Stack(-4)),
                                 SetCC(ConditionCode.E, Stack(-4)),
-                                // if (tmp.0 != 0) goto .L_or_true_0
+                                // if (tmp.1 != 0) goto .L_or_true_0
                                 Cmp(Imm(0), Stack(-4)),
                                 JmpCC(ConditionCode.NE, Label(".L_or_true_0")),
-                                // tmp.2 = (5 > 2)
-                                Mov(Imm(5), Register(HardwareRegister.EAX)),
-                                Cmp(Imm(2), Register(HardwareRegister.EAX)),
+                                // tmp.3 = (5 > 2)
+                                Mov(Imm(5), Register(HardwareRegister.R11D)),
+                                Cmp(Imm(2), Register(HardwareRegister.R11D)),
+                                Mov(Imm(0), Stack(-8)),
+                                SetCC(ConditionCode.G, Stack(-8)),
+                                // if (tmp.3 == 0) goto .L_and_false_2
+                                Cmp(Imm(0), Stack(-8)),
+                                JmpCC(ConditionCode.E, Label(".L_and_false_2")),
+                                // tmp.4 = (10 <= 20)
+                                Mov(Imm(10), Register(HardwareRegister.R11D)),
+                                Cmp(Imm(20), Register(HardwareRegister.R11D)),
                                 Mov(Imm(0), Stack(-12)),
-                                SetCC(ConditionCode.G, Stack(-12)),
-                                // if (tmp.2 == 0) goto .L_and_false_2
+                                SetCC(ConditionCode.LE, Stack(-12)),
+                                // if (tmp.4 == 0) goto .L_and_false_2
                                 Cmp(Imm(0), Stack(-12)),
                                 JmpCC(ConditionCode.E, Label(".L_and_false_2")),
-                                // tmp.3 = (10 <= 20)
-                                Mov(Imm(10), Register(HardwareRegister.EAX)),
-                                Cmp(Imm(20), Register(HardwareRegister.EAX)),
-                                Mov(Imm(0), Stack(-16)),
-                                SetCC(ConditionCode.LE, Stack(-16)),
-                                // if (tmp.3 == 0) goto .L_and_false_2
-                                Cmp(Imm(0), Stack(-16)),
-                                JmpCC(ConditionCode.E, Label(".L_and_false_2")),
-                                // tmp.1 = 1 (AND is true)
-                                Mov(Imm(1), Stack(-8)),
+                                // tmp.2 = 1 (AND is true)
+                                Mov(Imm(1), Stack(-16)),
                                 Jmp(Label(".L_and_end_3")),
                                 // .L_and_false_2: (AND is false)
                                 Label(".L_and_false_2"),
-                                Mov(Imm(0), Stack(-8)),
+                                Mov(Imm(0), Stack(-16)),
                                 // .L_and_end_3:
                                 Label(".L_and_end_3"),
-                                // if (tmp.1 != 0) goto .L_or_true_0
-                                Cmp(Imm(0), Stack(-8)),
+                                // if (tmp.2 != 0) goto .L_or_true_0
+                                Cmp(Imm(0), Stack(-16)),
                                 JmpCC(ConditionCode.NE, Label(".L_or_true_0")),
-                                // tmp.4 = 0 (OR is false)
+                                // tmp.0 = 0 (OR is false)
                                 Mov(Imm(0), Stack(-20)),
                                 Jmp(Label(".L_or_end_1")),
                                 // .L_or_true_0: (OR is true)
@@ -342,8 +344,9 @@ object ValidTestCases {
                                 Mov(Imm(1), Stack(-20)),
                                 // .L_or_end_1:
                                 Label(".L_or_end_1"),
-                                // return tmp.4
-                                Mov(Stack(-20), Register(HardwareRegister.EAX))
+                                // return tmp.0
+                                Mov(Stack(-20), Register(HardwareRegister.EAX)),
+                                Ret
                             )
                         )
                     )
@@ -458,8 +461,8 @@ object ValidTestCases {
                     listOf(
                         TackyFunction(
                             name = "main",
-                            // The TackyFunction's params are the unique names of all local variables
-                            args = listOf("b.0", "a.1"),
+                            // No parameters for main function
+                            args = emptyList(),
                             body =
                             listOf(
                                 TackyBinary(TackyBinaryOP.ADD, TackyConstant(10), TackyConstant(1), TackyVar("tmp.0")),
@@ -511,8 +514,9 @@ object ValidTestCases {
                                 TackyLabel(".L_else_label_1"),
                                 TackyRet(TackyConstant(20)),
                                 // end of if
-                                TackyLabel(".L_end_0")
-                                // TackyRet(TackyConstant(0))
+                                TackyLabel(".L_end_0"),
+                                // implicit return 0
+                                TackyRet(TackyConstant(0))
                             )
                         )
                     )
@@ -523,9 +527,10 @@ object ValidTestCases {
                     listOf(
                         AsmFunction(
                             name = "main",
+                            stackSize = 8,
                             body =
                             listOf(
-                                AllocateStack(8),
+                                AllocateStack(16),
                                 // int a = 0;
                                 Mov(Imm(0), Stack(-4)),
                                 // tmp.0 = a == 0;
@@ -537,15 +542,18 @@ object ValidTestCases {
                                 JmpCC(ConditionCode.E, Label(".L_else_label_1")),
                                 // return 10;
                                 Mov(Imm(10), Register(HardwareRegister.EAX)),
+                                Ret,
                                 Jmp(Label(".L_end_0")),
                                 // .L_else_label_1:
                                 Label(".L_else_label_1"),
                                 // return 20;
                                 Mov(Imm(20), Register(HardwareRegister.EAX)),
+                                Ret,
                                 // .L_end_0:
-                                Label(".L_end_0")
-                                // The extra return 0
-                                // Mov(Imm(0), Register(HardwareRegister.EAX))
+                                Label(".L_end_0"),
+                                // implicit return 0
+                                Mov(Imm(0), Register(HardwareRegister.EAX)),
+                                Ret
                             )
                         )
                     )
@@ -571,7 +579,7 @@ object ValidTestCases {
                     listOf( // TackyProgram holds a LIST of functions
                         TackyFunction(
                             name = "main",
-                            args = listOf("a.0"), // 'a' is a local variable/parameter
+                            args = emptyList(), // No parameters for main function
                             body =
                             listOf(
                                 // int a = 0;
@@ -584,12 +592,12 @@ object ValidTestCases {
                                 TackyCopy(TackyVar("tmp.0"), TackyVar("a.0")),
                                 // tmp.1 = a < 3
                                 TackyBinary(TackyBinaryOP.LESS, TackyVar("a.0"), TackyConstant(3), TackyVar("tmp.1")),
-                                // if (tmp.1 == 0) goto .L_if_end_0;
-                                JumpIfZero(TackyVar("tmp.1"), TackyLabel(".L_if_end_0")),
+                                // if (tmp.1 == 0) goto .L_end_0;
+                                JumpIfZero(TackyVar("tmp.1"), TackyLabel(".L_end_0")),
                                 // goto start;
                                 TackyJump(TackyLabel("start")),
                                 // end of if
-                                TackyLabel(".L_if_end_0"),
+                                TackyLabel(".L_end_0"),
                                 // return a;
                                 TackyRet(TackyVar("a.0"))
                                 // TackyRet(TackyConstant(0))
@@ -613,26 +621,25 @@ object ValidTestCases {
                                 Label("start"),
                                 // tmp.0 = a + 1
                                 Mov(Stack(-4), Register(HardwareRegister.R10D)),
-                                AsmBinary(AsmBinaryOp.ADD, Imm(1), Register(HardwareRegister.R10D)),
                                 Mov(Register(HardwareRegister.R10D), Stack(-8)), // Stack slot for tmp.0
+                                AsmBinary(AsmBinaryOp.ADD, Imm(1), Stack(-8)),
                                 // a = tmp.0
                                 Mov(Stack(-8), Register(HardwareRegister.R10D)),
                                 Mov(Register(HardwareRegister.R10D), Stack(-4)),
                                 // tmp.1 = a < 3
-                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
-                                Cmp(Imm(3), Register(HardwareRegister.EAX)),
+                                Cmp(Imm(3), Stack(-4)),
                                 Mov(Imm(0), Stack(-12)), // Stack slot for tmp.1
                                 SetCC(ConditionCode.L, Stack(-12)),
-                                // if (tmp.1 == 0) goto .L_if_end_0
+                                // if (tmp.1 == 0) goto .L_end_0
                                 Cmp(Imm(0), Stack(-12)),
-                                JmpCC(ConditionCode.E, Label(".L_if_end_0")),
+                                JmpCC(ConditionCode.E, Label(".L_end_0")),
                                 // goto start
                                 Jmp(Label("start")),
-                                // .L_if_end_0:
-                                Label(".L_if_end_0"),
+                                // .L_end_0:
+                                Label(".L_end_0"),
                                 // return a
-                                Mov(Stack(-4), Register(HardwareRegister.EAX))
-                                // Mov(src = Imm(value = 0), dest = Register(name = HardwareRegister.EAX))
+                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
+                                Ret
                             )
                         )
                     )
