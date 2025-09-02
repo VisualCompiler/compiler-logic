@@ -3,5 +3,5 @@ package assembly
 sealed class Program : AsmConstruct()
 
 data class AsmProgram(
-    val function: AsmFunction
+    val functions: List<AsmFunction>
 ) : Program()

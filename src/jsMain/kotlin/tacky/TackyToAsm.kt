@@ -1,14 +1,17 @@
 package tacky
 
+import assembly.AllocateStack
 import assembly.AsmBinary
 import assembly.AsmBinaryOp
 import assembly.AsmFunction
 import assembly.AsmProgram
 import assembly.AsmUnary
 import assembly.AsmUnaryOp
+import assembly.Call
 import assembly.Cdq
 import assembly.Cmp
 import assembly.ConditionCode
+import assembly.DeAllocateStack
 import assembly.HardwareRegister
 import assembly.Idiv
 import assembly.Imm
@@ -19,17 +22,51 @@ import assembly.Label
 import assembly.Mov
 import assembly.Operand
 import assembly.Pseudo
+import assembly.Push
 import assembly.Register
 import assembly.Ret
 import assembly.SetCC
+import assembly.Stack
 
 class TackyToAsm {
     fun convert(tackyProgram: TackyProgram): AsmProgram {
-        val tackyFunction = tackyProgram.function
-        val asmInstructions = tackyFunction.body.flatMap { convertInstruction(it) }
+        val asmFunction = tackyProgram.functions.map { convertFunction(it) }
 
-        val asmFunction = AsmFunction(tackyFunction.name, asmInstructions)
         return AsmProgram(asmFunction)
+    }
+
+    private fun convertFunction(tackyFunc: TackyFunction): AsmFunction {
+        val paramSetupInstructions = generateParamSetup(tackyFunc.args)
+        // Convert the rest of the body as before
+        val bodyInstructions = tackyFunc.body.flatMap { convertInstruction(it) }
+        return AsmFunction(tackyFunc.name, paramSetupInstructions + bodyInstructions)
+    }
+
+    private fun generateParamSetup(params: List<String>): List<Instruction> {
+        val instructions = mutableListOf<Instruction>()
+        val argRegisters =
+            listOf(
+                HardwareRegister.EDI,
+                HardwareRegister.ESI,
+                HardwareRegister.EDX,
+                HardwareRegister.ECX,
+                HardwareRegister.R8D,
+                HardwareRegister.R9D
+            )
+
+        params.forEachIndexed { index, paramName ->
+            if (index < argRegisters.size) {
+                val srcReg = Register(argRegisters[index])
+                val destPseudo = Pseudo(paramName)
+                instructions.add(Mov(srcReg, destPseudo))
+            } else {
+                val stackOffset = 16 + (index - argRegisters.size) * 8
+                val srcStack = Stack(stackOffset)
+                val destPseudo = Pseudo(paramName)
+                instructions.add(Mov(srcStack, destPseudo))
+            }
+        }
+        return instructions
     }
 
     private fun convertInstruction(tackyInstr: TackyInstruction): List<Instruction> =
@@ -134,6 +171,58 @@ class TackyToAsm {
             is TackyJump -> listOf(Jmp(Label(tackyInstr.target.name)))
 
             is TackyLabel -> listOf(Label(tackyInstr.name))
+
+            is TackyFunCall -> {
+                val instructions = mutableListOf<Instruction>()
+                val argRegisters =
+                    listOf(
+                        HardwareRegister.EDI,
+                        HardwareRegister.ESI,
+                        HardwareRegister.EDX,
+                        HardwareRegister.ECX,
+                        HardwareRegister.R8D,
+                        HardwareRegister.R9D
+                    )
+
+                val registerArgs = tackyInstr.args.take(6)
+                val stackArgs = tackyInstr.args.drop(6)
+
+                // Adjust stack alignment
+                val stackPadding = if (stackArgs.size % 2 != 0) 8 else 0
+                if (stackPadding > 0) {
+                    instructions.add(AllocateStack(stackPadding))
+                }
+
+                // Pass arguments on the stack in reverse order
+                stackArgs.asReversed().forEach { arg ->
+                    val asmArg = convertVal(arg)
+                    if (asmArg is Stack) {
+                        instructions.add(Mov(asmArg, Register(HardwareRegister.EAX)))
+                        instructions.add(Push(Register(HardwareRegister.EAX)))
+                    } else {
+                        instructions.add(Push(asmArg))
+                    }
+                }
+
+                // Pass arguments in registers
+                registerArgs.forEachIndexed { index, arg ->
+                    val asmArg = convertVal(arg)
+                    instructions.add(Mov(asmArg, Register(argRegisters[index])))
+                }
+
+                instructions.add(Call(tackyInstr.funName))
+
+                // Clean up stack
+                val bytesToRemove = stackArgs.size * 8 + stackPadding
+                if (bytesToRemove > 0) {
+                    instructions.add(DeAllocateStack(bytesToRemove))
+                }
+
+                // Retrieve return value
+                instructions.add(Mov(Register(HardwareRegister.EAX), convertVal(tackyInstr.dest)))
+
+                instructions
+            }
         }
 
     private fun convertVal(tackyVal: TackyVal): Operand =

@@ -45,3 +45,10 @@ data class ConditionalExpression(
 ) : Expression() {
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
+
+data class FunctionCall(
+    val name: String,
+    val arguments: List<Expression>
+) : Expression() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}

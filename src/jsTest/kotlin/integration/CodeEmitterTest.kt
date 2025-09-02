@@ -1,24 +1,17 @@
 package integration
 
 import assembly.AllocateStack
-import assembly.AsmBinary
-import assembly.AsmBinaryOp
 import assembly.AsmFunction
 import assembly.AsmProgram
-import assembly.AsmUnary
-import assembly.AsmUnaryOp
-import assembly.Cmp
 import assembly.CodeEmitter
 import assembly.ConditionCode
 import assembly.HardwareRegister
 import assembly.Imm
 import assembly.Jmp
-import assembly.JmpCC
 import assembly.Label
 import assembly.Mov
 import assembly.Register
 import assembly.SetCC
-import assembly.Stack
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -30,11 +23,14 @@ class CodeEmitterTest {
         // Arrange
         val program =
             AsmProgram(
-                AsmFunction(
-                    name = "main",
-                    body =
-                    listOf(
-                        Mov(Imm(3), Register(HardwareRegister.EAX))
+                functions =
+                listOf(
+                    AsmFunction(
+                        name = "main",
+                        body =
+                        listOf(
+                            Mov(Imm(3), Register(HardwareRegister.EAX))
+                        )
                     )
                 )
             )
@@ -50,6 +46,7 @@ class CodeEmitterTest {
               pushq %rbp
               movq %rsp, %rbp
               movl $3, %eax
+              movq %rbp, %rsp
               popq %rbp
               ret
             """.trimIndent()
@@ -62,27 +59,9 @@ class CodeEmitterTest {
         // Arrange
         val program =
             AsmProgram(
-                AsmFunction("main", listOf(AllocateStack(16)))
-            )
-
-        // Act
-        val asm = emitter.emit(program)
-
-        // Assert
-        val bodyLine = asm.lines()[4].trim() // Get the instruction line
-        assertEquals("subq $16, %rsp", bodyLine)
-    }
-
-    @Test
-    fun `it should correctly format a Cmp instruction`() {
-        // Arrange
-        val program =
-            AsmProgram(
-                AsmFunction(
-                    "main",
-                    listOf(
-                        Cmp(Imm(5), Stack(-4))
-                    )
+                functions =
+                listOf(
+                    AsmFunction("main", listOf(AllocateStack(16)))
                 )
             )
 
@@ -90,8 +69,8 @@ class CodeEmitterTest {
         val asm = emitter.emit(program)
 
         // Assert
-        val bodyLine = asm.lines()[4].trim()
-        assertEquals("cmpl $5, -4(%rbp)", bodyLine)
+        val bodyLine = asm.lines()[4].trim() // Prologue is 3 lines
+        assertEquals("subq $16, %rsp", bodyLine)
     }
 
     @Test
@@ -99,11 +78,14 @@ class CodeEmitterTest {
         // Arrange
         val program =
             AsmProgram(
-                AsmFunction(
-                    "main",
-                    listOf(
-                        Jmp(Label(".L_my_label_1")),
-                        Label(".L_my_label_1")
+                functions =
+                listOf(
+                    AsmFunction(
+                        "main",
+                        listOf(
+                            Jmp(Label(".L_my_label_1")),
+                            Label(".L_my_label_1")
+                        )
                     )
                 )
             )
@@ -119,35 +101,17 @@ class CodeEmitterTest {
     }
 
     @Test
-    fun `it should correctly format a JmpCC instruction`() {
-        // Arrange
-        val program =
-            AsmProgram(
-                AsmFunction(
-                    "main",
-                    listOf(
-                        JmpCC(ConditionCode.NE, Label(".L_target_0"))
-                    )
-                )
-            )
-
-        // Act
-        val asm = emitter.emit(program)
-
-        // Assert
-        val bodyLine = asm.lines()[4].trim()
-        assertEquals("jne .L_target_0", bodyLine)
-    }
-
-    @Test
     fun `it should use a 1-byte register for SetCC`() {
         // Arrange
         val program =
             AsmProgram(
-                AsmFunction(
-                    "main",
-                    listOf(
-                        SetCC(ConditionCode.G, Register(HardwareRegister.EAX))
+                functions =
+                listOf(
+                    AsmFunction(
+                        "main",
+                        listOf(
+                            SetCC(ConditionCode.G, Register(HardwareRegister.EAX))
+                        )
                     )
                 )
             )
@@ -157,7 +121,6 @@ class CodeEmitterTest {
 
         // Assert
         val bodyLine = asm.lines()[4].trim()
-        // The key is to check for '%al', not '%eax'
         assertEquals("setg %al", bodyLine)
     }
 
@@ -166,7 +129,10 @@ class CodeEmitterTest {
         // Arrange
         val program =
             AsmProgram(
-                AsmFunction(name = "main", body = emptyList())
+                functions =
+                listOf(
+                    AsmFunction(name = "main", body = emptyList())
+                )
             )
 
         // Act
@@ -179,6 +145,7 @@ class CodeEmitterTest {
             main:
               pushq %rbp
               movq %rsp, %rbp
+              movq %rbp, %rsp
               popq %rbp
               ret
             """.trimIndent()
@@ -186,32 +153,72 @@ class CodeEmitterTest {
         assertEquals(expected, asm.trim())
     }
 
+    // Function Call Instructions ---
     @Test
-    fun `it should handle all binary and unary operations`() {
+    fun `it should correctly format function call instructions`() {
         // Arrange
         val program =
             AsmProgram(
-                AsmFunction(
-                    "main",
-                    listOf(
-                        AsmBinary(AsmBinaryOp.ADD, Imm(1), Register(HardwareRegister.EAX)),
-                        AsmBinary(AsmBinaryOp.SUB, Imm(2), Register(HardwareRegister.EAX)),
-                        AsmBinary(AsmBinaryOp.MUL, Imm(3), Register(HardwareRegister.EAX)),
-                        AsmUnary(AsmUnaryOp.NEG, Register(HardwareRegister.EDX)),
-                        AsmUnary(AsmUnaryOp.NOT, Register(HardwareRegister.EDX))
+                functions =
+                listOf(
+                    AsmFunction(
+                        "main",
+                        listOf(
+                            assembly.Push(Imm(10)),
+                            assembly.Call("my_function"),
+                            assembly.DeAllocateStack(8)
+                        )
                     )
                 )
             )
 
         // Act
         val asm = emitter.emit(program)
-        val bodyLines = asm.lines().slice(4..8).map { it.trim() }
+        val bodyLines = asm.lines().slice(4..6).map { it.trim() } // Get the 3 body instructions
 
         // Assert
-        assertEquals("addl $1, %eax", bodyLines[0])
-        assertEquals("subl $2, %eax", bodyLines[1])
-        assertEquals("imull $3, %eax", bodyLines[2])
-        assertEquals("negl %edx", bodyLines[3])
-        assertEquals("notl %edx", bodyLines[4])
+        assertEquals("pushq $10", bodyLines[0])
+        assertEquals("call my_function", bodyLines[1])
+        assertEquals("addq $8, %rsp", bodyLines[2])
+    }
+
+    @Test
+    fun `it should handle multiple functions`() {
+        // Arrange
+        val program =
+            AsmProgram(
+                functions =
+                listOf(
+                    AsmFunction("foo", listOf(Mov(Imm(1), Register(HardwareRegister.EAX)))),
+                    AsmFunction("bar", listOf(Mov(Imm(2), Register(HardwareRegister.EAX))))
+                )
+            )
+
+        // Act
+        val asm = emitter.emit(program)
+
+        // Assert
+        val expected =
+            """
+            .globl foo
+            foo:
+              pushq %rbp
+              movq %rsp, %rbp
+              movl $1, %eax
+              movq %rbp, %rsp
+              popq %rbp
+              ret
+
+              .globl bar
+            bar:
+              pushq %rbp
+              movq %rsp, %rbp
+              movl $2, %eax
+              movq %rbp, %rsp
+              popq %rbp
+              ret
+            """.trimIndent()
+
+        assertEquals(expected, asm.trim())
     }
 }

@@ -1,6 +1,7 @@
-package compiler.parser
+package compiler.symanticAnalysis
 
 import exceptions.DuplicateVariableDeclaration
+import exceptions.NestedFunctionException
 import exceptions.UndeclaredVariableException
 import parser.ASTNode
 import parser.AssignmentExpression
@@ -18,7 +19,9 @@ import parser.Expression
 import parser.ExpressionStatement
 import parser.ForInit
 import parser.ForStatement
-import parser.Function
+import parser.FunDecl
+import parser.FunctionCall
+import parser.FunctionDeclaration
 import parser.GotoStatement
 import parser.IfStatement
 import parser.InitDeclaration
@@ -31,28 +34,74 @@ import parser.S
 import parser.SimpleProgram
 import parser.Statement
 import parser.UnaryExpression
+import parser.VarDecl
+import parser.VariableDeclaration
 import parser.VariableExpression
 import parser.Visitor
 import parser.WhileStatement
 
-class VariableResolution : Visitor<ASTNode> {
+data class SymbolInfo(
+    val uniqueName: String,
+    val hasLinkage: Boolean
+)
+
+class IdentifierResolution : Visitor<ASTNode> {
     private var tempCounter = 0
 
     private fun newTemporary(name: String): String = "$name.${tempCounter++}"
 
-    private val variableMap = mutableMapOf<String, VariableMapEntry>()
+    // private val variableMap = mutableMapOf<String, VariableMapEntry>()
 
-    data class VariableMapEntry(
-        val name: String,
-        val fromCurrentBlock: Boolean = false
-    )
+    private val scopeStack = mutableListOf<MutableMap<String, SymbolInfo>>()
+
+    fun analyze(program: SimpleProgram): SimpleProgram {
+        tempCounter = 0
+        scopeStack.clear()
+        enterScope()
+        val result = program.accept(this) as SimpleProgram
+        leaveScope()
+        if (scopeStack.isNotEmpty()) {
+            throw IllegalStateException("Scope stack was not empty after analysis.")
+        }
+        return result
+    }
+
+    private fun declare(
+        name: String,
+        hasLinkage: Boolean
+    ): String {
+        val currentScope = scopeStack.last()
+        val existing = currentScope[name]
+
+        if (existing != null) {
+            // A redeclaration in the same scope is only okay if both have linkage.
+            if (!existing.hasLinkage || !hasLinkage) {
+                throw DuplicateVariableDeclaration()
+            }
+            // If both have linkage (e.g., two function declarations), it's okay.
+            return existing.uniqueName
+        }
+        val uniqueName = if (hasLinkage) name else newTemporary(name)
+        currentScope[name] = SymbolInfo(uniqueName, hasLinkage)
+        return uniqueName
+    }
+
+    private fun enterScope() = scopeStack.add(mutableMapOf())
+
+    private fun leaveScope() = scopeStack.removeAt(scopeStack.lastIndex)
+
+    private fun resolve(name: String): SymbolInfo {
+        scopeStack.asReversed().forEach { scope ->
+            if (scope.containsKey(name)) {
+                return scope.getValue(name)
+            }
+        }
+        throw UndeclaredVariableException()
+    }
 
     override fun visit(node: SimpleProgram): ASTNode {
-        // Reset state for each program to avoid leaking declarations across compilations
-        variableMap.clear()
-        tempCounter = 0
-        val function = node.functionDefinition.accept(this) as Function
-        return SimpleProgram(function)
+        val newDecls = node.functionDeclaration.map { it.accept(this) as FunctionDeclaration }
+        return SimpleProgram(newDecls)
     }
 
     override fun visit(node: ReturnStatement): ASTNode {
@@ -84,20 +133,21 @@ class VariableResolution : Visitor<ASTNode> {
     }
 
     override fun visit(node: ForStatement): ASTNode {
-        // Create a new inner scope for the for-loop header variables
-        val saved = variableMap.toMutableMap()
+        enterScope()
+
         val newInit = node.init.accept(this) as ForInit
+
         val newCond = node.condition?.accept(this) as Expression?
         val newPost = node.post?.accept(this) as Expression?
         val newBody = node.body.accept(this) as Statement
-        // Restore the outer scope so header declarations are not visible outside
-        variableMap.clear()
-        variableMap.putAll(saved)
-        return ForStatement(newInit, newCond, newPost, newBody, node.label)
+
+        leaveScope()
+
+        return ForStatement(newInit, newCond, newPost, newBody)
     }
 
     override fun visit(node: InitDeclaration): ASTNode {
-        val newDecl = node.declaration.accept(this) as Declaration
+        val newDecl = node.varDeclaration.accept(this) as VariableDeclaration
         return InitDeclaration(newDecl)
     }
 
@@ -106,13 +156,31 @@ class VariableResolution : Visitor<ASTNode> {
         return InitExpression(newExp)
     }
 
-    override fun visit(node: Function): ASTNode {
-        val body = node.body.accept(this) as Block
-        return Function(node.name, body)
+    override fun visit(node: FunctionDeclaration): ASTNode {
+        // Nested functions are illegal. Check if we are inside another function's scope.
+        if (scopeStack.size > 1) {
+            throw NestedFunctionException()
+        }
+
+        declare(node.name, hasLinkage = true)
+
+        enterScope()
+
+        val newParams =
+            node.params.map { paramName ->
+                declare(paramName, hasLinkage = false)
+            }
+        val newBody = node.body?.accept(this) as Block?
+
+        leaveScope()
+
+        return FunctionDeclaration(node.name, newParams, newBody)
     }
 
-    override fun visit(node: VariableExpression): ASTNode =
-        VariableExpression(variableMap[node.name]?.name ?: throw UndeclaredVariableException())
+    override fun visit(node: VariableExpression): ASTNode {
+        val symbol = resolve(node.name)
+        return VariableExpression(symbol.uniqueName)
+    }
 
     override fun visit(node: UnaryExpression): ASTNode {
         val exp = node.expression.accept(this) as Expression
@@ -154,14 +222,14 @@ class VariableResolution : Visitor<ASTNode> {
         return AssignmentExpression(lvalue, rvalue)
     }
 
-    override fun visit(node: Declaration): ASTNode {
-        if (node.name in variableMap && variableMap[node.name]!!.fromCurrentBlock) {
-            throw DuplicateVariableDeclaration()
-        }
-        val uniqueName = newTemporary(node.name)
-        variableMap[node.name] = VariableMapEntry(uniqueName, true)
-        val init = node.init?.accept(this)
-        return Declaration(uniqueName, init as Expression?)
+    override fun visit(node: Declaration): ASTNode = throw IllegalStateException("Should not visit Declaration directly.")
+
+    override fun visit(node: VariableDeclaration): ASTNode {
+        val newInit = node.init?.accept(this) as Expression?
+
+        val uniqueName = declare(node.name, hasLinkage = false)
+
+        return VariableDeclaration(uniqueName, newInit)
     }
 
     override fun visit(node: S): ASTNode {
@@ -169,19 +237,31 @@ class VariableResolution : Visitor<ASTNode> {
         return S(statement)
     }
 
-    override fun visit(node: D): ASTNode {
-        val declaration = node.declaration.accept(this) as Declaration
-        return D(declaration)
+    override fun visit(node: D): ASTNode = D(node.declaration.accept(this) as VarDecl)
+
+    override fun visit(node: VarDecl): ASTNode {
+        val newVarDeclData = node.varDecl.accept(this) as VariableDeclaration
+        return VarDecl(newVarDeclData)
     }
 
-    override fun visit(node: Block): ASTNode = Block(node.block.map { it.accept(this) as BlockItem })
+    override fun visit(node: FunDecl): ASTNode = throw NestedFunctionException()
+
+    override fun visit(node: Block): ASTNode {
+        enterScope()
+        val newItems = node.block.map { it.accept(this) as BlockItem }
+        leaveScope()
+        return Block(newItems)
+    }
 
     override fun visit(node: CompoundStatement): ASTNode {
-        val saved = variableMap.toMutableMap()
-        variableMap.map { (name, entry) -> name to VariableMapEntry(entry.name) }.toMap(variableMap)
-        val block = node.block.accept(this) as Block
-        variableMap.clear()
-        variableMap.putAll(saved)
-        return CompoundStatement(block)
+        val newBlock = node.block.accept(this) as Block
+        return CompoundStatement(newBlock)
+    }
+
+    override fun visit(node: FunctionCall): ASTNode {
+        val symbol = resolve(node.name)
+        val newArgs = node.arguments.map { it.accept(this) as Expression }
+        // The unique name for a function is just its original name.
+        return FunctionCall(symbol.uniqueName, newArgs)
     }
 }

@@ -27,19 +27,21 @@ data class TackyLabel(
 }
 
 data class TackyProgram(
-    val function: TackyFunction
+    val functions: List<TackyFunction>
 ) : TackyConstruct() {
-    override fun toPseudoCode(indentationLevel: Int): String = function.toPseudoCode(indentationLevel)
+    override fun toPseudoCode(indentationLevel: Int): String = functions.joinToString("\n\n") { it.toPseudoCode(indentationLevel) }
 }
 
 data class TackyFunction(
     val name: String,
+    val args: List<String>,
     val body: List<TackyInstruction>
 ) : TackyConstruct() {
     override fun toPseudoCode(indentationLevel: Int): String {
+        val paramString = args.joinToString(", ")
         val bodyAsCode = body.joinToString("\n") { it.toPseudoCode(indentationLevel + 1) }
         return buildString {
-            appendLine("${indent(indentationLevel)}def $name():")
+            appendLine("${indent(indentationLevel)}def $name($paramString):")
             append(bodyAsCode)
         }
     }

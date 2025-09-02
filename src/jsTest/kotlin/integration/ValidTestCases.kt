@@ -26,17 +26,17 @@ import parser.ASTNode
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
-import parser.CompoundStatement
 import parser.D
-import parser.Declaration
 import parser.ExpressionStatement
-import parser.Function
+import parser.FunctionDeclaration
 import parser.IntExpression
 import parser.NullStatement
 import parser.ReturnStatement
 import parser.S
 import parser.SimpleProgram
 import parser.UnaryExpression
+import parser.VarDecl
+import parser.VariableDeclaration
 import parser.VariableExpression
 import tacky.JumpIfNotZero
 import tacky.JumpIfZero
@@ -100,52 +100,55 @@ object ValidTestCases {
                 ),
                 expectedAst =
                 SimpleProgram(
-                    functionDefinition =
-                    Function(
-                        name = "main",
-                        body =
-                        Block(
-                            listOf(
-                                S(
-                                    ReturnStatement(
-                                        expression =
-                                        BinaryExpression(
-                                            left =
-                                            BinaryExpression(
-                                                left =
-                                                BinaryExpression(
-                                                    left = IntExpression(5),
-                                                    operator = Token(TokenType.NEGATION, "-", 2, 14),
-                                                    right = IntExpression(3)
-                                                ),
-                                                operator = Token(TokenType.MULTIPLY, "*", 2, 19),
-                                                right = IntExpression(4)
-                                            ),
-                                            operator = Token(TokenType.PLUS, "+", 2, 23),
-                                            right =
+                    functionDeclaration =
+                    listOf(
+                        FunctionDeclaration(
+                            name = "main",
+                            params = emptyList(),
+                            body =
+                            Block(
+                                listOf(
+                                    S(
+                                        ReturnStatement(
+                                            expression =
                                             BinaryExpression(
                                                 left =
                                                 BinaryExpression(
                                                     left =
-                                                    UnaryExpression(
-                                                        operator = Token(TokenType.TILDE, "~", 2, 25),
-                                                        expression =
-                                                        UnaryExpression(
-                                                            operator =
-                                                            Token(
-                                                                TokenType.NEGATION,
-                                                                "-",
-                                                                2,
-                                                                27
-                                                            ),
-                                                            expression = IntExpression(5)
-                                                        )
+                                                    BinaryExpression(
+                                                        left = IntExpression(5),
+                                                        operator = Token(TokenType.NEGATION, "-", 2, 14),
+                                                        right = IntExpression(3)
                                                     ),
-                                                    operator = Token(TokenType.DIVIDE, "/", 2, 31),
-                                                    right = IntExpression(6)
+                                                    operator = Token(TokenType.MULTIPLY, "*", 2, 19),
+                                                    right = IntExpression(4)
                                                 ),
-                                                operator = Token(TokenType.REMAINDER, "%", 2, 35),
-                                                right = IntExpression(3)
+                                                operator = Token(TokenType.PLUS, "+", 2, 23),
+                                                right =
+                                                BinaryExpression(
+                                                    left =
+                                                    BinaryExpression(
+                                                        left =
+                                                        UnaryExpression(
+                                                            operator = Token(TokenType.TILDE, "~", 2, 25),
+                                                            expression =
+                                                            UnaryExpression(
+                                                                operator =
+                                                                Token(
+                                                                    TokenType.NEGATION,
+                                                                    "-",
+                                                                    2,
+                                                                    27
+                                                                ),
+                                                                expression = IntExpression(5)
+                                                            )
+                                                        ),
+                                                        operator = Token(TokenType.DIVIDE, "/", 2, 31),
+                                                        right = IntExpression(6)
+                                                    ),
+                                                    operator = Token(TokenType.REMAINDER, "%", 2, 35),
+                                                    right = IntExpression(3)
+                                                )
                                             )
                                         )
                                     )
@@ -156,79 +159,81 @@ object ValidTestCases {
                 ),
                 expectedTacky =
                 TackyProgram(
-                    TackyFunction(
-                        name = "main",
-                        body =
-                        listOf(
-                            // (5 + 3) -> tmp.0
-                            TackyBinary(TackyBinaryOP.SUBTRACT, TackyConstant(5), TackyConstant(3), TackyVar("tmp.0")),
-                            // tmp.0 * 4 -> tmp.1
-                            TackyBinary(TackyBinaryOP.MULTIPLY, TackyVar("tmp.0"), TackyConstant(4), TackyVar("tmp.1")),
-                            // -5 -> tmp.2
-                            TackyUnary(TackyUnaryOP.NEGATE, TackyConstant(5), TackyVar("tmp.2")),
-                            // ~tmp.2 -> tmp.3
-                            TackyUnary(TackyUnaryOP.COMPLEMENT, TackyVar("tmp.2"), TackyVar("tmp.3")),
-                            // tmp.3 / 6 -> tmp.4
-                            TackyBinary(TackyBinaryOP.DIVIDE, TackyVar("tmp.3"), TackyConstant(6), TackyVar("tmp.4")),
-                            // tmp.4 % 3 -> tmp.5
-                            TackyBinary(TackyBinaryOP.REMAINDER, TackyVar("tmp.4"), TackyConstant(3), TackyVar("tmp.5")),
-                            // tmp.1 + tmp.5 -> tmp.6
-                            TackyBinary(TackyBinaryOP.ADD, TackyVar("tmp.1"), TackyVar("tmp.5"), TackyVar("tmp.6")),
-                            // Return tmp.6
-                            TackyRet(TackyVar("tmp.6")),
-                            // Return 0
-                            TackyRet(TackyConstant(0))
+                    functions =
+                    listOf( // TackyProgram now holds a LIST of functions
+                        TackyFunction(
+                            name = "main",
+                            args = emptyList(), // No parameters for main
+                            body =
+                            listOf(
+                                // (5 - 3) -> tmp.0
+                                TackyBinary(TackyBinaryOP.SUBTRACT, TackyConstant(5), TackyConstant(3), TackyVar("tmp.0")),
+                                // tmp.0 * 4 -> tmp.1
+                                TackyBinary(TackyBinaryOP.MULTIPLY, TackyVar("tmp.0"), TackyConstant(4), TackyVar("tmp.1")),
+                                // -5 -> tmp.2
+                                TackyUnary(TackyUnaryOP.NEGATE, TackyConstant(5), TackyVar("tmp.2")),
+                                // ~tmp.2 -> tmp.3
+                                TackyUnary(TackyUnaryOP.COMPLEMENT, TackyVar("tmp.2"), TackyVar("tmp.3")),
+                                // tmp.3 / 6 -> tmp.4
+                                TackyBinary(TackyBinaryOP.DIVIDE, TackyVar("tmp.3"), TackyConstant(6), TackyVar("tmp.4")),
+                                // tmp.4 % 3 -> tmp.5
+                                TackyBinary(TackyBinaryOP.REMAINDER, TackyVar("tmp.4"), TackyConstant(3), TackyVar("tmp.5")),
+                                // tmp.1 + tmp.5 -> tmp.6
+                                TackyBinary(TackyBinaryOP.ADD, TackyVar("tmp.1"), TackyVar("tmp.5"), TackyVar("tmp.6")),
+                                // Return tmp.6
+                                TackyRet(TackyVar("tmp.6"))
+                            )
                         )
                     )
                 ),
+                //
                 expectedAssembly =
                 AsmProgram(
-                    AsmFunction(
-                        name = "main",
-                        body =
-                        listOf(
-                            AllocateStack(28),
-                            // --- Block for tmp.0 = 5 - 3 ---
-                            Mov(Imm(5), Stack(-4)),
-                            AsmBinary(AsmBinaryOp.SUB, Imm(3), Stack(-4)),
-                            // --- Block for tmp.1 = tmp.0 * 4 ---
-                            // Note: We use R10D here because the destination of the MOV is a register
-                            Mov(Stack(-4), Register(HardwareRegister.R10D)),
-                            Mov(Register(HardwareRegister.R10D), Stack(-8)),
-                            // The fixer sees `imul Imm(4), Stack(-8)` and replaces it
-                            Mov(Stack(-8), Register(HardwareRegister.R11D)), // Load dest
-                            AsmBinary(AsmBinaryOp.MUL, Imm(4), Register(HardwareRegister.R11D)), // Multiply
-                            Mov(Register(HardwareRegister.R11D), Stack(-8)), // Store result
-                            // --- The rest of the blocks are now correct based on this change ---
-                            // Block for tmp.2 = -5
-                            Mov(Imm(5), Stack(-12)),
-                            AsmUnary(AsmUnaryOp.NEG, Stack(-12)),
-                            // Block for tmp.3 = ~tmp.2
-                            Mov(Stack(-12), Register(HardwareRegister.R10D)),
-                            Mov(Register(HardwareRegister.R10D), Stack(-16)),
-                            AsmUnary(AsmUnaryOp.NOT, Stack(-16)),
-                            // Block for tmp.4 = tmp.3 / 6
-                            Mov(Stack(-16), Register(HardwareRegister.EAX)),
-                            Cdq,
-                            // The Idiv(Imm(6)) will be fixed here
-                            Mov(Imm(6), Register(HardwareRegister.R10D)),
-                            Idiv(Register(HardwareRegister.R10D)),
-                            Mov(Register(HardwareRegister.EAX), Stack(-20)),
-                            // Block for tmp.5 = tmp.4 % 3
-                            Mov(Stack(-20), Register(HardwareRegister.EAX)),
-                            Cdq,
-                            // The Idiv(Imm(3)) will be fixed here
-                            Mov(Imm(3), Register(HardwareRegister.R10D)),
-                            Idiv(Register(HardwareRegister.R10D)),
-                            Mov(Register(HardwareRegister.EDX), Stack(-24)),
-                            // Block for tmp.6 = tmp.1 + tmp.5
-                            Mov(Stack(-8), Register(HardwareRegister.R10D)),
-                            Mov(Register(HardwareRegister.R10D), Stack(-28)),
-                            Mov(Stack(-24), Register(HardwareRegister.R10D)),
-                            AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-28)),
-                            // Final return
-                            Mov(Stack(-28), Register(HardwareRegister.EAX)),
-                            Mov(src = Imm(value = 0), dest = Register(name = HardwareRegister.EAX))
+                    functions =
+                    listOf( // AsmProgram now holds a LIST of functions
+                        AsmFunction(
+                            name = "main",
+                            stackSize = 28, // 7 temporary variables * 4 bytes
+                            body =
+                            listOf(
+                                AllocateStack(32), // 28 rounded up to 16
+                                // tmp.0 = 5 - 3
+                                Mov(Imm(5), Stack(-4)),
+                                AsmBinary(AsmBinaryOp.SUB, Imm(3), Stack(-4)),
+                                // tmp.1 = tmp.0 * 4
+                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-8)),
+                                Mov(Stack(-8), Register(HardwareRegister.R11D)),
+                                AsmBinary(AsmBinaryOp.MUL, Imm(4), Register(HardwareRegister.R11D)),
+                                Mov(Register(HardwareRegister.R11D), Stack(-8)),
+                                // tmp.2 = -5
+                                Mov(Imm(5), Stack(-12)),
+                                AsmUnary(AsmUnaryOp.NEG, Stack(-12)),
+                                // tmp.3 = ~tmp.2
+                                Mov(Stack(-12), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-16)),
+                                AsmUnary(AsmUnaryOp.NOT, Stack(-16)),
+                                // tmp.4 = tmp.3 / 6
+                                Mov(Stack(-16), Register(HardwareRegister.EAX)),
+                                Cdq,
+                                Mov(Imm(6), Register(HardwareRegister.R10D)),
+                                Idiv(Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.EAX), Stack(-20)),
+                                // tmp.5 = tmp.4 % 3
+                                Mov(Stack(-20), Register(HardwareRegister.EAX)),
+                                Cdq,
+                                Mov(Imm(3), Register(HardwareRegister.R10D)),
+                                Idiv(Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.EDX), Stack(-24)),
+                                // tmp.6 = tmp.1 + tmp.5
+                                Mov(Stack(-8), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-28)),
+                                Mov(Stack(-24), Register(HardwareRegister.R10D)),
+                                AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-28)),
+                                // return tmp.6
+                                Mov(Stack(-28), Register(HardwareRegister.EAX))
+                                // The implicit return 0
+                            )
                         )
                     )
                 )
@@ -239,99 +244,107 @@ object ValidTestCases {
                 code = "int main(void) { return 1 == 0 || 5 > 2 && 10 <= 20; }",
                 expectedTacky =
                 TackyProgram(
-                    TackyFunction(
-                        name = "main",
-                        body =
-                        listOf(
-                            // tmp.1 = (1 == 0)
-                            TackyBinary(TackyBinaryOP.EQUAL, TackyConstant(1), TackyConstant(0), TackyVar("tmp.1")),
-                            // if (tmp.1 != 0) goto .L_or_true_0
-                            JumpIfNotZero(TackyVar("tmp.1"), TackyLabel(".L_or_true_0")),
-                            // -- Start of the AND expression --
-                            // tmp.3 = (5 > 2)
-                            TackyBinary(TackyBinaryOP.GREATER, TackyConstant(5), TackyConstant(2), TackyVar("tmp.3")),
-                            // if (tmp.3 == 0) goto .L_and_false_2
-                            JumpIfZero(TackyVar("tmp.3"), TackyLabel(".L_and_false_2")),
-                            // tmp.4 = (10 <= 20)
-                            TackyBinary(TackyBinaryOP.LESS_EQUAL, TackyConstant(10), TackyConstant(20), TackyVar("tmp.4")),
-                            // if (tmp.4 == 0) goto .L_and_false_2
-                            JumpIfZero(TackyVar("tmp.4"), TackyLabel(".L_and_false_2")),
-                            // AND is true -> tmp.2 = 1
-                            TackyCopy(TackyConstant(1), TackyVar("tmp.2")),
-                            TackyJump(TackyLabel(".L_and_end_3")),
-                            // AND is false -> tmp.2 = 0
-                            TackyLabel(".L_and_false_2"),
-                            TackyCopy(TackyConstant(0), TackyVar("tmp.2")),
-                            // End of AND block
-                            TackyLabel(".L_and_end_3"),
-                            // -- Resume OR logic --
-                            // if (tmp.2 != 0) goto .L_or_true_0
-                            JumpIfNotZero(TackyVar("tmp.2"), TackyLabel(".L_or_true_0")),
-                            // OR is false -> tmp.0 = 0
-                            TackyCopy(TackyConstant(0), TackyVar("tmp.0")),
-                            TackyJump(TackyLabel(".L_or_end_1")),
-                            // OR is true -> tmp.0 = 1
-                            TackyLabel(".L_or_true_0"),
-                            TackyCopy(TackyConstant(1), TackyVar("tmp.0")),
-                            // End of OR block
-                            TackyLabel(".L_or_end_1"),
-                            // Final return
-                            TackyRet(TackyVar("tmp.0")),
-                            TackyRet(TackyConstant(0))
+                    functions =
+                    listOf( // TackyProgram holds a LIST of functions
+                        TackyFunction(
+                            name = "main",
+                            args = emptyList(), // No parameters for main
+                            body =
+                            listOf(
+                                // tmp.0 = (1 == 0)
+                                TackyBinary(TackyBinaryOP.EQUAL, TackyConstant(1), TackyConstant(0), TackyVar("tmp.0")),
+                                // if (tmp.0 != 0) goto .L_or_true_0
+                                JumpIfNotZero(TackyVar("tmp.0"), TackyLabel(".L_or_true_0")),
+                                // -- Start of the AND expression --
+                                // tmp.2 = (5 > 2)
+                                TackyBinary(TackyBinaryOP.GREATER, TackyConstant(5), TackyConstant(2), TackyVar("tmp.2")),
+                                // if (tmp.2 == 0) goto .L_and_false_2
+                                JumpIfZero(TackyVar("tmp.2"), TackyLabel(".L_and_false_2")),
+                                // tmp.3 = (10 <= 20)
+                                TackyBinary(TackyBinaryOP.LESS_EQUAL, TackyConstant(10), TackyConstant(20), TackyVar("tmp.3")),
+                                // if (tmp.3 == 0) goto .L_and_false_2
+                                JumpIfZero(TackyVar("tmp.3"), TackyLabel(".L_and_false_2")),
+                                // AND is true -> tmp.1 = 1
+                                TackyCopy(TackyConstant(1), TackyVar("tmp.1")),
+                                TackyJump(TackyLabel(".L_and_end_3")),
+                                // AND is false -> tmp.1 = 0
+                                TackyLabel(".L_and_false_2"),
+                                TackyCopy(TackyConstant(0), TackyVar("tmp.1")),
+                                // End of AND block
+                                TackyLabel(".L_and_end_3"),
+                                // -- Resume OR logic --
+                                // if (tmp.1 != 0) goto .L_or_true_0
+                                JumpIfNotZero(TackyVar("tmp.1"), TackyLabel(".L_or_true_0")),
+                                // OR is false -> tmp.4 = 0 (using a new final temp)
+                                TackyCopy(TackyConstant(0), TackyVar("tmp.4")),
+                                TackyJump(TackyLabel(".L_or_end_1")),
+                                // OR is true -> tmp.4 = 1
+                                TackyLabel(".L_or_true_0"),
+                                TackyCopy(TackyConstant(1), TackyVar("tmp.4")),
+                                // End of OR block
+                                TackyLabel(".L_or_end_1"),
+                                // Final return
+                                TackyRet(TackyVar("tmp.4"))
+                            )
                         )
                     )
                 ),
                 expectedAssembly =
                 AsmProgram(
-                    AsmFunction(
-                        name = "main",
-                        body =
-                        listOf(
-                            AllocateStack(size = 20),
-                            // Block for tmp.1 = (1 == 0)
-                            Mov(src = Imm(value = 1), dest = Register(name = HardwareRegister.R11D)),
-                            Cmp(src = Imm(value = 0), dest = Register(name = HardwareRegister.R11D)),
-                            Mov(src = Imm(value = 0), dest = Stack(offset = -4)),
-                            SetCC(condition = ConditionCode.E, dest = Stack(offset = -4)),
-                            // First jump for OR: if (tmp.1 != 0) goto .L_or_true_0
-                            Cmp(src = Imm(value = 0), dest = Stack(offset = -4)),
-                            JmpCC(condition = ConditionCode.NE, label = Label(name = ".L_or_true_0")),
-                            // Block for tmp.3 = (5 > 2)
-                            Mov(src = Imm(value = 5), dest = Register(name = HardwareRegister.R11D)),
-                            Cmp(src = Imm(value = 2), dest = Register(name = HardwareRegister.R11D)),
-                            Mov(src = Imm(value = 0), dest = Stack(offset = -8)),
-                            SetCC(condition = ConditionCode.G, dest = Stack(offset = -8)),
-                            // First jump for AND: if (tmp.3 == 0) goto .L_and_false_2
-                            Cmp(src = Imm(value = 0), dest = Stack(offset = -8)),
-                            JmpCC(condition = ConditionCode.E, label = Label(name = ".L_and_false_2")),
-                            // Block for tmp.4 = (10 <= 20)
-                            Mov(src = Imm(value = 10), dest = Register(name = HardwareRegister.R11D)),
-                            Cmp(src = Imm(value = 20), dest = Register(name = HardwareRegister.R11D)),
-                            Mov(src = Imm(value = 0), dest = Stack(offset = -12)),
-                            SetCC(condition = ConditionCode.LE, dest = Stack(offset = -12)),
-                            // Second jump for AND: if (tmp.4 == 0) goto .L_and_false_2
-                            Cmp(src = Imm(value = 0), dest = Stack(offset = -12)),
-                            JmpCC(condition = ConditionCode.E, label = Label(name = ".L_and_false_2")),
-                            // AND is true path (tmp.2 = 1)
-                            Mov(src = Imm(value = 1), dest = Stack(offset = -16)),
-                            Jmp(label = Label(name = ".L_and_end_3")),
-                            // AND is false path
-                            Label(name = ".L_and_false_2"),
-                            Mov(src = Imm(value = 0), dest = Stack(offset = -16)),
-                            Label(name = ".L_and_end_3"),
-                            // Second jump for OR: if (tmp.2 != 0) goto .L_or_true_0
-                            Cmp(src = Imm(value = 0), dest = Stack(offset = -16)),
-                            JmpCC(condition = ConditionCode.NE, label = Label(name = ".L_or_true_0")),
-                            // OR is false path (tmp.0 = 0)
-                            Mov(src = Imm(value = 0), dest = Stack(offset = -20)),
-                            Jmp(label = Label(name = ".L_or_end_1")),
-                            // OR is true path
-                            Label(name = ".L_or_true_0"),
-                            Mov(src = Imm(value = 1), dest = Stack(offset = -20)),
-                            Label(name = ".L_or_end_1"),
-                            // Final return tmp.0
-                            Mov(src = Stack(offset = -20), dest = Register(name = HardwareRegister.EAX)),
-                            Mov(src = Imm(value = 0), dest = Register(name = HardwareRegister.EAX))
+                    functions =
+                    listOf( // AsmProgram holds a LIST of functions
+                        AsmFunction(
+                            name = "main",
+                            stackSize = 20, // 5 temporary variables * 4 bytes
+                            body =
+                            listOf(
+                                AllocateStack(32), // 20 rounded up to 16 is 32
+                                // tmp.0 = (1 == 0)
+                                Mov(Imm(1), Register(HardwareRegister.EAX)),
+                                Cmp(Imm(0), Register(HardwareRegister.EAX)),
+                                Mov(Imm(0), Stack(-4)),
+                                SetCC(ConditionCode.E, Stack(-4)),
+                                // if (tmp.0 != 0) goto .L_or_true_0
+                                Cmp(Imm(0), Stack(-4)),
+                                JmpCC(ConditionCode.NE, Label(".L_or_true_0")),
+                                // tmp.2 = (5 > 2)
+                                Mov(Imm(5), Register(HardwareRegister.EAX)),
+                                Cmp(Imm(2), Register(HardwareRegister.EAX)),
+                                Mov(Imm(0), Stack(-12)),
+                                SetCC(ConditionCode.G, Stack(-12)),
+                                // if (tmp.2 == 0) goto .L_and_false_2
+                                Cmp(Imm(0), Stack(-12)),
+                                JmpCC(ConditionCode.E, Label(".L_and_false_2")),
+                                // tmp.3 = (10 <= 20)
+                                Mov(Imm(10), Register(HardwareRegister.EAX)),
+                                Cmp(Imm(20), Register(HardwareRegister.EAX)),
+                                Mov(Imm(0), Stack(-16)),
+                                SetCC(ConditionCode.LE, Stack(-16)),
+                                // if (tmp.3 == 0) goto .L_and_false_2
+                                Cmp(Imm(0), Stack(-16)),
+                                JmpCC(ConditionCode.E, Label(".L_and_false_2")),
+                                // tmp.1 = 1 (AND is true)
+                                Mov(Imm(1), Stack(-8)),
+                                Jmp(Label(".L_and_end_3")),
+                                // .L_and_false_2: (AND is false)
+                                Label(".L_and_false_2"),
+                                Mov(Imm(0), Stack(-8)),
+                                // .L_and_end_3:
+                                Label(".L_and_end_3"),
+                                // if (tmp.1 != 0) goto .L_or_true_0
+                                Cmp(Imm(0), Stack(-8)),
+                                JmpCC(ConditionCode.NE, Label(".L_or_true_0")),
+                                // tmp.4 = 0 (OR is false)
+                                Mov(Imm(0), Stack(-20)),
+                                Jmp(Label(".L_or_end_1")),
+                                // .L_or_true_0: (OR is true)
+                                Label(".L_or_true_0"),
+                                Mov(Imm(1), Stack(-20)),
+                                // .L_or_end_1:
+                                Label(".L_or_end_1"),
+                                // return tmp.4
+                                Mov(Stack(-20), Register(HardwareRegister.EAX))
+                            )
                         )
                     )
                 )
@@ -388,68 +401,79 @@ object ValidTestCases {
                 ),
                 expectedAst =
                 SimpleProgram(
-                    functionDefinition =
-                    Function(
-                        name = "main",
-                        body =
-                        Block(
-                            listOf(
-                                D(Declaration(name = "b.0", init = null)),
-                                D(
-                                    Declaration(
-                                        name = "a.1",
-                                        init =
-                                        BinaryExpression(
-                                            left = IntExpression(10),
-                                            operator = Token(TokenType.PLUS, "+", 3, 12),
-                                            right = IntExpression(1)
-                                        )
-                                    )
-                                ),
-                                S(
-                                    ExpressionStatement(
-                                        AssignmentExpression(
-                                            lvalue = VariableExpression("b.0"),
-                                            rvalue =
-                                            BinaryExpression(
-                                                left =
-                                                AssignmentExpression(
-                                                    lvalue = VariableExpression("a.1"),
-                                                    rvalue = IntExpression(2)
-                                                ),
-                                                operator = Token(TokenType.MULTIPLY, "*", 4, 11),
-                                                right = IntExpression(2)
+                    functionDeclaration =
+                    listOf(
+                        FunctionDeclaration(
+                            name = "main",
+                            params = emptyList(),
+                            body =
+                            Block(
+                                block =
+                                listOf(
+                                    D(VarDecl(VariableDeclaration(name = "b.0", init = null))),
+                                    D(
+                                        VarDecl(
+                                            VariableDeclaration(
+                                                name = "a.1",
+                                                init =
+                                                BinaryExpression(
+                                                    left = IntExpression(10),
+                                                    operator = Token(TokenType.PLUS, "+", 3, 12),
+                                                    right = IntExpression(1)
+                                                )
                                             )
                                         )
-                                    )
-                                ),
-                                S(
-                                    ReturnStatement(
-                                        expression = VariableExpression("b.0")
-                                    )
-                                ),
-                                S(NullStatement())
+                                    ),
+                                    S(
+                                        ExpressionStatement(
+                                            AssignmentExpression(
+                                                lvalue = VariableExpression("b.0"),
+                                                rvalue =
+                                                BinaryExpression(
+                                                    left =
+                                                    AssignmentExpression(
+                                                        lvalue = VariableExpression("a.1"),
+                                                        rvalue = IntExpression(2)
+                                                    ),
+                                                    operator = Token(TokenType.MULTIPLY, "*", 4, 11),
+                                                    right = IntExpression(2)
+                                                )
+                                            )
+                                        )
+                                    ),
+                                    S(
+                                        ReturnStatement(
+                                            expression = VariableExpression("b.0")
+                                        )
+                                    ),
+                                    S(NullStatement())
+                                )
                             )
                         )
                     )
                 ),
                 expectedTacky =
                 TackyProgram(
-                    TackyFunction(
-                        name = "main",
-                        body =
-                        listOf(
-                            TackyBinary(TackyBinaryOP.ADD, TackyConstant(10), TackyConstant(1), TackyVar("tmp.0")),
-                            TackyCopy(TackyVar("tmp.0"), TackyVar("a.1")),
-                            TackyCopy(TackyConstant(2), TackyVar("a.1")),
-                            TackyBinary(TackyBinaryOP.MULTIPLY, TackyVar("a.1"), TackyConstant(2), TackyVar("tmp.1")),
-                            TackyCopy(TackyVar("tmp.1"), TackyVar("b.0")),
-                            TackyRet(TackyVar("b.0")),
-                            TackyRet(TackyConstant(0))
+                    functions =
+                    listOf(
+                        TackyFunction(
+                            name = "main",
+                            // The TackyFunction's params are the unique names of all local variables
+                            args = listOf("b.0", "a.1"),
+                            body =
+                            listOf(
+                                TackyBinary(TackyBinaryOP.ADD, TackyConstant(10), TackyConstant(1), TackyVar("tmp.0")),
+                                TackyCopy(TackyVar("tmp.0"), TackyVar("a.1")),
+                                TackyCopy(TackyConstant(2), TackyVar("a.1")),
+                                TackyBinary(TackyBinaryOP.MULTIPLY, TackyVar("a.1"), TackyConstant(2), TackyVar("tmp.1")),
+                                TackyCopy(TackyVar("tmp.1"), TackyVar("b.0")),
+                                TackyRet(TackyVar("b.0"))
+                                // TackyRet(TackyConstant(0))
+                            )
                         )
                     )
+                    // No need to test the assembly here since this feature doesn't effect the assembly generation stage
                 )
-                // No need to test the assembly here since this feature doesn't effect the assembly generation stage
             ),
             // --- Test Case for an IF-ELSE statement ---
             ValidTestCase(
@@ -466,56 +490,63 @@ object ValidTestCases {
                 """.trimIndent(),
                 expectedTacky =
                 TackyProgram(
-                    TackyFunction(
-                        name = "main",
-                        body =
-                        listOf(
-                            // int a = 0;
-                            TackyCopy(TackyConstant(0), TackyVar("a.0")),
-                            // tmp.0 = a == 0
-                            TackyBinary(TackyBinaryOP.EQUAL, TackyVar("a.0"), TackyConstant(0), TackyVar("tmp.0")),
-                            // if (tmp.0 == 0) goto .L_else_label_1
-                            JumpIfZero(TackyVar("tmp.0"), TackyLabel(".L_else_label_1")),
-                            // then block: return 10;
-                            TackyRet(TackyConstant(10)),
-                            // goto .L_end_0;
-                            TackyJump(TackyLabel(".L_end_0")),
-                            // else block
-                            TackyLabel(".L_else_label_1"),
-                            TackyRet(TackyConstant(20)),
-                            // end of if
-                            TackyLabel(".L_end_0"),
-                            TackyRet(TackyConstant(0))
+                    functions =
+                    listOf(
+                        TackyFunction(
+                            name = "main",
+                            args = emptyList(),
+                            body =
+                            listOf(
+                                // int a = 0;
+                                TackyCopy(TackyConstant(0), TackyVar("a.0")),
+                                // tmp.0 = a == 0
+                                TackyBinary(TackyBinaryOP.EQUAL, TackyVar("a.0"), TackyConstant(0), TackyVar("tmp.0")),
+                                // if (tmp.0 == 0) goto .L_else_label_1
+                                JumpIfZero(TackyVar("tmp.0"), TackyLabel(".L_else_label_1")),
+                                // then block: return 10;
+                                TackyRet(TackyConstant(10)),
+                                // goto .L_end_0;
+                                TackyJump(TackyLabel(".L_end_0")),
+                                // else block
+                                TackyLabel(".L_else_label_1"),
+                                TackyRet(TackyConstant(20)),
+                                // end of if
+                                TackyLabel(".L_end_0")
+                                // TackyRet(TackyConstant(0))
+                            )
                         )
                     )
                 ),
                 expectedAssembly =
                 AsmProgram(
-                    AsmFunction(
-                        name = "main",
-                        body =
-                        listOf(
-                            AllocateStack(8),
-                            // int a = 0;
-                            Mov(Imm(0), Stack(-4)),
-                            // tmp.0 = a == 0;
-                            Cmp(Imm(0), Stack(-4)),
-                            Mov(Imm(0), Stack(-8)),
-                            SetCC(ConditionCode.E, Stack(-8)),
-                            // if (tmp.0 == 0) goto .L_else_label_1
-                            Cmp(Imm(0), Stack(-8)),
-                            JmpCC(ConditionCode.E, Label(".L_else_label_1")),
-                            // return 10;
-                            Mov(Imm(10), Register(HardwareRegister.EAX)),
-                            Jmp(Label(".L_end_0")),
-                            // .L_else_label_1:
-                            Label(".L_else_label_1"),
-                            // return 20;
-                            Mov(Imm(20), Register(HardwareRegister.EAX)),
-                            // .L_end_0:
-                            Label(".L_end_0"),
-                            // The extra return 0
-                            Mov(Imm(0), Register(HardwareRegister.EAX))
+                    functions =
+                    listOf(
+                        AsmFunction(
+                            name = "main",
+                            body =
+                            listOf(
+                                AllocateStack(8),
+                                // int a = 0;
+                                Mov(Imm(0), Stack(-4)),
+                                // tmp.0 = a == 0;
+                                Cmp(Imm(0), Stack(-4)),
+                                Mov(Imm(0), Stack(-8)),
+                                SetCC(ConditionCode.E, Stack(-8)),
+                                // if (tmp.0 == 0) goto .L_else_label_1
+                                Cmp(Imm(0), Stack(-8)),
+                                JmpCC(ConditionCode.E, Label(".L_else_label_1")),
+                                // return 10;
+                                Mov(Imm(10), Register(HardwareRegister.EAX)),
+                                Jmp(Label(".L_end_0")),
+                                // .L_else_label_1:
+                                Label(".L_else_label_1"),
+                                // return 20;
+                                Mov(Imm(20), Register(HardwareRegister.EAX)),
+                                // .L_end_0:
+                                Label(".L_end_0")
+                                // The extra return 0
+                                // Mov(Imm(0), Register(HardwareRegister.EAX))
+                            )
                         )
                     )
                 )
@@ -536,374 +567,73 @@ object ValidTestCases {
                 """.trimIndent(),
                 expectedTacky =
                 TackyProgram(
-                    TackyFunction(
-                        name = "main",
-                        body =
-                        listOf(
-                            // int a = 0;
-                            TackyCopy(TackyConstant(0), TackyVar("a.0")),
-                            // start:
-                            TackyLabel("start"),
-                            // tmp.0 = a + 1;
-                            TackyBinary(TackyBinaryOP.ADD, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.0")),
-                            // a = tmp.1
-                            TackyCopy(TackyVar("tmp.0"), TackyVar("a.0")),
-                            // tmp.2 = a < 3
-                            TackyBinary(TackyBinaryOP.LESS, TackyVar("a.0"), TackyConstant(3), TackyVar("tmp.1")),
-                            // if (tmp.2 == 0) goto .L_if_end_0;
-                            JumpIfZero(TackyVar("tmp.1"), TackyLabel(".L_end_0")),
-                            // goto start;
-                            TackyJump(TackyLabel("start")),
-                            // end of if
-                            TackyLabel(".L_end_0"),
-                            // return a;
-                            TackyRet(TackyVar("a.0")),
-                            TackyRet(TackyConstant(0))
+                    functions =
+                    listOf( // TackyProgram holds a LIST of functions
+                        TackyFunction(
+                            name = "main",
+                            args = listOf("a.0"), // 'a' is a local variable/parameter
+                            body =
+                            listOf(
+                                // int a = 0;
+                                TackyCopy(TackyConstant(0), TackyVar("a.0")),
+                                // start:
+                                TackyLabel("start"),
+                                // tmp.0 = a + 1;
+                                TackyBinary(TackyBinaryOP.ADD, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.0")),
+                                // a = tmp.0
+                                TackyCopy(TackyVar("tmp.0"), TackyVar("a.0")),
+                                // tmp.1 = a < 3
+                                TackyBinary(TackyBinaryOP.LESS, TackyVar("a.0"), TackyConstant(3), TackyVar("tmp.1")),
+                                // if (tmp.1 == 0) goto .L_if_end_0;
+                                JumpIfZero(TackyVar("tmp.1"), TackyLabel(".L_if_end_0")),
+                                // goto start;
+                                TackyJump(TackyLabel("start")),
+                                // end of if
+                                TackyLabel(".L_if_end_0"),
+                                // return a;
+                                TackyRet(TackyVar("a.0"))
+                                // TackyRet(TackyConstant(0))
+                            )
                         )
                     )
                 ),
                 expectedAssembly =
                 AsmProgram(
-                    AsmFunction(
-                        name = "main",
-                        body =
-                        listOf(
-                            AllocateStack(12), // For a, tmp.1, tmp.2
-                            // a = 0
-                            Mov(Imm(0), Stack(-4)),
-                            // start:
-                            Label("start"),
-                            // tmp.1 = a + 1
-                            Mov(Stack(-4), Register(HardwareRegister.R10D)),
-                            Mov(Register(HardwareRegister.R10D), Stack(-8)),
-                            AsmBinary(AsmBinaryOp.ADD, Imm(1), Stack(-8)),
-                            // a = tmp.1
-                            Mov(Stack(-8), Register(HardwareRegister.R10D)),
-                            Mov(Register(HardwareRegister.R10D), Stack(-4)),
-                            // tmp.2 = a < 3
-                            Cmp(Imm(3), Stack(-4)),
-                            Mov(Imm(0), Stack(-12)),
-                            SetCC(ConditionCode.L, Stack(-12)),
-                            // if (tmp.2 == 0) goto .L_if_end_0
-                            Cmp(Imm(0), Stack(-12)),
-                            JmpCC(ConditionCode.E, Label(".L_end_0")),
-                            // goto start
-                            Jmp(Label("start")),
-                            // .L_if_end_0:
-                            Label(".L_end_0"),
-                            // return a
-                            Mov(Stack(-4), Register(HardwareRegister.EAX)),
-                            Mov(src = Imm(value = 0), dest = Register(name = HardwareRegister.EAX))
-                        )
-                    )
-                )
-            ),
-            ValidTestCase(
-                title = "Testing loop statements with blocks",
-                code =
-                """int main(void) { 
-                    |int a = 10;
-                    |while(a > 0) {
-                    |   int a = 2;
-                    |   a = a - 1;
-                    |}
-                    |for(int i = 0; i < 10; i = i + 1) 
-                    |   a = a + 1;
-                    |for(;a > 0;)
-                    |   a = a + 1;
-                    |do 
-                    |   a = a + 1;
-                    |while(a > 0);
-                    |return 0;
-                    |}
-                """.trimMargin(),
-                expectedTokenList =
-                listOf(
-                    Token(TokenType.KEYWORD_INT, "int", 1, 1),
-                    Token(TokenType.IDENTIFIER, "main", 1, 5),
-                    Token(TokenType.LEFT_PAREN, "(", 1, 9),
-                    Token(TokenType.KEYWORD_VOID, "void", 1, 10),
-                    Token(TokenType.RIGHT_PAREN, ")", 1, 14),
-                    Token(TokenType.LEFT_BRACK, "{", 1, 16),
-                    // int a = 10;
-                    Token(TokenType.KEYWORD_INT, "int", 2, 1),
-                    Token(TokenType.IDENTIFIER, "a", 2, 5),
-                    Token(TokenType.ASSIGN, "=", 2, 7),
-                    Token(TokenType.INT_LITERAL, "10", 2, 9),
-                    Token(TokenType.SEMICOLON, ";", 2, 11),
-                    // while(a > 0)
-                    Token(TokenType.KEYWORD_WHILE, "while", 3, 1),
-                    Token(TokenType.LEFT_PAREN, "(", 3, 6),
-                    Token(TokenType.IDENTIFIER, "a", 3, 7),
-                    Token(TokenType.GREATER, ">", 3, 9),
-                    Token(TokenType.INT_LITERAL, "0", 3, 11),
-                    Token(TokenType.RIGHT_PAREN, ")", 3, 12),
-                    // { int a = 2; a = a - 1; }
-                    Token(TokenType.LEFT_BRACK, "{", 3, 14),
-                    Token(TokenType.KEYWORD_INT, "int", 4, 4),
-                    Token(TokenType.IDENTIFIER, "a", 4, 8),
-                    Token(TokenType.ASSIGN, "=", 4, 10),
-                    Token(TokenType.INT_LITERAL, "2", 4, 12),
-                    Token(TokenType.SEMICOLON, ";", 4, 13),
-                    Token(TokenType.IDENTIFIER, "a", 5, 4),
-                    Token(TokenType.ASSIGN, "=", 5, 6),
-                    Token(TokenType.IDENTIFIER, "a", 5, 8),
-                    Token(TokenType.NEGATION, "-", 5, 10),
-                    Token(TokenType.INT_LITERAL, "1", 5, 12),
-                    Token(TokenType.SEMICOLON, ";", 5, 13),
-                    Token(TokenType.RIGHT_BRACK, "}", 6, 1),
-                    // for(int i = 0; i < 10; i = i + 1)
-                    Token(TokenType.KEYWORD_FOR, "for", 7, 1),
-                    Token(TokenType.LEFT_PAREN, "(", 7, 4),
-                    Token(TokenType.KEYWORD_INT, "int", 7, 5),
-                    Token(TokenType.IDENTIFIER, "i", 7, 9),
-                    Token(TokenType.ASSIGN, "=", 7, 11),
-                    Token(TokenType.INT_LITERAL, "0", 7, 13),
-                    Token(TokenType.SEMICOLON, ";", 7, 14),
-                    Token(TokenType.IDENTIFIER, "i", 7, 16),
-                    Token(TokenType.LESS, "<", 7, 18),
-                    Token(TokenType.INT_LITERAL, "10", 7, 20),
-                    Token(TokenType.SEMICOLON, ";", 7, 22),
-                    Token(TokenType.IDENTIFIER, "i", 7, 24),
-                    Token(TokenType.ASSIGN, "=", 7, 26),
-                    Token(TokenType.IDENTIFIER, "i", 7, 28),
-                    Token(TokenType.PLUS, "+", 7, 30),
-                    Token(TokenType.INT_LITERAL, "1", 7, 32),
-                    Token(TokenType.RIGHT_PAREN, ")", 7, 33),
-                    // a = a + 1;
-                    Token(TokenType.IDENTIFIER, "a", 8, 4),
-                    Token(TokenType.ASSIGN, "=", 8, 6),
-                    Token(TokenType.IDENTIFIER, "a", 8, 8),
-                    Token(TokenType.PLUS, "+", 8, 10),
-                    Token(TokenType.INT_LITERAL, "1", 8, 12),
-                    Token(TokenType.SEMICOLON, ";", 8, 13),
-                    // for(;a > 0;)
-                    Token(TokenType.KEYWORD_FOR, "for", 9, 1),
-                    Token(TokenType.LEFT_PAREN, "(", 9, 4),
-                    Token(TokenType.SEMICOLON, ";", 9, 5),
-                    Token(TokenType.IDENTIFIER, "a", 9, 6),
-                    Token(TokenType.GREATER, ">", 9, 8),
-                    Token(TokenType.INT_LITERAL, "0", 9, 10),
-                    Token(TokenType.SEMICOLON, ";", 9, 11),
-                    Token(TokenType.RIGHT_PAREN, ")", 9, 12),
-                    // a = a + 1;
-                    Token(TokenType.IDENTIFIER, "a", 10, 4),
-                    Token(TokenType.ASSIGN, "=", 10, 6),
-                    Token(TokenType.IDENTIFIER, "a", 10, 8),
-                    Token(TokenType.PLUS, "+", 10, 10),
-                    Token(TokenType.INT_LITERAL, "1", 10, 12),
-                    Token(TokenType.SEMICOLON, ";", 10, 13),
-                    // do
-                    Token(TokenType.KEYWORD_DO, "do", 11, 1),
-                    // a = a + 1;
-                    Token(TokenType.IDENTIFIER, "a", 12, 4),
-                    Token(TokenType.ASSIGN, "=", 12, 6),
-                    Token(TokenType.IDENTIFIER, "a", 12, 8),
-                    Token(TokenType.PLUS, "+", 12, 10),
-                    Token(TokenType.INT_LITERAL, "1", 12, 12),
-                    Token(TokenType.SEMICOLON, ";", 12, 13),
-                    // while(a > 0);
-                    Token(TokenType.KEYWORD_WHILE, "while", 13, 1),
-                    Token(TokenType.LEFT_PAREN, "(", 13, 6),
-                    Token(TokenType.IDENTIFIER, "a", 13, 7),
-                    Token(TokenType.GREATER, ">", 13, 9),
-                    Token(TokenType.INT_LITERAL, "0", 13, 11),
-                    Token(TokenType.RIGHT_PAREN, ")", 13, 12),
-                    Token(TokenType.SEMICOLON, ";", 13, 13),
-                    // return 0;
-                    Token(TokenType.KEYWORD_RETURN, "return", 14, 1),
-                    Token(TokenType.INT_LITERAL, "0", 14, 8),
-                    Token(TokenType.SEMICOLON, ";", 14, 9),
-                    Token(TokenType.RIGHT_BRACK, "}", 15, 1),
-                    Token(TokenType.EOF, "", 15, 2)
-                ),
-                expectedAst =
-                SimpleProgram(
-                    functionDefinition =
-                    Function(
-                        name = "main",
-                        body =
-                        Block(
+                    functions =
+                    listOf( // AsmProgram holds a LIST of functions
+                        AsmFunction(
+                            name = "main",
+                            stackSize = 12, // 1 variable (a) + 2 temporaries (tmp.0, tmp.1) = 3 * 4 = 12
+                            body =
                             listOf(
-                                D(Declaration(name = "a.0", init = IntExpression(10))),
-                                S(
-                                    parser.WhileStatement(
-                                        condition =
-                                        BinaryExpression(
-                                            left = VariableExpression("a.0"),
-                                            operator = Token(TokenType.GREATER, ">", 3, 9),
-                                            right = IntExpression(0)
-                                        ),
-                                        body =
-                                        CompoundStatement(
-                                            Block(
-                                                listOf(
-                                                    D(Declaration(name = "a.1", init = IntExpression(2))),
-                                                    S(
-                                                        ExpressionStatement(
-                                                            AssignmentExpression(
-                                                                lvalue = VariableExpression("a.1"),
-                                                                rvalue =
-                                                                BinaryExpression(
-                                                                    left = VariableExpression("a.1"),
-                                                                    operator = Token(TokenType.NEGATION, "-", 5, 10),
-                                                                    right = IntExpression(1)
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        ),
-                                        label = "loop.0"
-                                    )
-                                ),
-                                S(
-                                    parser.ForStatement(
-                                        init =
-                                        parser.InitDeclaration(
-                                            Declaration(name = "i.2", init = IntExpression(0))
-                                        ),
-                                        condition =
-                                        BinaryExpression(
-                                            left = VariableExpression("i.2"),
-                                            operator = Token(TokenType.LESS, "<", 5, 18),
-                                            right = IntExpression(10)
-                                        ),
-                                        post =
-                                        AssignmentExpression(
-                                            lvalue = VariableExpression("i.2"),
-                                            rvalue =
-                                            BinaryExpression(
-                                                left = VariableExpression("i.2"),
-                                                operator = Token(TokenType.PLUS, "+", 5, 30),
-                                                right = IntExpression(1)
-                                            )
-                                        ),
-                                        body =
-                                        ExpressionStatement(
-                                            AssignmentExpression(
-                                                lvalue = VariableExpression("a.0"),
-                                                rvalue =
-                                                BinaryExpression(
-                                                    left = VariableExpression("a.0"),
-                                                    operator = Token(TokenType.PLUS, "+", 6, 10),
-                                                    right = IntExpression(1)
-                                                )
-                                            )
-                                        ),
-                                        label = "loop.1"
-                                    )
-                                ),
-                                S(
-                                    parser.ForStatement(
-                                        init =
-                                        parser.InitExpression(
-                                            expression = null
-                                        ),
-                                        condition =
-                                        BinaryExpression(
-                                            left = VariableExpression("a.0"),
-                                            operator = Token(TokenType.GREATER, ">", 7, 8),
-                                            right = IntExpression(0)
-                                        ),
-                                        post = null,
-                                        body =
-                                        ExpressionStatement(
-                                            AssignmentExpression(
-                                                lvalue = VariableExpression("a.0"),
-                                                rvalue =
-                                                BinaryExpression(
-                                                    left = VariableExpression("a.0"),
-                                                    operator = Token(TokenType.PLUS, "+", 8, 10),
-                                                    right = IntExpression(1)
-                                                )
-                                            )
-                                        ),
-                                        label = "loop.2"
-                                    )
-                                ),
-                                S(
-                                    parser.DoWhileStatement(
-                                        condition =
-                                        BinaryExpression(
-                                            left = VariableExpression("a.0"),
-                                            operator = Token(TokenType.GREATER, ">", 11, 9),
-                                            right = IntExpression(0)
-                                        ),
-                                        body =
-                                        ExpressionStatement(
-                                            AssignmentExpression(
-                                                lvalue = VariableExpression("a.0"),
-                                                rvalue =
-                                                BinaryExpression(
-                                                    left = VariableExpression("a.0"),
-                                                    operator = Token(TokenType.PLUS, "+", 10, 10),
-                                                    right = IntExpression(1)
-                                                )
-                                            )
-                                        ),
-                                        label = "loop.3"
-                                    )
-                                ),
-                                S(ReturnStatement(expression = IntExpression(0)))
+                                AllocateStack(16), // 12 rounded up to nearest 16
+                                // a = 0
+                                Mov(Imm(0), Stack(-4)), // Stack slot for a.0
+                                // start:
+                                Label("start"),
+                                // tmp.0 = a + 1
+                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
+                                AsmBinary(AsmBinaryOp.ADD, Imm(1), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-8)), // Stack slot for tmp.0
+                                // a = tmp.0
+                                Mov(Stack(-8), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-4)),
+                                // tmp.1 = a < 3
+                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
+                                Cmp(Imm(3), Register(HardwareRegister.EAX)),
+                                Mov(Imm(0), Stack(-12)), // Stack slot for tmp.1
+                                SetCC(ConditionCode.L, Stack(-12)),
+                                // if (tmp.1 == 0) goto .L_if_end_0
+                                Cmp(Imm(0), Stack(-12)),
+                                JmpCC(ConditionCode.E, Label(".L_if_end_0")),
+                                // goto start
+                                Jmp(Label("start")),
+                                // .L_if_end_0:
+                                Label(".L_if_end_0"),
+                                // return a
+                                Mov(Stack(-4), Register(HardwareRegister.EAX))
+                                // Mov(src = Imm(value = 0), dest = Register(name = HardwareRegister.EAX))
                             )
-                        )
-                    )
-                ),
-                expectedTacky =
-                TackyProgram(
-                    TackyFunction(
-                        name = "main",
-                        body =
-                        listOf(
-                            // a.0 = 10
-                            TackyCopy(TackyConstant(10), TackyVar("a.0")),
-                            // while (a.0 > 0) ... label loop.0
-                            TackyLabel("continue_loop.0"),
-                            TackyBinary(TackyBinaryOP.GREATER, TackyVar("a.0"), TackyConstant(0), TackyVar("tmp.0")),
-                            JumpIfZero(TackyVar("tmp.0"), TackyLabel("break_loop.0")),
-                            TackyCopy(src = TackyConstant(value = 2), dest = TackyVar(name = "a.1")),
-                            // a.0 = a.0 - 1
-                            TackyBinary(TackyBinaryOP.SUBTRACT, TackyVar("a.1"), TackyConstant(1), TackyVar("tmp.1")),
-                            TackyCopy(TackyVar("tmp.1"), TackyVar("a.1")),
-                            TackyJump(TackyLabel("continue_loop.0")),
-                            TackyLabel("break_loop.0"),
-                            // for (int i.2 = 0; i.2 < 10; i.2 = i.2 + 1) ... label loop.1
-                            TackyCopy(TackyConstant(0), TackyVar("i.2")),
-                            TackyLabel("start_loop.1"),
-                            TackyBinary(TackyBinaryOP.LESS, TackyVar("i.2"), TackyConstant(10), TackyVar("tmp.2")),
-                            JumpIfZero(TackyVar("tmp.2"), TackyLabel("break_loop.1")),
-                            // body: a.0 = a.0 + 1
-                            TackyBinary(TackyBinaryOP.ADD, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.3")),
-                            TackyCopy(TackyVar("tmp.3"), TackyVar("a.0")),
-                            TackyLabel("continue_loop.1"),
-                            // post: i.2 = i.2 + 1
-                            TackyBinary(TackyBinaryOP.ADD, TackyVar("i.2"), TackyConstant(1), TackyVar("tmp.4")),
-                            TackyCopy(TackyVar("tmp.4"), TackyVar("i.2")),
-                            TackyJump(TackyLabel("start_loop.1")),
-                            TackyLabel("break_loop.1"),
-                            // for (; a.0 > 0;) ... label loop.2
-                            TackyLabel("start_loop.2"),
-                            TackyBinary(TackyBinaryOP.GREATER, TackyVar("a.0"), TackyConstant(0), TackyVar("tmp.5")),
-                            JumpIfZero(TackyVar("tmp.5"), TackyLabel("break_loop.2")),
-                            // body: a.0 = a.0 + 1
-                            TackyBinary(TackyBinaryOP.ADD, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.6")),
-                            TackyCopy(TackyVar("tmp.6"), TackyVar("a.0")),
-                            TackyLabel("continue_loop.2"),
-                            TackyJump(TackyLabel("start_loop.2")),
-                            TackyLabel("break_loop.2"),
-                            // do { a.0 = a.0 + 1; } while (a.0 > 0); label loop.3
-                            TackyLabel("start_loop.3"),
-                            TackyBinary(TackyBinaryOP.ADD, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.7")),
-                            TackyCopy(TackyVar("tmp.7"), TackyVar("a.0")),
-                            TackyLabel("continue_loop.3"),
-                            TackyBinary(TackyBinaryOP.GREATER, TackyVar("a.0"), TackyConstant(0), TackyVar("tmp.8")),
-                            JumpIfNotZero(TackyVar("tmp.8"), TackyLabel("start_loop.3")),
-                            TackyLabel("break_loop.3"),
-                            // return 0; (explicit) and implicit final return 0
-                            TackyRet(TackyConstant(0)),
-                            TackyRet(TackyConstant(0))
                         )
                     )
                 )

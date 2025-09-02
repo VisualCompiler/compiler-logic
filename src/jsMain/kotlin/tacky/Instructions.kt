@@ -79,3 +79,14 @@ data class JumpIfNotZero(
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}if (${condition.toPseudoCode()} != 0) goto ${target.name}"
 }
+
+data class TackyFunCall(
+    val funName: String,
+    val args: List<TackyVal>,
+    val dest: TackyVar
+) : TackyInstruction() {
+    override fun toPseudoCode(indentationLevel: Int): String {
+        val argString = args.joinToString(", ") { it.toPseudoCode() }
+        return "${indent(indentationLevel)}${dest.toPseudoCode()} = $funName($argString)"
+    }
+}

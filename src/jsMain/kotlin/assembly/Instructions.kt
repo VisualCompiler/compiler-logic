@@ -46,6 +46,18 @@ data class AllocateStack(
     val size: Int
 ) : Instruction()
 
+data class DeAllocateStack(
+    val size: Int
+) : Instruction()
+
+data class Push(
+    val operand: Operand
+) : Instruction()
+
+data class Call(
+    val identifier: String
+) : Instruction()
+
 data class Label(
     val name: String
 ) : Instruction()

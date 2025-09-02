@@ -84,6 +84,8 @@ sealed class TokenType {
 
     object COLON : TokenType()
 
+    object COMMA : TokenType()
+
     // Special token for End of File
     object EOF : TokenType()
 
@@ -162,6 +164,7 @@ class Lexer(
             '/' -> addToken(TokenType.DIVIDE)
             '?' -> addToken(TokenType.QUESTION_MARK)
             ':' -> addToken(TokenType.COLON)
+            ',' -> addToken(TokenType.COMMA)
 
             '~' -> addToken(TokenType.TILDE)
             '-' -> {

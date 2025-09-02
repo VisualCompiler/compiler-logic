@@ -17,7 +17,9 @@ import parser.Declaration
 import parser.DoWhileStatement
 import parser.ExpressionStatement
 import parser.ForStatement
-import parser.Function
+import parser.FunDecl
+import parser.FunctionCall
+import parser.FunctionDeclaration
 import parser.GotoStatement
 import parser.IfStatement
 import parser.InitDeclaration
@@ -29,28 +31,41 @@ import parser.ReturnStatement
 import parser.S
 import parser.SimpleProgram
 import parser.UnaryExpression
+import parser.VarDecl
+import parser.VariableDeclaration
 import parser.VariableExpression
 import parser.Visitor
 import parser.WhileStatement
 
 class ASTExport : Visitor<String> {
-    override fun visit(node: SimpleProgram): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "functionDefinition" to JsonPrimitive(node.functionDefinition.accept(this))
-                )
-            )
-
+    private fun buildJsonString(
+        type: String,
+        label: String,
+        children: Map<String, JsonPrimitive>
+    ): String {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("function definition"),
+                    "type" to JsonPrimitive(type),
+                    "label" to JsonPrimitive(label),
+                    "children" to JsonObject(children)
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+
+    override fun visit(node: SimpleProgram): String {
+        val decls = JsonArray(node.functionDeclaration.map { Json.decodeFromString(it.accept(this)) })
+
+        val children = JsonObject(mapOf("declarations" to decls))
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive("Program"),
+                    "label" to JsonPrimitive("Top-level Declarations"),
                     "children" to children
                 )
             )
-
         return Json.encodeToString(jsonNode)
     }
 
@@ -194,7 +209,7 @@ class ASTExport : Visitor<String> {
         val children =
             JsonObject(
                 mapOf(
-                    "declaration" to JsonPrimitive(node.declaration.accept(this))
+                    "declaration" to JsonPrimitive(node.varDeclaration.accept(this))
                 )
             )
         val jsonNode =
@@ -225,24 +240,51 @@ class ASTExport : Visitor<String> {
         return Json.encodeToString(jsonNode)
     }
 
-    override fun visit(node: Function): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "name" to JsonPrimitive(node.name),
-                    "body" to JsonPrimitive(node.body.accept(this))
-                )
+    override fun visit(node: FunctionDeclaration): String {
+        val childrenMap =
+            mutableMapOf(
+                "name" to JsonPrimitive(node.name),
+                "params" to JsonArray(node.params.map { JsonPrimitive(it) })
             )
+        // A function declaration might not have a body (prototype)
+        node.body?.let {
+            childrenMap["body"] = Json.decodeFromString(it.accept(this))
+        }
 
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("'main', body'"),
+                    "type" to JsonPrimitive("FunctionDeclaration"),
+                    "label" to JsonPrimitive("name, params, body?"),
+                    "children" to JsonObject(childrenMap)
+                )
+            )
+        return Json.encodeToString(jsonNode)
+    }
+
+    override fun visit(node: VarDecl): String {
+        val children = JsonObject(mapOf("variableDeclaration" to Json.decodeFromString(node.varDecl.accept(this))))
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive("VarDecl"),
+                    "label" to JsonPrimitive("Variable Declaration"),
                     "children" to children
                 )
             )
+        return Json.encodeToString(jsonNode)
+    }
 
+    override fun visit(node: FunDecl): String {
+        val children = JsonObject(mapOf("functionDeclaration" to Json.decodeFromString(node.funDecl.accept(this))))
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive("FunDecl"),
+                    "label" to JsonPrimitive("Function Declaration"),
+                    "children" to children
+                )
+            )
         return Json.encodeToString(jsonNode)
     }
 
@@ -416,105 +458,97 @@ class ASTExport : Visitor<String> {
         return Json.encodeToString(jsonNode)
     }
 
-    override fun visit(node: Declaration): String {
-        val childrenMap =
-            mutableMapOf<String, kotlinx.serialization.json.JsonElement>(
-                "name" to JsonPrimitive(node.name)
-            )
-        if (node.init != null) {
-            childrenMap["init"] = JsonPrimitive(node.init.accept(this))
+    override fun visit(node: Declaration): String =
+        when (node) {
+            is FunDecl -> node.accept(this)
+            is VarDecl -> node.accept(this)
         }
-        val children = JsonObject(childrenMap)
 
+    override fun visit(node: VariableDeclaration): String {
+        val childrenMap = mutableMapOf("name" to JsonPrimitive(node.name))
+        node.init?.let {
+            childrenMap["initializer"] = Json.decodeFromString(it.accept(this))
+        }
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("declaration"),
-                    "children" to children
+                    "type" to JsonPrimitive("VariableDeclaration"),
+                    "label" to JsonPrimitive("name, init?"),
+                    "children" to JsonObject(childrenMap)
                 )
             )
-
         return Json.encodeToString(jsonNode)
     }
 
     override fun visit(node: S): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "statement" to JsonPrimitive(node.statement.accept(this))
-                )
-            )
-
+        val children = JsonObject(mapOf("statement" to Json.decodeFromString(node.statement.accept(this))))
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("statement"),
+                    "type" to JsonPrimitive("S"),
+                    "label" to JsonPrimitive("Statement Wrapper"),
                     "children" to children
                 )
             )
-
         return Json.encodeToString(jsonNode)
     }
 
     override fun visit(node: D): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "declaration" to JsonPrimitive(node.declaration.accept(this))
-                )
-            )
-
+        val children = JsonObject(mapOf("declaration" to Json.decodeFromString(node.declaration.accept(this))))
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("declaration"),
+                    "type" to JsonPrimitive("D"),
+                    "label" to JsonPrimitive("Declaration Wrapper"),
                     "children" to children
                 )
             )
-
         return Json.encodeToString(jsonNode)
     }
 
     override fun visit(node: Block): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "block" to JsonPrimitive(node.block.map { it.accept(this) }.joinToString(","))
-                )
-            )
-
+        val items = JsonArray(node.block.map { Json.decodeFromString(it.accept(this)) })
+        val children = JsonObject(mapOf("items" to items))
         val jsonNode =
             JsonObject(
                 mapOf(
                     "type" to JsonPrimitive("Block"),
-                    "label" to JsonPrimitive("block items"),
+                    "label" to JsonPrimitive("Block Items"),
                     "children" to children
                 )
             )
-
         return Json.encodeToString(jsonNode)
     }
 
     override fun visit(node: CompoundStatement): String {
-        val children =
-            JsonObject(
-                mapOf(
-                    "block" to JsonPrimitive(node.block.accept(this))
-                )
-            )
-
+        val children = JsonObject(mapOf("block" to Json.decodeFromString(node.block.accept(this))))
         val jsonNode =
             JsonObject(
                 mapOf(
                     "type" to JsonPrimitive("CompoundStatement"),
-                    "label" to JsonPrimitive("compound statement"),
+                    "label" to JsonPrimitive("Block"),
                     "children" to children
                 )
             )
+        return Json.encodeToString(jsonNode)
+    }
 
+    override fun visit(node: FunctionCall): String {
+        val children =
+            JsonObject(
+                mapOf(
+                    "name" to JsonPrimitive(node.name),
+                    "arguments" to JsonArray(node.arguments.map { Json.decodeFromString(it.accept(this)) })
+                )
+            )
+        val jsonNode =
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive("FunctionCall"),
+                    "label" to JsonPrimitive("name, args"),
+                    "children" to children
+                )
+            )
         return Json.encodeToString(jsonNode)
     }
 }

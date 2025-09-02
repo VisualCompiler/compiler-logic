@@ -63,7 +63,7 @@ data class ForStatement(
 sealed class ForInit : ASTNode()
 
 data class InitDeclaration(
-    val declaration: Declaration
+    val varDeclaration: VariableDeclaration
 ) : ForInit() {
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
@@ -95,10 +95,24 @@ class LabeledStatement(
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
 
-data class Declaration(
+sealed class Declaration : ASTNode()
+
+data class VariableDeclaration(
     val name: String,
     val init: Expression?
 ) : ASTNode() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class VarDecl(
+    val varDecl: VariableDeclaration
+) : Declaration() {
+    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+}
+
+data class FunDecl(
+    val funDecl: FunctionDeclaration
+) : Declaration() {
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
 

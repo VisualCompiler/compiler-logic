@@ -75,3 +75,46 @@ class TackyException(
     line: Int? = null,
     column: Int? = null
 ) : CompilationException("TackyException(Invalid operator: $operator)", line, column)
+
+class NestedFunctionException(
+    line: Int? = null,
+    column: Int? = null
+) : CompilationException("NestedFunctionException(Can't define a function inside another function)", line, column)
+
+class ReDeclarationFunctionException(
+    name: String,
+    line: Int? = null,
+    column: Int? = null
+) : CompilationException("ReDeclarationFunctionException(Function '$name' cannot be defined more than once.)", line, column)
+
+class IncompatibleFuncDeclarationException(
+    name: String,
+    line: Int? = null,
+    column: Int? = null
+) : CompilationException("Function '$name' redeclared with a different number of parameters.", line, column)
+
+class NotFunctionException(
+    name: String,
+    line: Int? = null,
+    column: Int? = null
+) : CompilationException("Cannot call '$name' because it is not a function.", line, column)
+
+class NotVariableException(
+    name: String,
+    line: Int? = null,
+    column: Int? = null
+) : CompilationException("Cannot use function '$name' as a variable.", line, column)
+
+class ArgumentCountException(
+    name: String,
+    expected: Int,
+    actual: Int,
+    line: Int? = null,
+    column: Int? = null
+) : CompilationException("Wrong number of arguments for function '$name'. Expected $expected, got $actual.", line, column)
+
+class IllegalStateException(
+    name: String,
+    line: Int? = null,
+    column: Int? = null
+) : CompilationException("Internal error: Variable '$name' should have been caught by IdentifierResolution.")

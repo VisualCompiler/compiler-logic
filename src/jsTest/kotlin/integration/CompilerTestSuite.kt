@@ -90,7 +90,10 @@ class CompilerTestSuite {
             val tokens = CompilerWorkflow.take(InvalidTestCases.testCases[i].code)
 
             if (InvalidTestCases.testCases[i].failingStage == CompilerStage.PARSER) {
-                assertFailsWith(InvalidTestCases.testCases[i].expectedException, "Test case $i failed with: ") {
+                assertFailsWith(
+                    InvalidTestCases.testCases[i].expectedException,
+                    "Test case $i failed with: ${InvalidTestCases.testCases[i].code}"
+                ) {
                     CompilerWorkflow.take(tokens)
                 }
                 continue

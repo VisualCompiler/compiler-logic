@@ -4,5 +4,6 @@ sealed class Function : AsmConstruct()
 
 data class AsmFunction(
     val name: String,
-    val body: List<Instruction>
+    var body: List<Instruction>,
+    var stackSize: Int = 0
 ) : Function()
