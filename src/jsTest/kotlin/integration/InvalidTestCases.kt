@@ -1,12 +1,17 @@
 package integration
 
 import compiler.CompilerStage
+import exceptions.ArgumentCountException
 import exceptions.DuplicateVariableDeclaration
 import exceptions.IncompatibleFuncDeclarationException
 import exceptions.InvalidLValueException
 import exceptions.InvalidStatementException
 import exceptions.LexicalException
 import exceptions.MissingDeclarationException
+import exceptions.NestedFunctionException
+import exceptions.NotFunctionException
+import exceptions.NotVariableException
+import exceptions.ReDeclarationFunctionException
 import exceptions.UnexpectedTokenException
 import kotlin.reflect.KClass
 
@@ -188,7 +193,7 @@ object InvalidTestCases {
                 failingStage = CompilerStage.PARSER,
                 expectedException = IncompatibleFuncDeclarationException::class
             ),
-            // Nested function
+            // Nested function inside block
             InvalidTestCase(
                 code = """
                     int main(void) {
@@ -201,7 +206,71 @@ object InvalidTestCases {
                     }
                 """.trimIndent(),
                 failingStage = CompilerStage.PARSER,
-                expectedException = UnexpectedTokenException::class
+                expectedException = NestedFunctionException::class
+            ),
+            // ArgumentCountException - Wrong number of arguments for function
+            InvalidTestCase(
+                code = """
+                    int func(int a, int b);
+                    int main(void) {
+                        return func(1);
+                    }
+                """.trimIndent(),
+                failingStage = CompilerStage.PARSER,
+                expectedException = ArgumentCountException::class
+            ),
+            InvalidTestCase(
+                code = """
+                    int main(void) {
+                        int nested(int x) {
+                            return x + 1;
+                        }
+                        return nested(5);
+                    }
+                """.trimIndent(),
+                failingStage = CompilerStage.PARSER,
+                expectedException = NestedFunctionException::class
+            ),
+            // NotFunctionException - Calling something that's not a function
+            InvalidTestCase(
+                code = """
+                    int main(void) {
+                        int a = 5;
+                        return a(1, 2); 
+                    }
+                """.trimIndent(),
+                failingStage = CompilerStage.PARSER,
+                expectedException = NotFunctionException::class
+            ),
+            // NotVariableException - Using function as a variable
+            InvalidTestCase(
+                code = """
+                    int func(int x) {
+                        return x + 1;
+                    }
+                    int main(void) {
+                        int a = func;
+                        return a;
+                    }
+                """.trimIndent(),
+                failingStage = CompilerStage.PARSER,
+                expectedException = NotVariableException::class
+            ),
+            // ReDeclarationFunctionException - Function defined more than once
+            InvalidTestCase(
+                code = """
+                    int func(int x) {
+                        return x + 1;
+                    }
+                    int func(int x) {
+                        return x + 2;
+                    }
+                    int main(void) {
+                        return func(5);
+                    }
+                """.trimIndent(),
+                failingStage = CompilerStage.PARSER,
+                expectedException = ReDeclarationFunctionException::class
             )
         )
 }

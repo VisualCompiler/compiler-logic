@@ -90,13 +90,8 @@ class Parser {
         expect(TokenType.RIGHT_PAREN, tokens)
         val body: Block?
         if (tokens.firstOrNull()?.type == TokenType.LEFT_BRACK) {
-            // Function definitions (with bodies) are not allowed inside other functions
-            throw UnexpectedTokenException(
-                expected = "SEMICOLON (function prototype)",
-                actual = "LEFT_BRACK (function definition)",
-                line = tokens.first().line,
-                column = tokens.first().column
-            )
+            // Parse function body, we will throw exception in semantic pass
+            body = parseBlock(tokens)
         } else {
             expect(TokenType.SEMICOLON, tokens)
             body = null
