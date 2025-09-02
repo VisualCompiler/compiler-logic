@@ -20,6 +20,7 @@ import assembly.Mov
 import assembly.Register
 import assembly.Ret
 import assembly.SetCC
+import assembly.Call
 import assembly.Stack
 import lexer.Token
 import lexer.TokenType
@@ -45,6 +46,7 @@ import tacky.TackyBinary
 import tacky.TackyBinaryOP
 import tacky.TackyConstant
 import tacky.TackyCopy
+import tacky.TackyFunCall
 import tacky.TackyFunction
 import tacky.TackyJump
 import tacky.TackyLabel
@@ -639,6 +641,128 @@ object ValidTestCases {
                                 Label(".L_end_0"),
                                 // return a
                                 Mov(Stack(-4), Register(HardwareRegister.EAX)),
+                                Ret
+                            )
+                        )
+                    )
+                )
+            ),
+// --- Test Case for MULTIPLE FUNCTIONS with FUNCTION CALLS ---
+            ValidTestCase(
+                title = "Testing multiple functions with function declarations and function calls.",
+                code =
+                """
+                    int add(int a, int b) {
+                        return a + b;
+                    }
+                    
+                    int multiply(int x, int y) {
+                        return x * y;
+                    }
+                    
+                    int main(void) {
+                        int result1 = add(5, 3);
+                        int result2 = multiply(result1, 2);
+                        return result2;
+                    }
+                """.trimIndent(),
+                expectedTacky =
+                TackyProgram(
+                    functions =
+                    listOf(
+                        TackyFunction(
+                            name = "add",
+                            args = listOf("a.0", "b.1"),
+                            body =
+                            listOf(
+                                // return a + b;
+                                TackyBinary(TackyBinaryOP.ADD, TackyVar("a.0"), TackyVar("b.1"), TackyVar("tmp.0")),
+                                TackyRet(TackyVar("tmp.0"))
+                            )
+                        ),
+                        TackyFunction(
+                            name = "multiply",
+                            args = listOf("x.2", "y.3"),
+                            body =
+                            listOf(
+                                // return x * y;
+                                TackyBinary(TackyBinaryOP.MULTIPLY, TackyVar("x.2"), TackyVar("y.3"), TackyVar("tmp.1")),
+                                TackyRet(TackyVar("tmp.1"))
+                            )
+                        ),
+                        TackyFunction(
+                            name = "main",
+                            args = emptyList(),
+                            body =
+                            listOf(
+                                // int result1 = add(5, 3);
+                                TackyFunCall("add", listOf(TackyConstant(5), TackyConstant(3)), TackyVar("result1.4")),
+                                // int result2 = multiply(result1, 2);
+                                TackyFunCall("multiply", listOf(TackyVar("result1.4"), TackyConstant(2)), TackyVar("result2.5")),
+                                // return result2;
+                                TackyRet(TackyVar("result2.5"))
+                            )
+                        )
+                    )
+                ),
+                expectedAssembly =
+                AsmProgram(
+                    functions =
+                    listOf(
+                        AsmFunction(
+                            name = "add",
+                            stackSize = 8,
+                            body =
+                            listOf(
+                                AllocateStack(16),
+                                // Parameter setup: a.0 -> Stack(-4), b.1 -> Stack(-8)
+                                Mov(Register(HardwareRegister.EDI), Stack(-4)),
+                                Mov(Register(HardwareRegister.ESI), Stack(-8)),
+                                // tmp.0 = a + b
+                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
+                                AsmBinary(AsmBinaryOp.ADD, Stack(-8), Register(HardwareRegister.EAX)),
+                                // return tmp.0
+                                Mov(Register(HardwareRegister.EAX), Register(HardwareRegister.EAX)),
+                                Ret
+                            )
+                        ),
+                        AsmFunction(
+                            name = "multiply",
+                            stackSize = 8,
+                            body =
+                            listOf(
+                                AllocateStack(16),
+                                // Parameter setup: x.2 -> Stack(-4), y.3 -> Stack(-8)
+                                Mov(Register(HardwareRegister.EDI), Stack(-4)),
+                                Mov(Register(HardwareRegister.ESI), Stack(-8)),
+                                // tmp.1 = x * y
+                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
+                                AsmBinary(AsmBinaryOp.MUL, Stack(-8), Register(HardwareRegister.EAX)),
+                                // return tmp.1
+                                Mov(Register(HardwareRegister.EAX), Register(HardwareRegister.EAX)),
+                                Ret
+                            )
+                        ),
+                        AsmFunction(
+                            name = "main",
+                            stackSize = 16,
+                            body =
+                            listOf(
+                                AllocateStack(32),
+                                // Call add(5, 3)
+                                Mov(Imm(5), Register(HardwareRegister.EDI)),
+                                Mov(Imm(3), Register(HardwareRegister.ESI)),
+                                Call("add"),
+                                // Store result in result1.4
+                                Mov(Register(HardwareRegister.EAX), Stack(-4)),
+                                // Call multiply(result1, 2)
+                                Mov(Stack(-4), Register(HardwareRegister.EDI)),
+                                Mov(Imm(2), Register(HardwareRegister.ESI)),
+                                Call("multiply"),
+                                // Store result in result2.5
+                                Mov(Register(HardwareRegister.EAX), Stack(-8)),
+                                // return result2
+                                Mov(Stack(-8), Register(HardwareRegister.EAX)),
                                 Ret
                             )
                         )
