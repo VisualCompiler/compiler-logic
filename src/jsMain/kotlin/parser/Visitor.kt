@@ -41,8 +41,6 @@ interface Visitor<T> {
 
     fun visit(node: AssignmentExpression): T
 
-    fun visit(node: Declaration): T
-
     fun visit(node: VariableDeclaration): T
 
     fun visit(node: FunctionDeclaration): T

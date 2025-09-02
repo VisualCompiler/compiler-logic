@@ -11,7 +11,6 @@ import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
-import parser.Declaration
 import parser.DoWhileStatement
 import parser.ExpressionStatement
 import parser.ForStatement
@@ -46,9 +45,6 @@ class LabelCollector : Visitor<Unit> {
     }
 
     override fun visit(node: AssignmentExpression) {
-    }
-
-    override fun visit(node: Declaration) {
     }
 
     override fun visit(node: VariableDeclaration) {
@@ -202,9 +198,6 @@ class LabelCollector : Visitor<Unit> {
         }
 
         override fun visit(node: AssignmentExpression) {
-        }
-
-        override fun visit(node: Declaration) {
         }
 
         override fun visit(node: VariableDeclaration) {

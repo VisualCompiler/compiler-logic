@@ -10,7 +10,6 @@ import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
-import parser.Declaration
 import parser.DoWhileStatement
 import parser.ExpressionStatement
 import parser.ForStatement
@@ -317,14 +316,6 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         val dest = TackyVar(node.lvalue.name)
         currentInstructions += TackyCopy(rvalue, dest)
         return dest
-    }
-
-    override fun visit(node: Declaration): TackyConstruct? {
-        when (node) {
-            is VarDecl -> node.accept(this)
-            is FunDecl -> node.accept(this)
-        }
-        return null
     }
 
     override fun visit(node: VariableDeclaration): TackyConstruct? {

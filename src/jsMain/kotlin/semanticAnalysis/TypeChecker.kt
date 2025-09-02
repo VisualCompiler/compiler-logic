@@ -13,7 +13,6 @@ import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
-import parser.Declaration
 import parser.DoWhileStatement
 import parser.ExpressionStatement
 import parser.ForStatement
@@ -149,13 +148,6 @@ class TypeChecker : Visitor<Unit> {
     override fun visit(node: AssignmentExpression) {
         node.lvalue.accept(this)
         node.rvalue.accept(this)
-    }
-
-    override fun visit(node: Declaration) {
-        when (node) {
-            is VarDecl -> node.accept(this)
-            is FunDecl -> node.accept(this)
-        }
     }
 
     override fun visit(node: VariableDeclaration) {

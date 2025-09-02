@@ -37,23 +37,19 @@ import parser.VariableExpression
 import parser.Visitor
 import parser.WhileStatement
 
-class ASTExport : Visitor<String> {
-    private fun buildJsonString(
-        type: String,
-        label: String,
-        children: Map<String, JsonPrimitive>
-    ): String {
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive(type),
-                    "label" to JsonPrimitive(label),
-                    "children" to JsonObject(children)
-                )
-            )
-        return Json.encodeToString(jsonNode)
-    }
+@OptIn(ExperimentalJsExport::class)
+@JsExport
+enum class NodeType {
+    Program,
+    Statement,
+    Function,
+    Expression,
+    ASTNode,
+    Block,
+    Declaration
+}
 
+class ASTExport : Visitor<String> {
     override fun visit(node: SimpleProgram): String {
         val decls = JsonArray(node.functionDeclaration.map { Json.decodeFromString(it.accept(this)) })
 
@@ -61,9 +57,10 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("Program"),
-                    "label" to JsonPrimitive("Top-level Declarations"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Program.name),
+                    "label" to JsonPrimitive("Program"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(false)
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -80,9 +77,10 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("return expression"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Statement.name),
+                    "label" to JsonPrimitive("ReturnStatement"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(false)
                 )
             )
 
@@ -100,9 +98,10 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("expression statement"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Statement.name),
+                    "label" to JsonPrimitive("ExpressionStatement"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(false)
                 )
             )
 
@@ -113,8 +112,8 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("null statement")
+                    "type" to JsonPrimitive(NodeType.Statement.name),
+                    "label" to JsonPrimitive("NullStatement")
                 )
             )
 
@@ -125,8 +124,8 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("break")
+                    "type" to JsonPrimitive(NodeType.Statement.name),
+                    "label" to JsonPrimitive("BreakStatement")
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -136,7 +135,7 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
+                    "type" to JsonPrimitive(NodeType.Statement.name),
                     "label" to JsonPrimitive("continue")
                 )
             )
@@ -147,16 +146,18 @@ class ASTExport : Visitor<String> {
         val children =
             JsonObject(
                 mapOf(
-                    "condition" to JsonPrimitive(node.condition.accept(this)),
-                    "body" to JsonArray(Json.decodeFromString(node.body.accept(this)))
+                    "cond" to JsonPrimitive(node.condition.accept(this)),
+                    "body" to JsonPrimitive(node.body.accept(this))
                 )
             )
+
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("while"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Statement.name),
+                    "label" to JsonPrimitive("WhileLoop"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(true)
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -166,16 +167,18 @@ class ASTExport : Visitor<String> {
         val children =
             JsonObject(
                 mapOf(
-                    "body" to JsonArray(Json.decodeFromString(node.body.accept(this))),
-                    "condition" to JsonPrimitive(node.condition.accept(this))
+                    "body" to JsonPrimitive(node.body.accept(this)),
+                    "cond" to JsonPrimitive(node.condition.accept(this))
                 )
             )
+
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("do while"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Statement.name),
+                    "label" to JsonPrimitive("DoWhileLoop"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(true)
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -187,19 +190,21 @@ class ASTExport : Visitor<String> {
                 "init" to JsonPrimitive(node.init.accept(this))
             )
         if (node.condition != null) {
-            childrenMap["condition"] = JsonPrimitive(node.condition.accept(this))
+            childrenMap["cond"] = JsonPrimitive(node.condition.accept(this))
         }
         if (node.post != null) {
             childrenMap["post"] = JsonPrimitive(node.post.accept(this))
         }
         childrenMap["body"] = JsonPrimitive(node.body.accept(this))
         val children = JsonObject(childrenMap)
+
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("for"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Statement.name),
+                    "label" to JsonPrimitive("ForLoop"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(true)
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -215,9 +220,10 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("init declaration"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.ASTNode.name),
+                    "label" to JsonPrimitive("Declaration"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(false)
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -232,9 +238,10 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("init expression"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Expression.name),
+                    "label" to JsonPrimitive("Expression"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(false)
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -243,20 +250,28 @@ class ASTExport : Visitor<String> {
     override fun visit(node: FunctionDeclaration): String {
         val childrenMap =
             mutableMapOf(
-                "name" to JsonPrimitive(node.name),
-                "params" to JsonArray(node.params.map { JsonPrimitive(it) })
+                "name" to JsonPrimitive(node.name)
             )
-        // A function declaration might not have a body (prototype)
-        node.body?.let {
-            childrenMap["body"] = Json.decodeFromString(it.accept(this))
+
+        if (node.body != null) {
+            childrenMap["body"] = JsonPrimitive(node.body.accept(this))
         }
+
+        val children = JsonObject(childrenMap)
+
+        JsonObject(
+            mapOf(
+                "body" to JsonPrimitive("body")
+            )
+        )
 
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("FunctionDeclaration"),
-                    "label" to JsonPrimitive("name, params, body?"),
-                    "children" to JsonObject(childrenMap)
+                    "type" to JsonPrimitive(NodeType.Function.name),
+                    "label" to JsonPrimitive("Function(${node.name})"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(true)
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -267,8 +282,8 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("VarDecl"),
-                    "label" to JsonPrimitive("Variable Declaration"),
+                    "type" to JsonPrimitive(NodeType.Declaration.name),
+                    "label" to JsonPrimitive("VarDeclaration"),
                     "children" to children
                 )
             )
@@ -280,8 +295,8 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("FunDecl"),
-                    "label" to JsonPrimitive("Function Declaration"),
+                    "type" to JsonPrimitive(NodeType.Declaration.name),
+                    "label" to JsonPrimitive("FuncDeclaration"),
                     "children" to children
                 )
             )
@@ -292,8 +307,8 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive(node.name)
+                    "type" to JsonPrimitive(NodeType.Expression.name),
+                    "label" to JsonPrimitive("Variable(${node.name})")
                 )
             )
 
@@ -312,9 +327,10 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("operator, expression"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Expression.name),
+                    "label" to JsonPrimitive("UnaryExpression(${node.operator.type})"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(false)
                 )
             )
 
@@ -326,17 +342,24 @@ class ASTExport : Visitor<String> {
             JsonObject(
                 mapOf(
                     "left" to JsonPrimitive(node.left.accept(this)),
-                    "operator" to JsonPrimitive(node.operator.toString()),
                     "right" to JsonPrimitive(node.right.accept(this))
                 )
             )
 
+        JsonObject(
+            mapOf(
+                "left" to JsonPrimitive("left"),
+                "right" to JsonPrimitive("right")
+            )
+        )
+
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("operator, left, right"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Expression.name),
+                    "label" to JsonPrimitive("BinaryExpression(${node.operator.type})"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(true)
                 )
             )
 
@@ -347,8 +370,8 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive(node.value)
+                    "type" to JsonPrimitive(NodeType.Expression.name),
+                    "label" to JsonPrimitive("Int(${node.value})")
                 )
             )
 
@@ -358,7 +381,7 @@ class ASTExport : Visitor<String> {
     override fun visit(node: IfStatement): String {
         val childrenMap =
             mutableMapOf(
-                "condition" to JsonPrimitive(node.condition.accept(this)),
+                "cond" to JsonPrimitive(node.condition.accept(this)),
                 "then" to JsonPrimitive(node.then.accept(this))
             )
         // Handle the optional 'else' branch
@@ -369,9 +392,10 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("IfStatement"),
-                    "label" to JsonPrimitive("if-then-else"),
-                    "children" to JsonObject(childrenMap)
+                    "type" to JsonPrimitive(NodeType.Statement.name),
+                    "label" to JsonPrimitive("IfStatement"),
+                    "children" to JsonObject(childrenMap),
+                    "edgeLabels" to JsonPrimitive(true)
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -381,18 +405,19 @@ class ASTExport : Visitor<String> {
         val children =
             JsonObject(
                 mapOf(
-                    "condition" to JsonPrimitive(node.codition.accept(this)),
-                    "thenExpression" to JsonPrimitive(node.thenExpression.accept(this)),
-                    "elseExpression" to JsonPrimitive(node.elseExpression.accept(this))
+                    "cond" to JsonPrimitive(node.codition.accept(this)),
+                    "then" to JsonPrimitive(node.thenExpression.accept(this)),
+                    "else" to JsonPrimitive(node.elseExpression.accept(this))
                 )
             )
 
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("ConditionalExpression"),
-                    "label" to JsonPrimitive("cond ? then : else"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Expression.name),
+                    "label" to JsonPrimitive("ConditionalExpression"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(true)
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -409,9 +434,10 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("GotoStatement"),
-                    "label" to JsonPrimitive("goto"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Statement.name),
+                    "label" to JsonPrimitive("Goto(${node.label})"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(true)
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -429,9 +455,10 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("LabeledStatement"),
-                    "label" to JsonPrimitive("label: statement"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Statement.name),
+                    "label" to JsonPrimitive("LabeledStatement(${node.label})"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(true)
                 )
             )
         return Json.encodeToString(jsonNode)
@@ -446,23 +473,25 @@ class ASTExport : Visitor<String> {
                 )
             )
 
+        JsonObject(
+            mapOf(
+                "lvalue" to JsonPrimitive("target"),
+                "rvalue" to JsonPrimitive("value")
+            )
+        )
+
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive(this::class.simpleName),
-                    "label" to JsonPrimitive("lvalue, rvalue"),
-                    "children" to children
+                    "type" to JsonPrimitive(NodeType.Expression.name),
+                    "label" to JsonPrimitive("Assignment"),
+                    "children" to children,
+                    "edgeLabels" to JsonPrimitive(true)
                 )
             )
 
         return Json.encodeToString(jsonNode)
     }
-
-    override fun visit(node: Declaration): String =
-        when (node) {
-            is FunDecl -> node.accept(this)
-            is VarDecl -> node.accept(this)
-        }
 
     override fun visit(node: VariableDeclaration): String {
         val childrenMap = mutableMapOf("name" to JsonPrimitive(node.name))
@@ -472,66 +501,40 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("VariableDeclaration"),
-                    "label" to JsonPrimitive("name, init?"),
+                    "type" to JsonPrimitive(NodeType.Declaration.name),
+                    "label" to JsonPrimitive("Declaration(${node.name})"),
                     "children" to JsonObject(childrenMap)
                 )
             )
         return Json.encodeToString(jsonNode)
     }
 
-    override fun visit(node: S): String {
-        val children = JsonObject(mapOf("statement" to Json.decodeFromString(node.statement.accept(this))))
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive("S"),
-                    "label" to JsonPrimitive("Statement Wrapper"),
-                    "children" to children
-                )
-            )
-        return Json.encodeToString(jsonNode)
-    }
+    override fun visit(node: S): String = node.statement.accept(this)
 
-    override fun visit(node: D): String {
-        val children = JsonObject(mapOf("declaration" to Json.decodeFromString(node.declaration.accept(this))))
-        val jsonNode =
-            JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive("D"),
-                    "label" to JsonPrimitive("Declaration Wrapper"),
-                    "children" to children
-                )
-            )
-        return Json.encodeToString(jsonNode)
-    }
+    override fun visit(node: D): String = node.declaration.accept(this)
 
     override fun visit(node: Block): String {
-        val items = JsonArray(node.block.map { Json.decodeFromString(it.accept(this)) })
-        val children = JsonObject(mapOf("items" to items))
-        val jsonNode =
+        val blockItems = node.block.map { it.accept(this) }
+        val children =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("Block"),
-                    "label" to JsonPrimitive("Block Items"),
-                    "children" to children
+                    "block" to JsonArray(blockItems.map { JsonPrimitive(it) })
                 )
             )
-        return Json.encodeToString(jsonNode)
-    }
 
-    override fun visit(node: CompoundStatement): String {
-        val children = JsonObject(mapOf("block" to Json.decodeFromString(node.block.accept(this))))
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("CompoundStatement"),
+                    "type" to JsonPrimitive(NodeType.Block.name),
                     "label" to JsonPrimitive("Block"),
                     "children" to children
                 )
             )
+
         return Json.encodeToString(jsonNode)
     }
+
+    override fun visit(node: CompoundStatement): String = node.block.accept(this)
 
     override fun visit(node: FunctionCall): String {
         val children =
@@ -544,8 +547,8 @@ class ASTExport : Visitor<String> {
         val jsonNode =
             JsonObject(
                 mapOf(
-                    "type" to JsonPrimitive("FunctionCall"),
-                    "label" to JsonPrimitive("name, args"),
+                    "type" to JsonPrimitive(NodeType.Function.name),
+                    "label" to JsonPrimitive("FuncCall(${node.name})"),
                     "children" to children
                 )
             )

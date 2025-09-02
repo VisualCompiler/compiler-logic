@@ -13,7 +13,6 @@ import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
-import parser.Declaration
 import parser.DoWhileStatement
 import parser.Expression
 import parser.ExpressionStatement
@@ -96,7 +95,7 @@ class IdentifierResolution : Visitor<ASTNode> {
                 return scope.getValue(name)
             }
         }
-        throw UndeclaredVariableException()
+        throw MissingDeclarationException(name)
     }
 
     override fun visit(node: SimpleProgram): ASTNode {
@@ -164,13 +163,10 @@ class IdentifierResolution : Visitor<ASTNode> {
                 // Function definition with body - not allowed inside other functions
                 throw NestedFunctionException()
             } else {
-                // Function prototype (no body) - allowed inside other functions
-                // Just declare the function name and return it
                 declare(node.name, hasLinkage = true)
                 return FunctionDeclaration(node.name, node.params, null)
             }
         } else {
-            // We're at global scope - all function declarations are allowed
             declare(node.name, hasLinkage = true)
 
             enterScope()
@@ -231,8 +227,6 @@ class IdentifierResolution : Visitor<ASTNode> {
         val rvalue = node.rvalue.accept(this) as Expression
         return AssignmentExpression(lvalue, rvalue)
     }
-
-    override fun visit(node: Declaration): ASTNode = throw IllegalStateException("Should not visit Declaration directly.")
 
     override fun visit(node: VariableDeclaration): ASTNode {
         val newInit = node.init?.accept(this) as Expression?

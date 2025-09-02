@@ -42,10 +42,11 @@ class DuplicateVariableDeclaration(
     column: Int? = null
 ) : CompilationException("DuplicateVariableDeclaration(Variable cannot be declared twice)", line, column)
 
-class UndeclaredVariableException(
+class MissingDeclarationException(
+    name: String,
     line: Int? = null,
     column: Int? = null
-) : CompilationException("UndeclaredVariableException(Variable is used before being declared)", line, column)
+) : CompilationException("MissingDeclarationException('$name' is not declared in this scope)", line, column)
 
 class UndeclaredLabelException(
     label: String,

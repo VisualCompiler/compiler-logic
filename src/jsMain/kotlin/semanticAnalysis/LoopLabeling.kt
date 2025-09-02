@@ -9,7 +9,6 @@ import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
-import parser.Declaration
 import parser.DoWhileStatement
 import parser.ExpressionStatement
 import parser.ForStatement
@@ -144,9 +143,6 @@ class LoopLabeling : Visitor<Unit> {
     override fun visit(node: AssignmentExpression) {
         node.lvalue.accept(this)
         node.rvalue.accept(this)
-    }
-
-    override fun visit(node: Declaration) {
     }
 
     override fun visit(node: VariableDeclaration) {
