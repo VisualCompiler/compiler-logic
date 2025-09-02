@@ -2,6 +2,7 @@ package integration
 
 import compiler.CompilerStage
 import exceptions.DuplicateVariableDeclaration
+import exceptions.IncompatibleFuncDeclarationException
 import exceptions.InvalidLValueException
 import exceptions.InvalidStatementException
 import exceptions.LexicalException
@@ -174,6 +175,33 @@ object InvalidTestCases {
                 code = "int main(void) { int a = 10; { int a = 5; int a = 10; } }",
                 failingStage = CompilerStage.PARSER,
                 expectedException = DuplicateVariableDeclaration::class
+            ),
+            // Function redeclaration with different parameter count (illegal in C)
+            InvalidTestCase(
+                code = """
+                    int func(int a, int b);
+                    int func(int a);
+                    int main(void) {
+                        return func(1, 2);
+                    }
+                """.trimIndent(),
+                failingStage = CompilerStage.PARSER,
+                expectedException = IncompatibleFuncDeclarationException::class
+            ),
+            // Nested function
+            InvalidTestCase(
+                code = """
+                    int main(void) {
+                        {
+                            int nested(int x) {
+                                return x + 1;
+                            }
+                        }
+                        return 0;
+                    }
+                """.trimIndent(),
+                failingStage = CompilerStage.PARSER,
+                expectedException = UnexpectedTokenException::class
             )
         )
 }
