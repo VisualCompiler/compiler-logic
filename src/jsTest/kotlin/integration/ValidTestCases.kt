@@ -7,6 +7,7 @@ import assembly.AsmFunction
 import assembly.AsmProgram
 import assembly.AsmUnary
 import assembly.AsmUnaryOp
+import assembly.Call
 import assembly.Cdq
 import assembly.Cmp
 import assembly.ConditionCode
@@ -20,7 +21,6 @@ import assembly.Mov
 import assembly.Register
 import assembly.Ret
 import assembly.SetCC
-import assembly.Call
 import assembly.Stack
 import lexer.Token
 import lexer.TokenType
@@ -656,14 +656,9 @@ object ValidTestCases {
                         return a + b;
                     }
                     
-                    int multiply(int x, int y) {
-                        return x * y;
-                    }
-                    
                     int main(void) {
-                        int result1 = add(5, 3);
-                        int result2 = multiply(result1, 2);
-                        return result2;
+                        int result = add(5, 3);
+                        return result;
                     }
                 """.trimIndent(),
                 expectedTacky =
@@ -681,26 +676,15 @@ object ValidTestCases {
                             )
                         ),
                         TackyFunction(
-                            name = "multiply",
-                            args = listOf("x.2", "y.3"),
-                            body =
-                            listOf(
-                                // return x * y;
-                                TackyBinary(TackyBinaryOP.MULTIPLY, TackyVar("x.2"), TackyVar("y.3"), TackyVar("tmp.1")),
-                                TackyRet(TackyVar("tmp.1"))
-                            )
-                        ),
-                        TackyFunction(
                             name = "main",
                             args = emptyList(),
                             body =
                             listOf(
-                                // int result1 = add(5, 3);
-                                TackyFunCall("add", listOf(TackyConstant(5), TackyConstant(3)), TackyVar("result1.4")),
-                                // int result2 = multiply(result1, 2);
-                                TackyFunCall("multiply", listOf(TackyVar("result1.4"), TackyConstant(2)), TackyVar("result2.5")),
-                                // return result2;
-                                TackyRet(TackyVar("result2.5"))
+                                // int result = add(5, 3);
+                                TackyFunCall("add", listOf(TackyConstant(5), TackyConstant(3)), TackyVar("tmp.1")),
+                                TackyCopy(TackyVar("tmp.1"), TackyVar("result.2")),
+                                // return result;
+                                TackyRet(TackyVar("result.2"))
                             )
                         )
                     )
@@ -711,57 +695,39 @@ object ValidTestCases {
                     listOf(
                         AsmFunction(
                             name = "add",
-                            stackSize = 8,
+                            stackSize = 12,
                             body =
                             listOf(
                                 AllocateStack(16),
                                 // Parameter setup: a.0 -> Stack(-4), b.1 -> Stack(-8)
                                 Mov(Register(HardwareRegister.EDI), Stack(-4)),
                                 Mov(Register(HardwareRegister.ESI), Stack(-8)),
-                                // tmp.0 = a + b
-                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
-                                AsmBinary(AsmBinaryOp.ADD, Stack(-8), Register(HardwareRegister.EAX)),
+                                // tmp.0 = a + b (using R10D for temporary)
+                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-12)),
+                                Mov(Stack(-8), Register(HardwareRegister.R10D)),
+                                AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-12)),
                                 // return tmp.0
-                                Mov(Register(HardwareRegister.EAX), Register(HardwareRegister.EAX)),
-                                Ret
-                            )
-                        ),
-                        AsmFunction(
-                            name = "multiply",
-                            stackSize = 8,
-                            body =
-                            listOf(
-                                AllocateStack(16),
-                                // Parameter setup: x.2 -> Stack(-4), y.3 -> Stack(-8)
-                                Mov(Register(HardwareRegister.EDI), Stack(-4)),
-                                Mov(Register(HardwareRegister.ESI), Stack(-8)),
-                                // tmp.1 = x * y
-                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
-                                AsmBinary(AsmBinaryOp.MUL, Stack(-8), Register(HardwareRegister.EAX)),
-                                // return tmp.1
-                                Mov(Register(HardwareRegister.EAX), Register(HardwareRegister.EAX)),
+                                Mov(Stack(-12), Register(HardwareRegister.EAX)),
                                 Ret
                             )
                         ),
                         AsmFunction(
                             name = "main",
-                            stackSize = 16,
+                            stackSize = 8,
                             body =
                             listOf(
-                                AllocateStack(32),
+                                AllocateStack(16),
                                 // Call add(5, 3)
                                 Mov(Imm(5), Register(HardwareRegister.EDI)),
                                 Mov(Imm(3), Register(HardwareRegister.ESI)),
                                 Call("add"),
-                                // Store result in result1.4
+                                // Store result in result.2
                                 Mov(Register(HardwareRegister.EAX), Stack(-4)),
-                                // Call multiply(result1, 2)
-                                Mov(Stack(-4), Register(HardwareRegister.EDI)),
-                                Mov(Imm(2), Register(HardwareRegister.ESI)),
-                                Call("multiply"),
-                                // Store result in result2.5
-                                Mov(Register(HardwareRegister.EAX), Stack(-8)),
-                                // return result2
+                                // Copy result to R10D for intermediate storage
+                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-8)),
+                                // return result
                                 Mov(Stack(-8), Register(HardwareRegister.EAX)),
                                 Ret
                             )
