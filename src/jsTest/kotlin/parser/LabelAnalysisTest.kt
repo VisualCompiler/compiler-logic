@@ -2,7 +2,7 @@ package parser
 
 import exceptions.DuplicateLabelException
 import exceptions.UndeclaredLabelException
-import symanticAnalysis.LabelCollector
+import semanticAnalysis.LabelCollector
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue

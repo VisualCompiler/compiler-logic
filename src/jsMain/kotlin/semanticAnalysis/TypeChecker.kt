@@ -1,6 +1,10 @@
-package symanticAnalysis
+package semanticAnalysis
 
-import exceptions.InvalidStatementException
+import exceptions.ArgumentCountException
+import exceptions.IncompatibleFuncDeclarationException
+import exceptions.NotFunctionException
+import exceptions.NotVariableException
+import exceptions.ReDeclarationFunctionException
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
@@ -33,15 +37,14 @@ import parser.VariableExpression
 import parser.Visitor
 import parser.WhileStatement
 
-class LoopLabeling : Visitor<Unit> {
-    var currentLabel: String? = null
-    private var labelCounter = 0
-
-    private fun newLabel(): String = "loop.${labelCounter++}"
+class TypeChecker : Visitor<Unit> {
+    fun analyze(program: SimpleProgram) {
+        SymbolTable.clear() // Ensure the table is fresh for each compilation.
+        program.accept(this)
+    }
 
     override fun visit(node: SimpleProgram) {
-        currentLabel = null
-        node.functionDeclaration.map { it.accept(this) }
+        node.functionDeclaration.forEach { it.accept(this) }
     }
 
     override fun visit(node: ReturnStatement) {
@@ -56,58 +59,61 @@ class LoopLabeling : Visitor<Unit> {
     }
 
     override fun visit(node: BreakStatement) {
-        if (currentLabel == null) {
-            throw InvalidStatementException("Break statement outside of loop")
-        }
-        node.label = currentLabel!!
     }
 
     override fun visit(node: ContinueStatement) {
-        if (currentLabel == null) {
-            throw InvalidStatementException("Continue statement outside of loop")
-        }
-        node.label = currentLabel!!
     }
 
     override fun visit(node: WhileStatement) {
-        currentLabel = newLabel()
-        node.label = currentLabel!!
-        node.body.accept(this)
-        currentLabel = null
-        node.condition.accept(this)
     }
 
     override fun visit(node: DoWhileStatement) {
-        currentLabel = newLabel()
-        node.label = currentLabel!!
-        node.body.accept(this)
-        currentLabel = null
-        node.condition.accept(this)
     }
 
     override fun visit(node: ForStatement) {
-        currentLabel = newLabel()
-        node.label = currentLabel!!
-        node.body.accept(this)
-        currentLabel = null
-        node.post?.accept(this)
-        node.condition?.accept(this)
-        node.init.accept(this)
     }
 
     override fun visit(node: InitDeclaration) {
-        node.varDeclaration.accept(this)
     }
 
     override fun visit(node: InitExpression) {
-        node.expression?.accept(this)
     }
 
     override fun visit(node: FunctionDeclaration) {
-        node.body?.accept(this)
+        val funType = FunType(node.params.size)
+        val hasBody = node.body != null
+        var isAlreadyDefined = false
+
+        val existingSymbol = SymbolTable.get(node.name)
+        if (existingSymbol != null) {
+            if (existingSymbol.type != funType) {
+                throw IncompatibleFuncDeclarationException(node.name)
+            }
+            isAlreadyDefined = existingSymbol.isDefined
+            if (isAlreadyDefined && hasBody) {
+                throw ReDeclarationFunctionException("Function '${node.name}' cannot be defined more than once.")
+            }
+        }
+
+        val newSymbol = Symbol(type = funType, isDefined = isAlreadyDefined || hasBody)
+        SymbolTable.add(node.name, newSymbol)
+
+        if (hasBody) {
+            node.params.forEach { paramName ->
+                SymbolTable.add(paramName, Symbol(IntType, isDefined = true))
+            }
+            node.body!!.accept(this)
+        }
     }
 
     override fun visit(node: VariableExpression) {
+        val symbol =
+            SymbolTable.get(node.name)
+                ?: throw IllegalStateException(node.name)
+
+        if (symbol.type !is IntType) {
+            throw NotVariableException(node.name)
+        }
     }
 
     override fun visit(node: UnaryExpression) {
@@ -123,9 +129,9 @@ class LoopLabeling : Visitor<Unit> {
     }
 
     override fun visit(node: IfStatement) {
+        node.condition.accept(this)
         node.then.accept(this)
         node._else?.accept(this)
-        node.condition.accept(this)
     }
 
     override fun visit(node: ConditionalExpression) {
@@ -138,7 +144,6 @@ class LoopLabeling : Visitor<Unit> {
     }
 
     override fun visit(node: LabeledStatement) {
-        node.statement.accept(this)
     }
 
     override fun visit(node: AssignmentExpression) {
@@ -147,9 +152,14 @@ class LoopLabeling : Visitor<Unit> {
     }
 
     override fun visit(node: Declaration) {
+        when (node) {
+            is VarDecl -> node.accept(this)
+            is FunDecl -> node.accept(this)
+        }
     }
 
     override fun visit(node: VariableDeclaration) {
+        SymbolTable.add(node.name, Symbol(IntType, isDefined = true))
         node.init?.accept(this)
     }
 
@@ -178,6 +188,24 @@ class LoopLabeling : Visitor<Unit> {
     }
 
     override fun visit(node: FunctionCall) {
+        val symbol =
+            SymbolTable.get(node.name)
+                ?: throw exceptions.IllegalStateException(node.name)
+
+        when (val type = symbol.type) {
+            is IntType -> throw NotFunctionException(node.name)
+            is FunType -> {
+                if (type.paramCount != node.arguments.size) {
+                    throw ArgumentCountException(
+                        name = node.name,
+                        expected = type.paramCount,
+                        actual = node.arguments.size
+                    )
+                }
+            }
+        }
+
+        // Recursively type check all arguments.
         node.arguments.forEach { it.accept(this) }
     }
 }

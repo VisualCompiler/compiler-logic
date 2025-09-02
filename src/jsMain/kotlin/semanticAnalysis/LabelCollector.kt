@@ -1,4 +1,4 @@
-package symanticAnalysis
+package semanticAnalysis
 
 import exceptions.DuplicateLabelException
 import exceptions.UndeclaredLabelException

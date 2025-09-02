@@ -1,4 +1,4 @@
-package compiler.symanticAnalysis
+package semanticAnalysis
 
 import exceptions.DuplicateVariableDeclaration
 import exceptions.NestedFunctionException

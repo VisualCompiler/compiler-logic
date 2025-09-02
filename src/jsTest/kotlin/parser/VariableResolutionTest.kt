@@ -1,8 +1,8 @@
 package parser
 
-import compiler.symanticAnalysis.IdentifierResolution
 import exceptions.DuplicateVariableDeclaration
 import exceptions.UndeclaredVariableException
+import semanticAnalysis.IdentifierResolution
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

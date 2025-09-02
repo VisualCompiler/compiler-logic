@@ -1,4 +1,4 @@
-package symanticAnalysis
+package semanticAnalysis
 
 sealed class Type
 
