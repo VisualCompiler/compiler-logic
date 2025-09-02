@@ -182,7 +182,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         val functionParams = node.params
 
         currentInstructions.clear()
-        node.body!!.accept(this)
+        node.body?.accept(this)
 
         if (currentInstructions.lastOrNull() !is TackyRet) {
             currentInstructions += TackyRet(TackyConstant(0))

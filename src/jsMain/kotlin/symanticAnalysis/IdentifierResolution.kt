@@ -157,24 +157,34 @@ class IdentifierResolution : Visitor<ASTNode> {
     }
 
     override fun visit(node: FunctionDeclaration): ASTNode {
-        // Nested functions are illegal. Check if we are inside another function's scope.
+        // Check if we are inside another function's scope
         if (scopeStack.size > 1) {
-            throw NestedFunctionException()
-        }
-
-        declare(node.name, hasLinkage = true)
-
-        enterScope()
-
-        val newParams =
-            node.params.map { paramName ->
-                declare(paramName, hasLinkage = false)
+            // We're inside another function - check if this is a prototype or definition
+            if (node.body != null) {
+                // Function definition with body - not allowed inside other functions
+                throw NestedFunctionException()
+            } else {
+                // Function prototype (no body) - allowed inside other functions
+                // Just declare the function name and return it
+                declare(node.name, hasLinkage = true)
+                return FunctionDeclaration(node.name, node.params, null)
             }
-        val newBody = node.body?.accept(this) as Block?
+        } else {
+            // We're at global scope - all function declarations are allowed
+            declare(node.name, hasLinkage = true)
 
-        leaveScope()
+            enterScope()
 
-        return FunctionDeclaration(node.name, newParams, newBody)
+            val newParams =
+                node.params.map { paramName ->
+                    declare(paramName, hasLinkage = false)
+                }
+            val newBody = node.body?.accept(this) as Block?
+
+            leaveScope()
+
+            return FunctionDeclaration(node.name, newParams, newBody)
+        }
     }
 
     override fun visit(node: VariableExpression): ASTNode {
@@ -237,14 +247,29 @@ class IdentifierResolution : Visitor<ASTNode> {
         return S(statement)
     }
 
-    override fun visit(node: D): ASTNode = D(node.declaration.accept(this) as VarDecl)
+    override fun visit(node: D): ASTNode {
+        val declaration = node.declaration.accept(this)
+        return when (declaration) {
+            is VarDecl -> D(declaration)
+            is FunDecl -> D(declaration)
+            else -> throw IllegalStateException("Unexpected declaration type: ${declaration::class.simpleName}")
+        }
+    }
 
     override fun visit(node: VarDecl): ASTNode {
         val newVarDeclData = node.varDecl.accept(this) as VariableDeclaration
         return VarDecl(newVarDeclData)
     }
 
-    override fun visit(node: FunDecl): ASTNode = throw NestedFunctionException()
+    override fun visit(node: FunDecl): ASTNode {
+        val funDecl = node.funDecl.accept(this) as FunctionDeclaration
+
+        if (funDecl.body != null) {
+            throw NestedFunctionException()
+        } else {
+            return FunDecl(funDecl)
+        }
+    }
 
     override fun visit(node: Block): ASTNode {
         enterScope()

@@ -1,4 +1,4 @@
-package compiler.symanticAnalysis
+package symanticAnalysis
 
 import exceptions.ArgumentCountException
 import exceptions.IncompatibleFuncDeclarationException
@@ -152,6 +152,10 @@ class TypeChecker : Visitor<Unit> {
     }
 
     override fun visit(node: Declaration) {
+        when (node) {
+            is VarDecl -> node.accept(this)
+            is FunDecl -> node.accept(this)
+        }
     }
 
     override fun visit(node: VariableDeclaration) {

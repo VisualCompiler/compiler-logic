@@ -4,14 +4,14 @@ import assembly.AsmConstruct
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
 import compiler.symanticAnalysis.IdentifierResolution
-import compiler.symanticAnalysis.LabelCollector
-import compiler.symanticAnalysis.LoopLabeling
-import compiler.symanticAnalysis.TypeChecker
 import lexer.Lexer
 import lexer.Token
 import parser.ASTNode
 import parser.Parser
 import parser.SimpleProgram
+import symanticAnalysis.LabelCollector
+import symanticAnalysis.LoopLabeling
+import symanticAnalysis.TypeChecker
 import tacky.TackyConstruct
 import tacky.TackyGenVisitor
 import tacky.TackyProgram

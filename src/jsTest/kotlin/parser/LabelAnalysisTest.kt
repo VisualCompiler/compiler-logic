@@ -1,8 +1,8 @@
 package parser
 
-import compiler.symanticAnalysis.LabelCollector
 import exceptions.DuplicateLabelException
 import exceptions.UndeclaredLabelException
+import symanticAnalysis.LabelCollector
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue

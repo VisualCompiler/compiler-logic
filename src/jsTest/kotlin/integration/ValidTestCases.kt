@@ -29,8 +29,12 @@ import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
 import parser.D
+import parser.DoWhileStatement
 import parser.ExpressionStatement
+import parser.ForStatement
 import parser.FunctionDeclaration
+import parser.InitDeclaration
+import parser.InitExpression
 import parser.IntExpression
 import parser.NullStatement
 import parser.ReturnStatement
@@ -40,6 +44,7 @@ import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
 import parser.VariableExpression
+import parser.WhileStatement
 import tacky.JumpIfNotZero
 import tacky.JumpIfZero
 import tacky.TackyBinary
@@ -411,8 +416,7 @@ object ValidTestCases {
                         FunctionDeclaration(
                             name = "main",
                             params = emptyList(),
-                            body =
-                            Block(
+                            body = Block(
                                 block =
                                 listOf(
                                     D(VarDecl(VariableDeclaration(name = "b.0", init = null))),
@@ -734,6 +738,384 @@ object ValidTestCases {
                         )
                     )
                 )
+            ),
+// --- Test Case for FUNCTION DECLARATION WITHOUT BODY ---
+            ValidTestCase(
+                title = "Testing function declaration without body (function prototype) at global level.",
+                code =
+                """
+                    int foo(void);
+                    
+                    int foo(void) {
+                        return 5;
+                    }
+                    
+                    int main(void) {
+                        int foo(void);
+                        int foo(void);
+                        return foo();
+                    }
+                """.trimIndent(),
+                expectedTacky =
+                TackyProgram(
+                    functions =
+                    listOf(
+                        TackyFunction(
+                            name = "foo",
+                            args = emptyList(),
+                            body =
+                            listOf(
+                                // return 5;
+                                TackyRet(TackyConstant(5))
+                            )
+                        ),
+                        TackyFunction(
+                            name = "main",
+                            args = emptyList(),
+                            body =
+                            listOf(
+                                // Implicit return for function without explicit return at start
+                                TackyRet(TackyConstant(0)),
+                                // int foo(void); (function prototype - no Tacky instructions)
+                                // int foo(void); (function prototype - no Tacky instructions)
+                                // return foo();
+                                TackyFunCall("foo", emptyList(), TackyVar("tmp.0")),
+                                TackyRet(TackyVar("tmp.0"))
+                            )
+                        )
+                    )
+                ),
+                expectedAssembly =
+                AsmProgram(
+                    functions =
+                    listOf(
+                        AsmFunction(
+                            name = "foo",
+                            stackSize = 0,
+                            body =
+                            listOf(
+                                // return 5;
+                                Mov(Imm(5), Register(HardwareRegister.EAX)),
+                                Ret
+                            )
+                        ),
+                        AsmFunction(
+                            name = "main",
+                            stackSize = 4,
+                            body =
+                            listOf(
+                                AllocateStack(16),
+                                // Implicit return 0
+                                Mov(Imm(0), Register(HardwareRegister.EAX)),
+                                Ret,
+                                // Call foo() (no arguments)
+                                Call("foo"),
+                                // Store result and return it
+                                Mov(Register(HardwareRegister.EAX), Stack(-4)),
+                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
+                                Ret
+                            )
+                        )
+                    )
+                )
+            ),
+// --- Test Case for LOOP STATEMENTS ---
+            ValidTestCase(
+                title = "Testing loop statements",
+                code =
+                """int main(void) { 
+    |int a = 10;
+    |while(a > 0)
+    |   a = a - 1;
+    |for(int i = 0; i < 10; i = i + 1) 
+    |   a = a + 1;
+    |for(;a > 0;)
+    |   a = a + 1;
+    |do 
+    |   a = a + 1;
+    |while(a > 0);
+    |return 0;
+    |}
+                """.trimMargin(),
+                expectedTokenList =
+                listOf(
+                    Token(TokenType.KEYWORD_INT, "int", 1, 1),
+                    Token(TokenType.IDENTIFIER, "main", 1, 5),
+                    Token(TokenType.LEFT_PAREN, "(", 1, 9),
+                    Token(TokenType.KEYWORD_VOID, "void", 1, 10),
+                    Token(TokenType.RIGHT_PAREN, ")", 1, 14),
+                    Token(TokenType.LEFT_BRACK, "{", 1, 16),
+                    // int a = 10;
+                    Token(TokenType.KEYWORD_INT, "int", 2, 1),
+                    Token(TokenType.IDENTIFIER, "a", 2, 5),
+                    Token(TokenType.ASSIGN, "=", 2, 7),
+                    Token(TokenType.INT_LITERAL, "10", 2, 9),
+                    Token(TokenType.SEMICOLON, ";", 2, 11),
+                    // while(a > 0)
+                    Token(TokenType.KEYWORD_WHILE, "while", 3, 1),
+                    Token(TokenType.LEFT_PAREN, "(", 3, 6),
+                    Token(TokenType.IDENTIFIER, "a", 3, 7),
+                    Token(TokenType.GREATER, ">", 3, 9),
+                    Token(TokenType.INT_LITERAL, "0", 3, 11),
+                    Token(TokenType.RIGHT_PAREN, ")", 3, 12),
+                    // a = a - 1;
+                    Token(TokenType.IDENTIFIER, "a", 4, 4),
+                    Token(TokenType.ASSIGN, "=", 4, 6),
+                    Token(TokenType.IDENTIFIER, "a", 4, 8),
+                    Token(TokenType.NEGATION, "-", 4, 10),
+                    Token(TokenType.INT_LITERAL, "1", 4, 12),
+                    Token(TokenType.SEMICOLON, ";", 4, 13),
+                    // for(int i = 0; i < 10; i = i + 1)
+                    Token(TokenType.KEYWORD_FOR, "for", 5, 1),
+                    Token(TokenType.LEFT_PAREN, "(", 5, 4),
+                    Token(TokenType.KEYWORD_INT, "int", 5, 5),
+                    Token(TokenType.IDENTIFIER, "i", 5, 9),
+                    Token(TokenType.ASSIGN, "=", 5, 11),
+                    Token(TokenType.INT_LITERAL, "0", 5, 13),
+                    Token(TokenType.SEMICOLON, ";", 5, 14),
+                    Token(TokenType.IDENTIFIER, "i", 5, 16),
+                    Token(TokenType.LESS, "<", 5, 18),
+                    Token(TokenType.INT_LITERAL, "10", 5, 20),
+                    Token(TokenType.SEMICOLON, ";", 5, 22),
+                    Token(TokenType.IDENTIFIER, "i", 5, 24),
+                    Token(TokenType.ASSIGN, "=", 5, 26),
+                    Token(TokenType.IDENTIFIER, "i", 5, 28),
+                    Token(TokenType.PLUS, "+", 5, 30),
+                    Token(TokenType.INT_LITERAL, "1", 5, 32),
+                    Token(TokenType.RIGHT_PAREN, ")", 5, 33),
+                    // a = a + 1;
+                    Token(TokenType.IDENTIFIER, "a", 6, 4),
+                    Token(TokenType.ASSIGN, "=", 6, 6),
+                    Token(TokenType.IDENTIFIER, "a", 6, 8),
+                    Token(TokenType.PLUS, "+", 6, 10),
+                    Token(TokenType.INT_LITERAL, "1", 6, 12),
+                    Token(TokenType.SEMICOLON, ";", 6, 13),
+                    // for(;a > 0;)
+                    Token(TokenType.KEYWORD_FOR, "for", 7, 1),
+                    Token(TokenType.LEFT_PAREN, "(", 7, 4),
+                    Token(TokenType.SEMICOLON, ";", 7, 5),
+                    Token(TokenType.IDENTIFIER, "a", 7, 6),
+                    Token(TokenType.GREATER, ">", 7, 8),
+                    Token(TokenType.INT_LITERAL, "0", 7, 10),
+                    Token(TokenType.SEMICOLON, ";", 7, 11),
+                    Token(TokenType.RIGHT_PAREN, ")", 7, 12),
+                    // a = a + 1;
+                    Token(TokenType.IDENTIFIER, "a", 8, 4),
+                    Token(TokenType.ASSIGN, "=", 8, 6),
+                    Token(TokenType.IDENTIFIER, "a", 8, 8),
+                    Token(TokenType.PLUS, "+", 8, 10),
+                    Token(TokenType.INT_LITERAL, "1", 8, 12),
+                    Token(TokenType.SEMICOLON, ";", 8, 13),
+                    // do
+                    Token(TokenType.KEYWORD_DO, "do", 9, 1),
+                    // a = a + 1;
+                    Token(TokenType.IDENTIFIER, "a", 10, 4),
+                    Token(TokenType.ASSIGN, "=", 10, 6),
+                    Token(TokenType.IDENTIFIER, "a", 10, 8),
+                    Token(TokenType.PLUS, "+", 10, 10),
+                    Token(TokenType.INT_LITERAL, "1", 10, 12),
+                    Token(TokenType.SEMICOLON, ";", 10, 13),
+                    // while(a > 0);
+                    Token(TokenType.KEYWORD_WHILE, "while", 11, 1),
+                    Token(TokenType.LEFT_PAREN, "(", 11, 6),
+                    Token(TokenType.IDENTIFIER, "a", 11, 7),
+                    Token(TokenType.GREATER, ">", 11, 9),
+                    Token(TokenType.INT_LITERAL, "0", 11, 11),
+                    Token(TokenType.RIGHT_PAREN, ")", 11, 12),
+                    Token(TokenType.SEMICOLON, ";", 11, 13),
+                    // return 0;
+                    Token(TokenType.KEYWORD_RETURN, "return", 12, 1),
+                    Token(TokenType.INT_LITERAL, "0", 12, 8),
+                    Token(TokenType.SEMICOLON, ";", 12, 9),
+                    Token(TokenType.RIGHT_BRACK, "}", 13, 1),
+                    Token(TokenType.EOF, "", 13, 2)
+                ),
+                expectedAst =
+                SimpleProgram(
+                    functionDeclaration = listOf(
+                        FunctionDeclaration(
+                            name = "main",
+                            params = emptyList(),
+                            body = Block(
+                                block =
+                                listOf(
+                                    D(VarDecl(VariableDeclaration(name = "a.0", init = IntExpression(10)))),
+                                    S(
+                                        WhileStatement(
+                                            condition =
+                                            BinaryExpression(
+                                                left = VariableExpression("a.0"),
+                                                operator = Token(TokenType.GREATER, ">", 3, 9),
+                                                right = IntExpression(0)
+                                            ),
+                                            body =
+                                            ExpressionStatement(
+                                                AssignmentExpression(
+                                                    lvalue = VariableExpression("a.0"),
+                                                    rvalue =
+                                                    BinaryExpression(
+                                                        left = VariableExpression("a.0"),
+                                                        operator = Token(TokenType.NEGATION, "-", 4, 10),
+                                                        right = IntExpression(1)
+                                                    )
+                                                )
+                                            ),
+                                            label = "loop.0"
+                                        )
+                                    ),
+                                    S(
+                                        ForStatement(
+                                            init =
+                                            InitDeclaration(
+                                                VariableDeclaration(name = "i.1", init = IntExpression(0))
+                                            ),
+                                            condition =
+                                            BinaryExpression(
+                                                left = VariableExpression("i.1"),
+                                                operator = Token(TokenType.LESS, "<", 5, 18),
+                                                right = IntExpression(10)
+                                            ),
+                                            post =
+                                            AssignmentExpression(
+                                                lvalue = VariableExpression("i.1"),
+                                                rvalue =
+                                                BinaryExpression(
+                                                    left = VariableExpression("i.1"),
+                                                    operator = Token(TokenType.PLUS, "+", 5, 30),
+                                                    right = IntExpression(1)
+                                                )
+                                            ),
+                                            body =
+                                            ExpressionStatement(
+                                                AssignmentExpression(
+                                                    lvalue = VariableExpression("a.0"),
+                                                    rvalue =
+                                                    BinaryExpression(
+                                                        left = VariableExpression("a.0"),
+                                                        operator = Token(TokenType.PLUS, "+", 6, 10),
+                                                        right = IntExpression(1)
+                                                    )
+                                                )
+                                            ),
+                                            label = "loop.1"
+                                        )
+                                    ),
+                                    S(
+                                        ForStatement(
+                                            init =
+                                            InitExpression(
+                                                expression = null
+                                            ),
+                                            condition =
+                                            BinaryExpression(
+                                                left = VariableExpression("a.0"),
+                                                operator = Token(TokenType.GREATER, ">", 7, 8),
+                                                right = IntExpression(0)
+                                            ),
+                                            post = null,
+                                            body =
+                                            ExpressionStatement(
+                                                AssignmentExpression(
+                                                    lvalue = VariableExpression("a.0"),
+                                                    rvalue =
+                                                    BinaryExpression(
+                                                        left = VariableExpression("a.0"),
+                                                        operator = Token(TokenType.PLUS, "+", 8, 10),
+                                                        right = IntExpression(1)
+                                                    )
+                                                )
+                                            ),
+                                            label = "loop.2"
+                                        )
+                                    ),
+                                    S(
+                                        DoWhileStatement(
+                                            condition =
+                                            BinaryExpression(
+                                                left = VariableExpression("a.0"),
+                                                operator = Token(TokenType.GREATER, ">", 11, 9),
+                                                right = IntExpression(0)
+                                            ),
+                                            body =
+                                            ExpressionStatement(
+                                                AssignmentExpression(
+                                                    lvalue = VariableExpression("a.0"),
+                                                    rvalue =
+                                                    BinaryExpression(
+                                                        left = VariableExpression("a.0"),
+                                                        operator = Token(TokenType.PLUS, "+", 10, 10),
+                                                        right = IntExpression(1)
+                                                    )
+                                                )
+                                            ),
+                                            label = "loop.3"
+                                        )
+                                    ),
+                                    S(ReturnStatement(expression = IntExpression(0)))
+                                )
+                            )
+                        )
+                    )
+                ),
+                expectedTacky =
+                TackyProgram(
+                    functions =
+                    listOf(
+                        TackyFunction(
+                            name = "main",
+                            args = emptyList(),
+                            body =
+                            listOf(
+                                // a.0 = 10
+                                TackyCopy(TackyConstant(10), TackyVar("a.0")),
+                                // while (a.0 > 0) ... label loop.0
+                                TackyLabel("continue_loop.0"),
+                                TackyBinary(TackyBinaryOP.GREATER, TackyVar("a.0"), TackyConstant(0), TackyVar("tmp.0")),
+                                JumpIfZero(TackyVar("tmp.0"), TackyLabel("break_loop.0")),
+                                // a.0 = a.0 - 1
+                                TackyBinary(TackyBinaryOP.SUBTRACT, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.1")),
+                                TackyCopy(TackyVar("tmp.1"), TackyVar("a.0")),
+                                TackyJump(TackyLabel("continue_loop.0")),
+                                TackyLabel("break_loop.0"),
+                                // for (int i.1 = 0; i.1 < 10; i.1 = i.1 + 1) ... label loop.1
+                                TackyCopy(TackyConstant(0), TackyVar("i.1")),
+                                TackyLabel("start_loop.1"),
+                                TackyBinary(TackyBinaryOP.LESS, TackyVar("i.1"), TackyConstant(10), TackyVar("tmp.2")),
+                                JumpIfZero(TackyVar("tmp.2"), TackyLabel("break_loop.1")),
+                                // body: a.0 = a.0 + 1
+                                TackyBinary(TackyBinaryOP.ADD, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.3")),
+                                TackyCopy(TackyVar("tmp.3"), TackyVar("a.0")),
+                                TackyLabel("continue_loop.1"),
+                                // post: i.1 = i.1 + 1
+                                TackyBinary(TackyBinaryOP.ADD, TackyVar("i.1"), TackyConstant(1), TackyVar("tmp.4")),
+                                TackyCopy(TackyVar("tmp.4"), TackyVar("i.1")),
+                                TackyJump(TackyLabel("start_loop.1")),
+                                TackyLabel("break_loop.1"),
+                                // for (; a.0 > 0;) ... label loop.2
+                                TackyLabel("start_loop.2"),
+                                TackyBinary(TackyBinaryOP.GREATER, TackyVar("a.0"), TackyConstant(0), TackyVar("tmp.5")),
+                                JumpIfZero(TackyVar("tmp.5"), TackyLabel("break_loop.2")),
+                                // body: a.0 = a.0 + 1
+                                TackyBinary(TackyBinaryOP.ADD, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.6")),
+                                TackyCopy(TackyVar("tmp.6"), TackyVar("a.0")),
+                                TackyLabel("continue_loop.2"),
+                                TackyJump(TackyLabel("start_loop.2")),
+                                TackyLabel("break_loop.2"),
+                                // do { a.0 = a.0 + 1; } while (a.0 > 0); label loop.3
+                                TackyLabel("start_loop.3"),
+                                TackyBinary(TackyBinaryOP.ADD, TackyVar("a.0"), TackyConstant(1), TackyVar("tmp.7")),
+                                TackyCopy(TackyVar("tmp.7"), TackyVar("a.0")),
+                                TackyLabel("continue_loop.3"),
+                                TackyBinary(TackyBinaryOP.GREATER, TackyVar("a.0"), TackyConstant(0), TackyVar("tmp.8")),
+                                JumpIfNotZero(TackyVar("tmp.8"), TackyLabel("start_loop.3")),
+                                TackyLabel("break_loop.3"),
+                                // return 0; (explicit) and implicit final return 0
+                                TackyRet(TackyConstant(0))
+                            )
+                        )
+                    )
+                ),
+                expectedAssembly = null
             )
         )
 }

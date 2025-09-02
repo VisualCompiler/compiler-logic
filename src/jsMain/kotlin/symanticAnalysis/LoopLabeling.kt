@@ -1,4 +1,4 @@
-package compiler.symanticAnalysis
+package symanticAnalysis
 
 import exceptions.InvalidStatementException
 import parser.AssignmentExpression

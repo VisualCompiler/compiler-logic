@@ -75,6 +75,36 @@ class Parser {
         return FunctionDeclaration(name, params, body)
     }
 
+    private fun parseFunctionDeclarationFromBody(tokens: MutableList<Token>, name: String): FunctionDeclaration {
+        expect(TokenType.LEFT_PAREN, tokens)
+        val params = mutableListOf<String>()
+        if (tokens.firstOrNull()?.type != TokenType.KEYWORD_VOID) {
+            // get params
+            do {
+                expect(TokenType.KEYWORD_INT, tokens)
+                params.add(parseIdentifier(tokens))
+            } while (tokens.firstOrNull()?.type == TokenType.COMMA && tokens.removeFirst().type == TokenType.COMMA)
+        } else {
+            tokens.removeFirst() // consume 'void'
+        }
+        expect(TokenType.RIGHT_PAREN, tokens)
+        val body: Block?
+        if (tokens.firstOrNull()?.type == TokenType.LEFT_BRACK) {
+            // Function definitions (with bodies) are not allowed inside other functions
+            throw UnexpectedTokenException(
+                expected = "SEMICOLON (function prototype)",
+                actual = "LEFT_BRACK (function definition)",
+                line = tokens.first().line,
+                column = tokens.first().column
+            )
+        } else {
+            expect(TokenType.SEMICOLON, tokens)
+            body = null
+        }
+
+        return FunctionDeclaration(name, params, body)
+    }
+
     private fun parseBlock(tokens: MutableList<Token>): Block {
         val body = mutableListOf<BlockItem>()
         expect(TokenType.LEFT_BRACK, tokens)
@@ -87,9 +117,19 @@ class Parser {
 
     private fun parseBlockItem(tokens: MutableList<Token>): BlockItem =
         if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
-            expect(TokenType.KEYWORD_INT, tokens)
-            val name = parseIdentifier(tokens)
-            D(VarDecl(parseVariableDeclaration(tokens, name)))
+            val lookaheadTokens = tokens.toMutableList()
+            expect(TokenType.KEYWORD_INT, lookaheadTokens)
+            val name = parseIdentifier(lookaheadTokens)
+
+            if (lookaheadTokens.firstOrNull()?.type == TokenType.LEFT_PAREN) {
+                expect(TokenType.KEYWORD_INT, tokens)
+                val actualName = parseIdentifier(tokens)
+                D(FunDecl(parseFunctionDeclarationFromBody(tokens, actualName)))
+            } else {
+                expect(TokenType.KEYWORD_INT, tokens)
+                val actualName = parseIdentifier(tokens)
+                D(VarDecl(parseVariableDeclaration(tokens, actualName)))
+            }
         } else {
             S(parseStatement(tokens))
         }
