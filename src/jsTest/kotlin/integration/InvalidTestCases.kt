@@ -6,7 +6,7 @@ import exceptions.IncompatibleFuncDeclarationException
 import exceptions.InvalidLValueException
 import exceptions.InvalidStatementException
 import exceptions.LexicalException
-import exceptions.UndeclaredVariableException
+import exceptions.MissingDeclarationException
 import exceptions.UnexpectedTokenException
 import kotlin.reflect.KClass
 
@@ -29,7 +29,7 @@ object InvalidTestCases {
             InvalidTestCase(
                 code = "int main(void) { return x; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UndeclaredVariableException::class
+                expectedException = MissingDeclarationException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { ret }",
@@ -101,7 +101,7 @@ object InvalidTestCases {
             InvalidTestCase(
                 code = "int main(void) { a = 3; }",
                 failingStage = CompilerStage.PARSER,
-                expectedException = UndeclaredVariableException::class
+                expectedException = MissingDeclarationException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { int a; int a; }",
@@ -154,7 +154,7 @@ object InvalidTestCases {
             InvalidTestCase(
                 code = "int main(void) { return a; }", // Undeclared variable
                 failingStage = CompilerStage.PARSER,
-                expectedException = UndeclaredVariableException::class
+                expectedException = MissingDeclarationException::class
             ),
             InvalidTestCase(
                 code = "int main(void) { 1 = 2; return 0; }", // Invalid L-value

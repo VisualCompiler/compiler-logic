@@ -1,8 +1,8 @@
 package semanticAnalysis
 
 import exceptions.DuplicateVariableDeclaration
+import exceptions.MissingDeclarationException
 import exceptions.NestedFunctionException
-import exceptions.UndeclaredVariableException
 import parser.ASTNode
 import parser.AssignmentExpression
 import parser.BinaryExpression

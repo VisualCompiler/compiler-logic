@@ -1,7 +1,7 @@
 package parser
 
 import exceptions.DuplicateVariableDeclaration
-import exceptions.UndeclaredVariableException
+import exceptions.MissingDeclarationException
 import semanticAnalysis.IdentifierResolution
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -115,7 +115,7 @@ class VariableResolutionTest {
             )
 
         // Act & Assert
-        assertFailsWith<UndeclaredVariableException> {
+        assertFailsWith<MissingDeclarationException> {
             IdentifierResolution().analyze(ast as SimpleProgram)
         }
     }
