@@ -1,21 +1,21 @@
 package assembly
 
 class PseudoEliminator {
-    data class EliminationResult(
-        val program: AsmProgram,
-        val stackSpaceUsed: Int
-    )
+    fun eliminate(program: AsmProgram): AsmProgram {
+        program.functions.forEach { function ->
+            eliminateInFunction(function)
+        }
+        return program
+    }
 
-    fun eliminate(program: AsmProgram): EliminationResult {
+    private fun eliminateInFunction(function: AsmFunction) {
         val pseudoToOffset = mutableMapOf<String, Int>()
         var nextAvailableOffset = 0
 
         fun getStackLocation(name: String): Stack =
-            // If we already assigned a stack slot for this pseudo-register, return it
-
-            if (pseudoToOffset.containsKey(name)) {
-                Stack(pseudoToOffset.getValue(name))
-            } else {
+            pseudoToOffset[name]?.let { offset ->
+                Stack(offset)
+            } ?: run {
                 nextAvailableOffset -= 4
                 pseudoToOffset[name] = nextAvailableOffset
                 Stack(nextAvailableOffset)
@@ -24,18 +24,21 @@ class PseudoEliminator {
         fun replace(operand: Operand): Operand = if (operand is Pseudo) getStackLocation(operand.name) else operand
 
         val newInstructions =
-            program.function.body.map { instruction ->
+            function.body.map { instruction ->
                 when (instruction) {
                     is Mov -> Mov(replace(instruction.src), replace(instruction.dest))
                     is AsmUnary -> AsmUnary(instruction.op, replace(instruction.dest))
                     is AsmBinary -> AsmBinary(instruction.op, replace(instruction.src), replace(instruction.dest))
                     is Cmp -> Cmp(replace(instruction.src), replace(instruction.dest))
                     is SetCC -> SetCC(instruction.condition, replace(instruction.dest))
+                    is Push -> Push(replace(instruction.operand))
+                    is Call -> instruction
+                    is Idiv -> Idiv(replace(instruction.divisor))
                     else -> instruction
                 }
             }
 
-        val newFunction = program.function.copy(body = newInstructions)
-        return EliminationResult(AsmProgram(newFunction), -nextAvailableOffset)
+        function.body = newInstructions
+        function.stackSize = -nextAvailableOffset
     }
 }

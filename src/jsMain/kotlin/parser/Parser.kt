@@ -39,58 +39,107 @@ class Parser {
     }
 
     private fun parseProgram(tokens: MutableList<Token>): SimpleProgram {
-        val function = parseFunction(tokens)
+        val declarations = mutableListOf<FunctionDeclaration>()
+        while (tokens.isNotEmpty() && tokens.first().type != TokenType.EOF) {
+            declarations.add(parseFunctionDeclaration(tokens))
+        }
 
         return SimpleProgram(
-            functionDefinition = function
+            functionDeclaration = declarations
         )
     }
 
-    private fun parseFunction(tokens: MutableList<Token>): FunctionDefinition {
+    private fun parseFunctionDeclaration(tokens: MutableList<Token>): FunctionDeclaration {
         expect(TokenType.KEYWORD_INT, tokens)
         val name = parseIdentifier(tokens)
         expect(TokenType.LEFT_PAREN, tokens)
-        expect(TokenType.KEYWORD_VOID, tokens)
+        val params = mutableListOf<String>()
+        if (tokens.firstOrNull()?.type != TokenType.KEYWORD_VOID) {
+            // get params
+            do {
+                expect(TokenType.KEYWORD_INT, tokens)
+                params.add(parseIdentifier(tokens))
+            } while (tokens.firstOrNull()?.type == TokenType.COMMA && tokens.removeFirst().type == TokenType.COMMA)
+        } else {
+            tokens.removeFirst() // consume 'void'
+        }
         expect(TokenType.RIGHT_PAREN, tokens)
-        expect(TokenType.LEFT_BRACK, tokens)
-        val body = parseBlock(tokens)
-        expect(TokenType.RIGHT_BRACK, tokens)
+        val body: Block?
+        if (tokens.firstOrNull()?.type == TokenType.LEFT_BRACK) {
+            body = parseBlock(tokens)
+        } else {
+            expect(TokenType.SEMICOLON, tokens)
+            body = null
+        }
 
-        return Function(
-            name = name,
-            body = body
-        )
+        return FunctionDeclaration(name, params, body)
+    }
+
+    private fun parseFunctionDeclarationFromBody(tokens: MutableList<Token>, name: String): FunctionDeclaration {
+        expect(TokenType.LEFT_PAREN, tokens)
+        val params = mutableListOf<String>()
+        if (tokens.firstOrNull()?.type != TokenType.KEYWORD_VOID) {
+            // get params
+            do {
+                expect(TokenType.KEYWORD_INT, tokens)
+                params.add(parseIdentifier(tokens))
+            } while (tokens.firstOrNull()?.type == TokenType.COMMA && tokens.removeFirst().type == TokenType.COMMA)
+        } else {
+            tokens.removeFirst() // consume 'void'
+        }
+        expect(TokenType.RIGHT_PAREN, tokens)
+        val body: Block?
+        if (tokens.firstOrNull()?.type == TokenType.LEFT_BRACK) {
+            // Parse function body, we will throw exception in semantic pass
+            body = parseBlock(tokens)
+        } else {
+            expect(TokenType.SEMICOLON, tokens)
+            body = null
+        }
+
+        return FunctionDeclaration(name, params, body)
     }
 
     private fun parseBlock(tokens: MutableList<Token>): Block {
         val body = mutableListOf<BlockItem>()
+        expect(TokenType.LEFT_BRACK, tokens)
         while (tokens.firstOrNull()?.type != TokenType.RIGHT_BRACK) {
             body.add(parseBlockItem(tokens))
         }
+        expect(TokenType.RIGHT_BRACK, tokens)
         return Block(body)
     }
 
     private fun parseBlockItem(tokens: MutableList<Token>): BlockItem =
         if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
-            D(parseDeclaration(tokens))
+            val lookaheadTokens = tokens.toMutableList()
+            expect(TokenType.KEYWORD_INT, lookaheadTokens)
+            val name = parseIdentifier(lookaheadTokens)
+
+            if (lookaheadTokens.firstOrNull()?.type == TokenType.LEFT_PAREN) {
+                expect(TokenType.KEYWORD_INT, tokens)
+                val actualName = parseIdentifier(tokens)
+                D(FunDecl(parseFunctionDeclarationFromBody(tokens, actualName)))
+            } else {
+                expect(TokenType.KEYWORD_INT, tokens)
+                val actualName = parseIdentifier(tokens)
+                D(VarDecl(parseVariableDeclaration(tokens, actualName)))
+            }
         } else {
             S(parseStatement(tokens))
         }
 
-    private fun parseDeclaration(tokens: MutableList<Token>): Declaration {
-        expect(TokenType.KEYWORD_INT, tokens)
-        val name = parseIdentifier(tokens)
-        var exp: Expression? = null
-        if (!tokens.isEmpty() && tokens.first().type == TokenType.ASSIGN) {
-            tokens.removeFirst()
-            exp = parseExpression(tokens = tokens)
+    private fun parseVariableDeclaration(
+        tokens: MutableList<Token>,
+        name: String
+    ): VariableDeclaration {
+        var init: Expression? = null
+        if (tokens.firstOrNull()?.type == TokenType.ASSIGN) {
+            tokens.removeFirst() // consume '='
+            init = parseExpression(0, tokens)
         }
         expect(TokenType.SEMICOLON, tokens)
-
-        return Declaration(
-            name = name,
-            init = exp
-        )
+        return VariableDeclaration(name, init)
     }
 
     private fun expect(
@@ -167,7 +216,7 @@ class Parser {
                     val statement = parseStatement(tokens)
                     return LabeledStatement(labelName, statement)
                 } else {
-                    // Not a label: parse as expression statement by delegating to default branch
+                    // Not a label, parse as expression statement by delegating to default branch
                     val expression = parseOptionalExpression(tokens = tokens, followedByType = TokenType.SEMICOLON)
                     return if (expression != null) ExpressionStatement(expression) else NullStatement()
                 }
@@ -215,9 +264,7 @@ class Parser {
                 )
             }
             TokenType.LEFT_BRACK -> {
-                tokens.removeFirst()
                 val body = parseBlock(tokens)
-                expect(TokenType.RIGHT_BRACK, tokens)
                 return CompoundStatement(body)
             }
             else -> {
@@ -229,7 +276,9 @@ class Parser {
 
     private fun parseForInit(tokens: MutableList<Token>): ForInit {
         if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
-            val declaration = parseDeclaration(tokens)
+            expect(TokenType.KEYWORD_INT, tokens)
+            val name = parseIdentifier(tokens)
+            val declaration = parseVariableDeclaration(tokens, name)
             return InitDeclaration(declaration)
         }
         val expression = parseOptionalExpression(tokens = tokens, followedByType = TokenType.SEMICOLON)
@@ -300,8 +349,23 @@ class Parser {
             }
             TokenType.IDENTIFIER -> {
                 nextToken = tokens.removeFirst()
-                return VariableExpression(name = nextToken.lexeme)
+                if (tokens.firstOrNull()?.type == TokenType.LEFT_PAREN) {
+                    // function call
+                    tokens.removeFirst() // consume '('
+                    val args = mutableListOf<Expression>()
+                    if (tokens.firstOrNull()?.type != TokenType.RIGHT_PAREN) {
+                        do {
+                            args.add(parseExpression(0, tokens))
+                        } while (tokens.firstOrNull()?.type == TokenType.COMMA && tokens.removeFirst().type == TokenType.COMMA)
+                    }
+                    expect(TokenType.RIGHT_PAREN, tokens)
+                    return FunctionCall(nextToken.lexeme, args)
+                } else {
+                    // It's a variable
+                    return VariableExpression(nextToken.lexeme)
+                }
             }
+
             TokenType.TILDE, TokenType.NEGATION, TokenType.NOT -> {
                 val operator = tokens.removeFirst()
                 val factor = parseFactor(tokens)

@@ -1,4 +1,4 @@
-package compiler.parser
+package semanticAnalysis
 
 import exceptions.InvalidStatementException
 import parser.AssignmentExpression
@@ -9,11 +9,12 @@ import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
-import parser.Declaration
 import parser.DoWhileStatement
 import parser.ExpressionStatement
 import parser.ForStatement
-import parser.Function
+import parser.FunDecl
+import parser.FunctionCall
+import parser.FunctionDeclaration
 import parser.GotoStatement
 import parser.IfStatement
 import parser.InitDeclaration
@@ -25,6 +26,8 @@ import parser.ReturnStatement
 import parser.S
 import parser.SimpleProgram
 import parser.UnaryExpression
+import parser.VarDecl
+import parser.VariableDeclaration
 import parser.VariableExpression
 import parser.Visitor
 import parser.WhileStatement
@@ -37,7 +40,7 @@ class LoopLabeling : Visitor<Unit> {
 
     override fun visit(node: SimpleProgram) {
         currentLabel = null
-        node.functionDefinition.accept(this)
+        node.functionDeclaration.map { it.accept(this) }
     }
 
     override fun visit(node: ReturnStatement) {
@@ -92,15 +95,15 @@ class LoopLabeling : Visitor<Unit> {
     }
 
     override fun visit(node: InitDeclaration) {
-        node.declaration.accept(this)
+        node.varDeclaration.accept(this)
     }
 
     override fun visit(node: InitExpression) {
         node.expression?.accept(this)
     }
 
-    override fun visit(node: Function) {
-        node.body.accept(this)
+    override fun visit(node: FunctionDeclaration) {
+        node.body?.accept(this)
     }
 
     override fun visit(node: VariableExpression) {
@@ -142,8 +145,16 @@ class LoopLabeling : Visitor<Unit> {
         node.rvalue.accept(this)
     }
 
-    override fun visit(node: Declaration) {
+    override fun visit(node: VariableDeclaration) {
         node.init?.accept(this)
+    }
+
+    override fun visit(node: VarDecl) {
+        node.varDecl.accept(this)
+    }
+
+    override fun visit(node: FunDecl) {
+        node.funDecl.accept(this)
     }
 
     override fun visit(node: S) {
@@ -160,5 +171,9 @@ class LoopLabeling : Visitor<Unit> {
 
     override fun visit(node: CompoundStatement) {
         node.block.accept(this)
+    }
+
+    override fun visit(node: FunctionCall) {
+        node.arguments.forEach { it.accept(this) }
     }
 }

@@ -23,8 +23,6 @@ interface Visitor<T> {
 
     fun visit(node: InitExpression): T
 
-    fun visit(node: Function): T
-
     fun visit(node: VariableExpression): T
 
     fun visit(node: UnaryExpression): T
@@ -43,7 +41,13 @@ interface Visitor<T> {
 
     fun visit(node: AssignmentExpression): T
 
-    fun visit(node: Declaration): T
+    fun visit(node: VariableDeclaration): T
+
+    fun visit(node: FunctionDeclaration): T
+
+    fun visit(node: VarDecl): T
+
+    fun visit(node: FunDecl): T
 
     fun visit(node: S): T
 
@@ -52,4 +56,6 @@ interface Visitor<T> {
     fun visit(node: Block): T
 
     fun visit(node: CompoundStatement): T
+
+    fun visit(node: FunctionCall): T
 }

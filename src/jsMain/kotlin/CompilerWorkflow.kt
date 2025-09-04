@@ -3,14 +3,15 @@ package compiler
 import assembly.AsmConstruct
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
-import compiler.parser.LabelAnalysis
-import compiler.parser.LoopLabeling
-import compiler.parser.VariableResolution
 import lexer.Lexer
 import lexer.Token
 import parser.ASTNode
 import parser.Parser
 import parser.SimpleProgram
+import semanticAnalysis.IdentifierResolution
+import semanticAnalysis.LabelCollector
+import semanticAnalysis.LoopLabeling
+import semanticAnalysis.TypeChecker
 import tacky.TackyConstruct
 import tacky.TackyGenVisitor
 import tacky.TackyProgram
@@ -27,8 +28,9 @@ sealed class CompilerWorkflow {
     companion object {
         private val parser = Parser()
         private val tackyGenVisitor = TackyGenVisitor()
-        private val variableResolution = VariableResolution()
-        private val labelAnalysis = LabelAnalysis()
+        private val identifierResolution = IdentifierResolution()
+        private val typeChecker = TypeChecker()
+        private val labelAnalysis = LabelCollector.LabelAnalysis()
         private val loopLabeling = LoopLabeling()
         private val tackyToAsmConverter = TackyToAsm()
         private val instructionFixer = InstructionFixer()
@@ -55,8 +57,9 @@ sealed class CompilerWorkflow {
 
         fun take(tokens: List<Token>): ASTNode {
             val ast = parser.parseTokens(tokens) as SimpleProgram
-            val transformedAst = variableResolution.visit(ast) as SimpleProgram
+            val transformedAst = identifierResolution.analyze(ast) as SimpleProgram
             labelAnalysis.analyze(transformedAst)
+            typeChecker.analyze(transformedAst)
             loopLabeling.visit(transformedAst)
             return transformedAst
         }
@@ -68,8 +71,8 @@ sealed class CompilerWorkflow {
 
         fun take(tacky: TackyConstruct): AsmConstruct {
             val asm = tackyToAsmConverter.convert(tacky as TackyProgram)
-            val (asmWithStack, stackSpaceNeeded) = pseudoEliminator.eliminate(asm)
-            val finalAsmProgram = instructionFixer.fix(asmWithStack, stackSpaceNeeded)
+            val asmWithStackSizes = pseudoEliminator.eliminate(asm)
+            val finalAsmProgram = instructionFixer.fix(asmWithStackSizes)
             return finalAsmProgram
         }
     }

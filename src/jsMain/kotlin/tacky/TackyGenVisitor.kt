@@ -10,11 +10,12 @@ import parser.CompoundStatement
 import parser.ConditionalExpression
 import parser.ContinueStatement
 import parser.D
-import parser.Declaration
 import parser.DoWhileStatement
 import parser.ExpressionStatement
 import parser.ForStatement
-import parser.Function
+import parser.FunDecl
+import parser.FunctionCall
+import parser.FunctionDeclaration
 import parser.GotoStatement
 import parser.IfStatement
 import parser.InitDeclaration
@@ -26,6 +27,8 @@ import parser.ReturnStatement
 import parser.S
 import parser.SimpleProgram
 import parser.UnaryExpression
+import parser.VarDecl
+import parser.VariableDeclaration
 import parser.VariableExpression
 import parser.Visitor
 import parser.WhileStatement
@@ -39,6 +42,12 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     private fun newLabel(base: String): TackyLabel = TackyLabel(".L_${base}_${labelCounter++}")
 
     private val currentInstructions = mutableListOf<TackyInstruction>()
+
+    fun reset() {
+        tempCounter = 0
+        labelCounter = 0
+        currentInstructions.clear()
+    }
 
     private fun convertUnaryOp(tokenType: TokenType): TackyUnaryOP {
         if (tokenType == TokenType.TILDE) {
@@ -84,7 +93,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         // Reset counter for test assertions
         tempCounter = 0
         labelCounter = 0
-        val tackyFunction = node.functionDefinition.accept(this) as TackyFunction
+        val tackyFunction = node.functionDeclaration.filter { it.body != null }.map { it.accept(this) as TackyFunction }
         return TackyProgram(tackyFunction)
     }
 
@@ -158,7 +167,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     }
 
     override fun visit(node: InitDeclaration): TackyConstruct? {
-        node.declaration.accept(this)
+        node.varDeclaration.accept(this)
         return null
     }
 
@@ -167,16 +176,27 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         return null
     }
 
-    override fun visit(node: Function): TackyConstruct {
+    override fun visit(node: FunctionDeclaration): TackyConstruct {
         val functionName = node.name
+        val functionParams = node.params
 
         currentInstructions.clear()
-        node.body.accept(this)
-        // Return 0 to guarantee successful termination
-        currentInstructions.add(TackyRet(TackyConstant(0)))
-        val instructionList = currentInstructions.toList()
+        node.body?.accept(this)
 
-        return TackyFunction(functionName, instructionList)
+        if (currentInstructions.lastOrNull() !is TackyRet) {
+            currentInstructions += TackyRet(TackyConstant(0))
+        }
+        return TackyFunction(functionName, functionParams, currentInstructions.toList())
+    }
+
+    override fun visit(node: VarDecl): TackyConstruct? {
+        node.varDecl.accept(this)
+        return null
+    }
+
+    override fun visit(node: FunDecl): TackyConstruct? {
+        node.funDecl.accept(this)
+        return null
     }
 
     override fun visit(node: VariableExpression): TackyConstruct = TackyVar(node.name)
@@ -298,9 +318,10 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         return dest
     }
 
-    override fun visit(node: Declaration): TackyConstruct? {
+    override fun visit(node: VariableDeclaration): TackyConstruct? {
         if (node.init != null) {
             val initVal = node.init.accept(this) as TackyVal
+            // The `node.name` is already the unique name from IdentifierResolution
             currentInstructions += TackyCopy(initVal, TackyVar(node.name))
         }
         return null
@@ -324,5 +345,12 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     override fun visit(node: CompoundStatement): TackyConstruct? {
         node.block.accept(this)
         return null
+    }
+
+    override fun visit(node: FunctionCall): TackyConstruct? {
+        val args = node.arguments.map { it.accept(this) as TackyVal }
+        val dest = newTemporary()
+        currentInstructions += TackyFunCall(node.name, args, dest)
+        return dest
     }
 }
