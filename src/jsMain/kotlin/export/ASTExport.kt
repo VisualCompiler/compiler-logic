@@ -217,6 +217,14 @@ class ASTExport : Visitor<String> {
                     "declaration" to JsonPrimitive(node.varDeclaration.accept(this))
                 )
             )
+
+        val edgeLabels =
+            JsonObject(
+                mapOf(
+                    "declaration" to JsonPrimitive("init declaration")
+                )
+            )
+
         val jsonNode =
             JsonObject(
                 mapOf(

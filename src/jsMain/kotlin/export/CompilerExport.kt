@@ -11,6 +11,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import lexer.Lexer
+import lexer.Token
 import tacky.TackyProgram
 
 @OptIn(ExperimentalJsExport::class)
@@ -25,7 +26,7 @@ class CompilerExport {
             val lexer = Lexer(code)
             outputs.add(
                 LexerOutput(
-                    tokens = lexer.toJsonString(),
+                    tokens = tokens.toJsonString(),
                     errors = emptyArray()
                 )
             )
@@ -100,9 +101,9 @@ class CompilerExport {
         return result.toJsonString()
     }
 
-    fun Lexer.toJsonString(): String {
+    fun List<Token>.toJsonString(): String {
         val jsonTokens =
-            this.tokens.map { token ->
+            this.map { token ->
                 JsonObject(
                     mapOf(
                         "line" to JsonPrimitive(token.line),
