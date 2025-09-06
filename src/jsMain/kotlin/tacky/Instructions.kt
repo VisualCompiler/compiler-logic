@@ -1,9 +1,10 @@
 package tacky
 
-sealed class TackyInstruction : TackyConstruct()
+sealed class TackyInstruction() : TackyConstruct()
 
 data class TackyRet(
-    val value: TackyVal
+    val value: TackyVal,
+    val sourceId: String = ""
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}return ${value.toPseudoCode()}"
 }
@@ -19,7 +20,8 @@ enum class TackyUnaryOP(
 data class TackyUnary(
     val operator: TackyUnaryOP,
     val src: TackyVal,
-    val dest: TackyVar
+    val dest: TackyVar,
+    val sourceId: String = ""
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}${dest.toPseudoCode()} = ${operator.text}${src.toPseudoCode()}"
@@ -45,7 +47,8 @@ data class TackyBinary(
     val operator: TackyBinaryOP,
     val src1: TackyVal,
     val src2: TackyVal,
-    val dest: TackyVar
+    val dest: TackyVar,
+    val sourceId: String = ""
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}${dest.toPseudoCode()} = ${src1.toPseudoCode()} ${operator.text} ${src2.toPseudoCode()}"
@@ -53,20 +56,23 @@ data class TackyBinary(
 
 data class TackyCopy(
     val src: TackyVal,
-    val dest: TackyVar
+    val dest: TackyVar,
+    val sourceId: String = ""
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}${dest.toPseudoCode()} = ${src.toPseudoCode()}"
 }
 
 data class TackyJump(
-    val target: TackyLabel
+    val target: TackyLabel,
+    val sourceId: String = ""
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}goto ${target.name}"
 }
 
 data class JumpIfZero(
     val condition: TackyVal,
-    val target: TackyLabel
+    val target: TackyLabel,
+    val sourceId: String = ""
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}if (${condition.toPseudoCode()} == 0) goto ${target.name}"
@@ -74,7 +80,8 @@ data class JumpIfZero(
 
 data class JumpIfNotZero(
     val condition: TackyVal,
-    val target: TackyLabel
+    val target: TackyLabel,
+    val sourceId: String = ""
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}if (${condition.toPseudoCode()} != 0) goto ${target.name}"
@@ -83,7 +90,8 @@ data class JumpIfNotZero(
 data class TackyFunCall(
     val funName: String,
     val args: List<TackyVal>,
-    val dest: TackyVar
+    val dest: TackyVar,
+    val sourceId: String = ""
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String {
         val argString = args.joinToString(", ") { it.toPseudoCode() }

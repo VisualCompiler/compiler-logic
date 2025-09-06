@@ -106,8 +106,8 @@ class CompilerExport {
             this.map { token ->
                 JsonObject(
                     mapOf(
-                        "line" to JsonPrimitive(token.line),
-                        "column" to JsonPrimitive(token.column),
+                        "line" to JsonPrimitive(token.startLine),
+                        "column" to JsonPrimitive(token.startColumn),
                         "type" to JsonPrimitive(token.type.toString()),
                         "lexeme" to JsonPrimitive(token.lexeme)
                     )

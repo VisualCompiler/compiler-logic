@@ -1,12 +1,12 @@
 package tacky
 
-sealed class TackyConstruct {
+sealed class TackyConstruct() {
     abstract fun toPseudoCode(indentationLevel: Int = 0): String
 
     protected fun indent(level: Int): String = "  ".repeat(level)
 }
 
-sealed class TackyVal : TackyConstruct()
+sealed class TackyVal() : TackyConstruct()
 
 data class TackyConstant(
     val value: Int

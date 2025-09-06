@@ -98,7 +98,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
 
     override fun visit(node: ReturnStatement): TackyConstruct {
         val value = node.expression.accept(this) as TackyVal
-        val instr = TackyRet(value)
+        val instr = TackyRet(value, node.id)
         currentInstructions += instr
         return instr
     }
@@ -112,13 +112,13 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
 
     override fun visit(node: BreakStatement): TackyConstruct? {
         val breakLabel = TackyLabel("break_${node.label}")
-        currentInstructions += TackyJump(breakLabel)
+        currentInstructions += TackyJump(breakLabel, node.id)
         return null
     }
 
     override fun visit(node: ContinueStatement): TackyConstruct? {
         val continueLabel = TackyLabel("continue_${node.label}")
-        currentInstructions += TackyJump(continueLabel)
+        currentInstructions += TackyJump(continueLabel, node.id)
         return null
     }
 
@@ -127,9 +127,9 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         val breakLabel = TackyLabel("break_${node.label}")
         currentInstructions += continueLabel
         val condition = node.condition.accept(this) as TackyVal
-        currentInstructions += JumpIfZero(condition, breakLabel)
+        currentInstructions += JumpIfZero(condition, breakLabel, node.id)
         node.body.accept(this)
-        currentInstructions += TackyJump(continueLabel)
+        currentInstructions += TackyJump(continueLabel, node.id)
         currentInstructions += breakLabel
         return null
     }
@@ -155,12 +155,12 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         currentInstructions += startLabel
         if (node.condition != null) {
             val condition = node.condition.accept(this) as TackyVal
-            currentInstructions += JumpIfZero(condition, breakLabel)
+            currentInstructions += JumpIfZero(condition, breakLabel, node.id)
         }
         node.body.accept(this)
         currentInstructions += continueLabel
         node.post?.accept(this)
-        currentInstructions += TackyJump(startLabel)
+        currentInstructions += TackyJump(startLabel, node.id)
         currentInstructions += breakLabel
         return null
     }
@@ -204,7 +204,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         val src = node.expression.accept(this) as TackyVal
         val dst = newTemporary()
         val op = convertUnaryOp(node.operator.type)
-        currentInstructions += TackyUnary(op, src, dst)
+        currentInstructions += TackyUnary(op, src, dst, node.id)
         return dst
     }
 
@@ -216,13 +216,13 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
                 val resultVar = newTemporary()
 
                 val left = node.left.accept(this) as TackyVal
-                currentInstructions += JumpIfZero(left, falseLabel)
+                currentInstructions += JumpIfZero(left, falseLabel, node.id)
                 val right = node.right.accept(this) as TackyVal
-                currentInstructions += JumpIfZero(right, falseLabel)
-                currentInstructions += TackyCopy(TackyConstant(1), resultVar)
-                currentInstructions += TackyJump(endLabel)
+                currentInstructions += JumpIfZero(right, falseLabel, node.id)
+                currentInstructions += TackyCopy(TackyConstant(1), resultVar, node.id)
+                currentInstructions += TackyJump(endLabel, node.id)
                 currentInstructions += falseLabel
-                currentInstructions += TackyCopy(TackyConstant(0), resultVar)
+                currentInstructions += TackyCopy(TackyConstant(0), resultVar, node.id)
                 currentInstructions += endLabel
 
                 return resultVar
@@ -236,10 +236,10 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
                 currentInstructions += JumpIfNotZero(left, trueLabel)
                 val right = node.right.accept(this) as TackyVal
                 currentInstructions += JumpIfNotZero(right, trueLabel)
-                currentInstructions += TackyCopy(TackyConstant(0), resultVar)
-                currentInstructions += TackyJump(endLabel)
+                currentInstructions += TackyCopy(TackyConstant(0), resultVar, node.id)
+                currentInstructions += TackyJump(endLabel, node.id)
                 currentInstructions += trueLabel
-                currentInstructions += TackyCopy(TackyConstant(1), resultVar)
+                currentInstructions += TackyCopy(TackyConstant(1), resultVar, node.id)
                 currentInstructions += endLabel
 
                 return resultVar
@@ -250,7 +250,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
                 val op = convertBinaryOp(node.operator.type)
 
                 val dst = newTemporary()
-                currentInstructions += TackyBinary(operator = op, src1 = src1, src2 = src2, dest = dst)
+                currentInstructions += TackyBinary(operator = op, src1 = src1, src2 = src2, dest = dst, sourceId = node.id)
                 return dst
             }
         }
@@ -263,14 +263,14 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
 
         val condition = node.condition.accept(this) as TackyVal
         if (node._else == null) {
-            currentInstructions += JumpIfZero(condition, endLabel)
+            currentInstructions += JumpIfZero(condition, endLabel, node.id)
             node.then.accept(this)
             currentInstructions += endLabel
         } else {
             val elseLabel = newLabel("else_label")
-            currentInstructions += JumpIfZero(condition, elseLabel)
+            currentInstructions += JumpIfZero(condition, elseLabel, node.id)
             node.then.accept(this)
-            currentInstructions += TackyJump(endLabel)
+            currentInstructions += TackyJump(endLabel, node.id)
             currentInstructions += elseLabel
             node._else.accept(this)
             currentInstructions += endLabel
@@ -285,26 +285,26 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         val endLabel = newLabel("cond_end")
 
         val conditionResult = node.codition.accept(this) as TackyVal
-        currentInstructions += JumpIfZero(conditionResult, elseLabel)
+        currentInstructions += JumpIfZero(conditionResult, elseLabel, node.id)
 
         val thenResult = node.thenExpression.accept(this) as TackyVal
-        currentInstructions += TackyCopy(thenResult, resultVar)
-        currentInstructions += TackyJump(endLabel)
+        currentInstructions += TackyCopy(thenResult, resultVar, node.id)
+        currentInstructions += TackyJump(endLabel, node.id)
         currentInstructions += elseLabel
         val elseResult = node.elseExpression.accept(this) as TackyVal
-        currentInstructions += TackyCopy(elseResult, resultVar)
+        currentInstructions += TackyCopy(elseResult, resultVar, node.id)
         currentInstructions += endLabel
 
         return resultVar
     }
 
     override fun visit(node: GotoStatement): TackyConstruct? {
-        currentInstructions += TackyJump(TackyLabel(node.label))
+        currentInstructions += TackyJump(TackyLabel(node.label), node.id)
         return null
     }
 
     override fun visit(node: LabeledStatement): TackyConstruct? {
-        // val label = newLabel(node.label)
+        val label = node.label
         currentInstructions += TackyLabel(node.label)
         node.statement.accept(this)
         return null
@@ -313,7 +313,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     override fun visit(node: AssignmentExpression): TackyConstruct {
         val rvalue = node.rvalue.accept(this) as TackyVal
         val dest = TackyVar(node.lvalue.name)
-        currentInstructions += TackyCopy(rvalue, dest)
+        currentInstructions += TackyCopy(rvalue, dest, node.id)
         return dest
     }
 
@@ -321,7 +321,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         if (node.init != null) {
             val initVal = node.init.accept(this) as TackyVal
             // The `node.name` is already the unique name from IdentifierResolution
-            currentInstructions += TackyCopy(initVal, TackyVar(node.name))
+            currentInstructions += TackyCopy(initVal, TackyVar(node.name), node.id)
         }
         return null
     }
@@ -337,7 +337,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     }
 
     override fun visit(node: Block): TackyConstruct? {
-        node.block.forEach { it.accept(this) }
+        node.items.forEach { it.accept(this) }
         return null
     }
 
@@ -349,7 +349,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     override fun visit(node: FunctionCall): TackyConstruct? {
         val args = node.arguments.map { it.accept(this) as TackyVal }
         val dest = newTemporary()
-        currentInstructions += TackyFunCall(node.name, args, dest)
+        currentInstructions += TackyFunCall(node.name, args, dest, node.id)
         return dest
     }
 }

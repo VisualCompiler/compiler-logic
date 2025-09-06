@@ -97,10 +97,19 @@ sealed class TokenType {
 data class Token(
     val type: TokenType,
     val lexeme: String,
-    val line: Int,
-    val column: Int
+    val startLine: Int,
+    val startColumn: Int,
+    val endLine: Int,
+    val endColumn: Int
 ) {
-    override fun equals(other: Any?): Boolean = other is Token && other.type == this.type && other.lexeme == this.lexeme
+    override fun equals(other: Any?): Boolean =
+        other is Token &&
+            other.type == this.type &&
+            other.lexeme == this.lexeme &&
+            other.startLine == this.startLine &&
+            other.startColumn == this.startColumn &&
+            other.endLine == this.endLine &&
+            other.endColumn == this.endColumn
 }
 
 class Lexer(
@@ -133,7 +142,7 @@ class Lexer(
             start = current
             scanToken()
         }
-        tokens.add(Token(TokenType.EOF, "", line, current - lineStart + 1))
+        tokens.add(Token(TokenType.EOF, "", line, current - lineStart + 1, line, current - lineStart + 1))
         return tokens
     }
 
@@ -264,7 +273,17 @@ class Lexer(
 
     private fun addToken(type: TokenType) {
         val text = source.substring(start, current)
-        val column = start - lineStart + 1
-        tokens.add(Token(type, text, line, column))
+        val startCol = start - lineStart + 1
+        val endCol = current - lineStart
+        tokens.add(
+            Token(
+                type,
+                text,
+                startLine = line,
+                startColumn = startCol,
+                endLine = line,
+                endColumn = endCol
+            )
+        )
     }
 }

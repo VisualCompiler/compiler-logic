@@ -233,14 +233,14 @@ class ASTExport : Visitor<String> {
 
     override fun visit(node: S): String = node.statement.accept(this)
 
-    override fun visit(node: D): String =
-        when (node.declaration) {
-            is VarDecl -> node.declaration.accept(this)
-            is FunDecl -> node.declaration.accept(this)
-        }
+    override fun visit(node: D): String = when (node.declaration) {
+        is VarDecl -> node.declaration.accept(this)
+        is FunDecl -> node.declaration.accept(this)
+        is VariableDeclaration -> node.declaration.accept(this)
+    }
 
     override fun visit(node: Block): String {
-        val blockItems = node.block.map { it.accept(this) }
+        val blockItems = node.items.map { it.accept(this) }
         val children = JsonObject(mapOf("block" to JsonArray(blockItems.map { JsonPrimitive(it) })))
         return createJsonNode(NodeType.Block.name, "Block", children)
     }
