@@ -23,7 +23,7 @@ class CompilerExport {
         val codeEmitter = CodeEmitter()
         try {
             val tokens = CompilerWorkflow.take(code)
-            val lexer = Lexer(code)
+            Lexer(code)
             outputs.add(
                 LexerOutput(
                     tokens = tokens.toJsonString(),
