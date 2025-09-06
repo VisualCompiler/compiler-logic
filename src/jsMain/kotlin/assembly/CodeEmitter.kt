@@ -13,13 +13,13 @@ class CodeEmitter {
         return buildString {
             appendLine("  .globl $functionName")
             appendLine("$functionName:")
-            appendLine("  pushq %rbp")
-            appendLine("  movq %rsp, %rbp")
+            appendLine("  push rbp")
+            appendLine("  mov rbp, rsp")
             if (bodyAsm.isNotEmpty()) {
                 appendLine(bodyAsm)
             }
-            appendLine("  movq %rbp, %rsp")
-            appendLine("  popq %rbp")
+            appendLine("  mov rsp, rbp")
+            appendLine("  pop rbp")
             append("  ret")
         }
     }
@@ -30,16 +30,16 @@ class CodeEmitter {
             is Call -> "${indent}call ${formatLabel(instruction.identifier)}"
             is Push -> {
                 val operand = emitOperand(instruction.operand, size = OperandSize.QUAD)
-                "${indent}pushq $operand"
+                "${indent}push $operand"
             }
-            is DeAllocateStack -> "${indent}addq $${instruction.size}, %rsp"
+            is DeAllocateStack -> "${indent}addq rsp, ${instruction.size}"
 
-            is Mov -> "${indent}movl ${emitOperand(instruction.src)}, ${emitOperand(instruction.dest)}"
+            is Mov -> "${indent}mov ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}"
             is AsmUnary -> "${indent}${instruction.op.text} ${emitOperand(instruction.dest)}"
-            is AsmBinary -> "${indent}${instruction.op.text} ${emitOperand(instruction.src)}, ${emitOperand(instruction.dest)}"
-            is Cmp -> "${indent}cmpl ${emitOperand(instruction.src)}, ${emitOperand(instruction.dest)}"
-            is Idiv -> "${indent}idivl ${emitOperand(instruction.divisor)}"
-            is AllocateStack -> "${indent}subq $${instruction.size}, %rsp"
+            is AsmBinary -> "${indent}${instruction.op.text} ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}"
+            is Cmp -> "${indent}cmp ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}"
+            is Idiv -> "${indent}idiv ${emitOperand(instruction.divisor)}"
+            is AllocateStack -> "${indent}subq rsp, ${instruction.size}"
             is Cdq -> "${indent}cdq"
             is Label -> formatLabel(instruction.name) + ":"
             is Jmp -> "${indent}jmp ${formatLabel(instruction.label.name)}"
@@ -60,16 +60,16 @@ class CodeEmitter {
 
     private fun emitOperand(
         operand: Operand,
-        size: OperandSize = OperandSize.LONG
+        size: OperandSize = OperandSize.QUAD
     ): String =
         when (operand) {
-            is Imm -> "$${operand.value}"
-            is Stack -> "${operand.offset}(%rbp)"
+            is Imm -> "${operand.value}"
+            is Stack -> "qword ptr[rbp ${operand.offset}]"
             is Register ->
                 when (size) {
-                    OperandSize.QUAD -> "%${operand.name.x64Name}"
-                    OperandSize.LONG -> "%${operand.name.x32Name}"
-                    OperandSize.BYTE -> "%${operand.name.x8Name}"
+                    OperandSize.QUAD -> operand.name.x64Name.lowercase()
+                    OperandSize.LONG -> operand.name.x32Name.lowercase()
+                    OperandSize.BYTE -> operand.name.x8Name.lowercase()
                 }
             is Pseudo -> throw IllegalStateException("Cannot emit assembly with pseudo-register '${operand.name}'")
         }

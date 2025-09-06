@@ -90,9 +90,8 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     }
 
     override fun visit(node: SimpleProgram): TackyConstruct {
-        // Reset counter for test assertions
-        tempCounter = 0
-        labelCounter = 0
+        // Reset counter
+        reset()
         val tackyFunction = node.functionDeclaration.filter { it.body != null }.map { it.accept(this) as TackyFunction }
         return TackyProgram(tackyFunction)
     }

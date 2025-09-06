@@ -16,7 +16,7 @@ class PseudoEliminator {
             pseudoToOffset[name]?.let { offset ->
                 Stack(offset)
             } ?: run {
-                nextAvailableOffset -= 4
+                nextAvailableOffset -= 8
                 pseudoToOffset[name] = nextAvailableOffset
                 Stack(nextAvailableOffset)
             }
