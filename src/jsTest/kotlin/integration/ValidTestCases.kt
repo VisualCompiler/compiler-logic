@@ -201,45 +201,45 @@ object ValidTestCases {
                     listOf( // AsmProgram now holds a LIST of functions
                         AsmFunction(
                             name = "main",
-                            stackSize = 28, // 7 temporary variables * 4 bytes
+                            stackSize = 56, // 7 temporary variables * 8 bytes = 56
                             body =
                             listOf(
-                                AllocateStack(32), // 28 rounded up to 16
+                                AllocateStack(64),
                                 // tmp.0 = 5 - 3
-                                Mov(Imm(5), Stack(-4)),
-                                AsmBinary(AsmBinaryOp.SUB, Imm(3), Stack(-4)),
+                                Mov(Imm(5), Stack(-8)),
+                                AsmBinary(AsmBinaryOp.SUB, Imm(3), Stack(-8)),
                                 // tmp.1 = tmp.0 * 4
-                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-8)),
-                                Mov(Stack(-8), Register(HardwareRegister.R11D)),
-                                AsmBinary(AsmBinaryOp.MUL, Imm(4), Register(HardwareRegister.R11D)),
-                                Mov(Register(HardwareRegister.R11D), Stack(-8)),
-                                // tmp.2 = -5
-                                Mov(Imm(5), Stack(-12)),
-                                AsmUnary(AsmUnaryOp.NEG, Stack(-12)),
-                                // tmp.3 = ~tmp.2
-                                Mov(Stack(-12), Register(HardwareRegister.R10D)),
+                                Mov(Stack(-8), Register(HardwareRegister.R10D)),
                                 Mov(Register(HardwareRegister.R10D), Stack(-16)),
-                                AsmUnary(AsmUnaryOp.NOT, Stack(-16)),
+                                Mov(Stack(-16), Register(HardwareRegister.R11D)),
+                                AsmBinary(AsmBinaryOp.MUL, Imm(4), Register(HardwareRegister.R11D)),
+                                Mov(Register(HardwareRegister.R11D), Stack(-16)),
+                                // tmp.2 = -5
+                                Mov(Imm(5), Stack(-24)),
+                                AsmUnary(AsmUnaryOp.NEG, Stack(-24)),
+                                // tmp.3 = ~tmp.2
+                                Mov(Stack(-24), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-32)),
+                                AsmUnary(AsmUnaryOp.NOT, Stack(-32)),
                                 // tmp.4 = tmp.3 / 6
-                                Mov(Stack(-16), Register(HardwareRegister.EAX)),
+                                Mov(Stack(-32), Register(HardwareRegister.EAX)),
                                 Cdq,
                                 Mov(Imm(6), Register(HardwareRegister.R10D)),
                                 Idiv(Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.EAX), Stack(-20)),
+                                Mov(Register(HardwareRegister.EAX), Stack(-40)),
                                 // tmp.5 = tmp.4 % 3
-                                Mov(Stack(-20), Register(HardwareRegister.EAX)),
+                                Mov(Stack(-40), Register(HardwareRegister.EAX)),
                                 Cdq,
                                 Mov(Imm(3), Register(HardwareRegister.R10D)),
                                 Idiv(Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.EDX), Stack(-24)),
+                                Mov(Register(HardwareRegister.EDX), Stack(-48)),
                                 // tmp.6 = tmp.1 + tmp.5
-                                Mov(Stack(-8), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-28)),
-                                Mov(Stack(-24), Register(HardwareRegister.R10D)),
-                                AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-28)),
+                                Mov(Stack(-16), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-56)),
+                                Mov(Stack(-48), Register(HardwareRegister.R10D)),
+                                AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-56)),
                                 // return tmp.6
-                                Mov(Stack(-28), Register(HardwareRegister.EAX)),
+                                Mov(Stack(-56), Register(HardwareRegister.EAX)),
                                 Ret
                                 // The implicit return 0
                             )
@@ -304,55 +304,55 @@ object ValidTestCases {
                     listOf( // AsmProgram holds a LIST of functions
                         AsmFunction(
                             name = "main",
-                            stackSize = 20, // 5 temporary variables * 4 bytes
+                            stackSize = 40, // 5 temporary variables * 8 bytes = 40
                             body =
                             listOf(
-                                AllocateStack(32), // 20 rounded up to 16 is 32
+                                AllocateStack(48),
                                 // tmp.1 = (1 == 0)
                                 Mov(Imm(1), Register(HardwareRegister.R11D)),
                                 Cmp(Imm(0), Register(HardwareRegister.R11D)),
-                                Mov(Imm(0), Stack(-4)),
-                                SetCC(ConditionCode.E, Stack(-4)),
+                                Mov(Imm(0), Stack(-8)),
+                                SetCC(ConditionCode.E, Stack(-8)),
                                 // if (tmp.1 != 0) goto .L_or_true_0
-                                Cmp(Imm(0), Stack(-4)),
+                                Cmp(Imm(0), Stack(-8)),
                                 JmpCC(ConditionCode.NE, Label(".L_or_true_0")),
                                 // tmp.3 = (5 > 2)
                                 Mov(Imm(5), Register(HardwareRegister.R11D)),
                                 Cmp(Imm(2), Register(HardwareRegister.R11D)),
-                                Mov(Imm(0), Stack(-8)),
-                                SetCC(ConditionCode.G, Stack(-8)),
+                                Mov(Imm(0), Stack(-16)),
+                                SetCC(ConditionCode.G, Stack(-16)),
                                 // if (tmp.3 == 0) goto .L_and_false_2
-                                Cmp(Imm(0), Stack(-8)),
+                                Cmp(Imm(0), Stack(-16)),
                                 JmpCC(ConditionCode.E, Label(".L_and_false_2")),
                                 // tmp.4 = (10 <= 20)
                                 Mov(Imm(10), Register(HardwareRegister.R11D)),
                                 Cmp(Imm(20), Register(HardwareRegister.R11D)),
-                                Mov(Imm(0), Stack(-12)),
-                                SetCC(ConditionCode.LE, Stack(-12)),
+                                Mov(Imm(0), Stack(-24)),
+                                SetCC(ConditionCode.LE, Stack(-24)),
                                 // if (tmp.4 == 0) goto .L_and_false_2
-                                Cmp(Imm(0), Stack(-12)),
+                                Cmp(Imm(0), Stack(-24)),
                                 JmpCC(ConditionCode.E, Label(".L_and_false_2")),
                                 // tmp.2 = 1 (AND is true)
-                                Mov(Imm(1), Stack(-16)),
+                                Mov(Imm(1), Stack(-32)),
                                 Jmp(Label(".L_and_end_3")),
                                 // .L_and_false_2: (AND is false)
                                 Label(".L_and_false_2"),
-                                Mov(Imm(0), Stack(-16)),
+                                Mov(Imm(0), Stack(-32)),
                                 // .L_and_end_3:
                                 Label(".L_and_end_3"),
                                 // if (tmp.2 != 0) goto .L_or_true_0
-                                Cmp(Imm(0), Stack(-16)),
+                                Cmp(Imm(0), Stack(-32)),
                                 JmpCC(ConditionCode.NE, Label(".L_or_true_0")),
                                 // tmp.0 = 0 (OR is false)
-                                Mov(Imm(0), Stack(-20)),
+                                Mov(Imm(0), Stack(-40)),
                                 Jmp(Label(".L_or_end_1")),
                                 // .L_or_true_0: (OR is true)
                                 Label(".L_or_true_0"),
-                                Mov(Imm(1), Stack(-20)),
+                                Mov(Imm(1), Stack(-40)),
                                 // .L_or_end_1:
                                 Label(".L_or_end_1"),
                                 // return tmp.0
-                                Mov(Stack(-20), Register(HardwareRegister.EAX)),
+                                Mov(Stack(-40), Register(HardwareRegister.EAX)),
                                 Ret
                             )
                         )
@@ -416,7 +416,8 @@ object ValidTestCases {
                         FunctionDeclaration(
                             name = "main",
                             params = emptyList(),
-                            body = Block(
+                            body =
+                            Block(
                                 block =
                                 listOf(
                                     D(VarDecl(VariableDeclaration(name = "b.0", init = null))),
@@ -533,18 +534,18 @@ object ValidTestCases {
                     listOf(
                         AsmFunction(
                             name = "main",
-                            stackSize = 8,
+                            stackSize = 16,
                             body =
                             listOf(
                                 AllocateStack(16),
                                 // int a = 0;
-                                Mov(Imm(0), Stack(-4)),
-                                // tmp.0 = a == 0;
-                                Cmp(Imm(0), Stack(-4)),
                                 Mov(Imm(0), Stack(-8)),
-                                SetCC(ConditionCode.E, Stack(-8)),
-                                // if (tmp.0 == 0) goto .L_else_label_1
+                                // tmp.0 = a == 0;
                                 Cmp(Imm(0), Stack(-8)),
+                                Mov(Imm(0), Stack(-16)),
+                                SetCC(ConditionCode.E, Stack(-16)),
+                                // if (tmp.0 == 0) goto .L_else_label_1
+                                Cmp(Imm(0), Stack(-16)),
                                 JmpCC(ConditionCode.E, Label(".L_else_label_1")),
                                 // return 10;
                                 Mov(Imm(10), Register(HardwareRegister.EAX)),
@@ -617,34 +618,34 @@ object ValidTestCases {
                     listOf( // AsmProgram holds a LIST of functions
                         AsmFunction(
                             name = "main",
-                            stackSize = 12, // 1 variable (a) + 2 temporaries (tmp.0, tmp.1) = 3 * 4 = 12
+                            stackSize = 24, // 1 variable (a) + 2 temporaries (tmp.0, tmp.1) = 3 * 8 = 24
                             body =
                             listOf(
-                                AllocateStack(16), // 12 rounded up to nearest 16
+                                AllocateStack(32), // 12 rounded up to nearest 16
                                 // a = 0
-                                Mov(Imm(0), Stack(-4)), // Stack slot for a.0
+                                Mov(Imm(0), Stack(-8)), // Stack slot for a.0
                                 // start:
                                 Label("start"),
                                 // tmp.0 = a + 1
-                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-8)), // Stack slot for tmp.0
-                                AsmBinary(AsmBinaryOp.ADD, Imm(1), Stack(-8)),
-                                // a = tmp.0
                                 Mov(Stack(-8), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-4)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-16)), // Stack slot for tmp.0
+                                AsmBinary(AsmBinaryOp.ADD, Imm(1), Stack(-16)),
+                                // a = tmp.0
+                                Mov(Stack(-16), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-8)),
                                 // tmp.1 = a < 3
-                                Cmp(Imm(3), Stack(-4)),
-                                Mov(Imm(0), Stack(-12)), // Stack slot for tmp.1
-                                SetCC(ConditionCode.L, Stack(-12)),
+                                Cmp(Imm(3), Stack(-8)),
+                                Mov(Imm(0), Stack(-24)), // Stack slot for tmp.1
+                                SetCC(ConditionCode.L, Stack(-24)),
                                 // if (tmp.1 == 0) goto .L_end_0
-                                Cmp(Imm(0), Stack(-12)),
+                                Cmp(Imm(0), Stack(-24)),
                                 JmpCC(ConditionCode.E, Label(".L_end_0")),
                                 // goto start
                                 Jmp(Label("start")),
                                 // .L_end_0:
                                 Label(".L_end_0"),
                                 // return a
-                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
+                                Mov(Stack(-8), Register(HardwareRegister.EAX)),
                                 Ret
                             )
                         )
@@ -699,26 +700,26 @@ object ValidTestCases {
                     listOf(
                         AsmFunction(
                             name = "add",
-                            stackSize = 12,
+                            stackSize = 24,
                             body =
                             listOf(
-                                AllocateStack(16),
-                                // Parameter setup: a.0 -> Stack(-4), b.1 -> Stack(-8)
-                                Mov(Register(HardwareRegister.EDI), Stack(-4)),
-                                Mov(Register(HardwareRegister.ESI), Stack(-8)),
+                                AllocateStack(32),
+                                // Parameter setup: a.0 -> Stack(-8), b.1 -> Stack(-16)
+                                Mov(Register(HardwareRegister.EDI), Stack(-8)),
+                                Mov(Register(HardwareRegister.ESI), Stack(-16)),
                                 // tmp.0 = a + b (using R10D for temporary)
-                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-12)),
                                 Mov(Stack(-8), Register(HardwareRegister.R10D)),
-                                AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-12)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-24)),
+                                Mov(Stack(-16), Register(HardwareRegister.R10D)),
+                                AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-24)),
                                 // return tmp.0
-                                Mov(Stack(-12), Register(HardwareRegister.EAX)),
+                                Mov(Stack(-24), Register(HardwareRegister.EAX)),
                                 Ret
                             )
                         ),
                         AsmFunction(
                             name = "main",
-                            stackSize = 8,
+                            stackSize = 16,
                             body =
                             listOf(
                                 AllocateStack(16),
@@ -727,12 +728,12 @@ object ValidTestCases {
                                 Mov(Imm(3), Register(HardwareRegister.ESI)),
                                 Call("add"),
                                 // Store result in result.2
-                                Mov(Register(HardwareRegister.EAX), Stack(-4)),
+                                Mov(Register(HardwareRegister.EAX), Stack(-8)),
                                 // Copy result to R10D for intermediate storage
-                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-8)),
+                                Mov(Stack(-8), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-16)),
                                 // return result
-                                Mov(Stack(-8), Register(HardwareRegister.EAX)),
+                                Mov(Stack(-16), Register(HardwareRegister.EAX)),
                                 Ret
                             )
                         )
@@ -801,7 +802,7 @@ object ValidTestCases {
                         ),
                         AsmFunction(
                             name = "main",
-                            stackSize = 4,
+                            stackSize = 8,
                             body =
                             listOf(
                                 AllocateStack(16),
@@ -811,8 +812,8 @@ object ValidTestCases {
                                 // Call foo() (no arguments)
                                 Call("foo"),
                                 // Store result and return it
-                                Mov(Register(HardwareRegister.EAX), Stack(-4)),
-                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
+                                Mov(Register(HardwareRegister.EAX), Stack(-8)),
+                                Mov(Stack(-8), Register(HardwareRegister.EAX)),
                                 Ret
                             )
                         )
@@ -932,11 +933,13 @@ object ValidTestCases {
                 ),
                 expectedAst =
                 SimpleProgram(
-                    functionDeclaration = listOf(
+                    functionDeclaration =
+                    listOf(
                         FunctionDeclaration(
                             name = "main",
                             params = emptyList(),
-                            body = Block(
+                            body =
+                            Block(
                                 block =
                                 listOf(
                                     D(VarDecl(VariableDeclaration(name = "a.0", init = IntExpression(10)))),

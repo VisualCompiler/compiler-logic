@@ -12,16 +12,16 @@ data class Mov(
 enum class AsmUnaryOp(
     val text: String
 ) {
-    NEG("negl"),
-    NOT("notl") // complement
+    NEG("neg"),
+    NOT("not") // complement
 }
 
 enum class AsmBinaryOp(
     val text: String
 ) {
-    ADD("addl"),
-    SUB("subl"),
-    MUL("imull")
+    ADD("add"),
+    SUB("sub"),
+    MUL("imul")
 }
 
 data class AsmUnary(

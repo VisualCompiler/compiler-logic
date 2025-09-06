@@ -17,8 +17,8 @@ class PseudoEliminatorTest {
         val resultFunction = resultProgram.functions[0]
 
         // Assert
-        val expectedBody = listOf(Mov(Stack(-4), Register(HardwareRegister.EAX)))
-        assertEquals(4, resultFunction.stackSize)
+        val expectedBody = listOf(Mov(Stack(-8), Register(HardwareRegister.EAX)))
+        assertEquals(8, resultFunction.stackSize)
         assertEquals(expectedBody, resultFunction.body)
     }
 
@@ -42,10 +42,10 @@ class PseudoEliminatorTest {
         // Assert
         val expectedBody =
             listOf(
-                Mov(Stack(-4), Register(HardwareRegister.EAX)),
-                AsmBinary(AsmBinaryOp.ADD, Stack(-8), Register(HardwareRegister.EAX))
+                Mov(Stack(-8), Register(HardwareRegister.EAX)),
+                AsmBinary(AsmBinaryOp.ADD, Stack(-16), Register(HardwareRegister.EAX))
             )
-        assertEquals(8, resultFunction.stackSize)
+        assertEquals(16, resultFunction.stackSize)
         assertEquals(expectedBody, resultFunction.body)
     }
 
@@ -70,11 +70,11 @@ class PseudoEliminatorTest {
         // Assert
         val expectedBody =
             listOf(
-                Mov(Stack(-4), Register(HardwareRegister.EAX)),
-                Mov(Register(HardwareRegister.EAX), Stack(-8)),
-                AsmBinary(AsmBinaryOp.SUB, Stack(-4), Stack(-8))
+                Mov(Stack(-8), Register(HardwareRegister.EAX)),
+                Mov(Register(HardwareRegister.EAX), Stack(-16)),
+                AsmBinary(AsmBinaryOp.SUB, Stack(-8), Stack(-16))
             )
-        assertEquals(8, resultFunction.stackSize)
+        assertEquals(16, resultFunction.stackSize)
         assertEquals(expectedBody, resultFunction.body)
     }
 
@@ -111,8 +111,8 @@ class PseudoEliminatorTest {
         val resultFunction = resultProgram.functions[0]
 
         // Assert
-        val expectedBody = listOf(Push(Stack(-4)))
-        assertEquals(4, resultFunction.stackSize)
+        val expectedBody = listOf(Push(Stack(-8)))
+        assertEquals(8, resultFunction.stackSize)
         assertEquals(expectedBody, resultFunction.body)
     }
 }
