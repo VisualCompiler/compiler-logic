@@ -17,24 +17,44 @@ import tacky.TackyProgram
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 class CompilerExport {
+
+    private fun calculateSourceLocationInfo(code: String): SourceLocationInfo {
+        val lines = code.split('\n')
+        val totalLines = lines.size
+        val lastLine = lines.lastOrNull() ?: ""
+        val endColumn = lastLine.length + 1
+
+        return SourceLocationInfo(
+            startLine = 1,
+            startColumn = 1,
+            endLine = totalLines,
+            endColumn = endColumn,
+            totalLines = totalLines
+        )
+    }
+
     fun exportCompilationResults(code: String): String {
         val outputs = mutableListOf<CompilationOutput>()
         val overallErrors = mutableListOf<CompilationError>()
         val codeEmitter = CodeEmitter()
+        val sourceLocationInfo = calculateSourceLocationInfo(code)
+
         try {
             val tokens = CompilerWorkflow.take(code)
             Lexer(code)
             outputs.add(
                 LexerOutput(
-                    tokens = tokens.toJsonString(),
-                    errors = emptyArray()
+                    tokens = exportTokens(tokens),
+                    errors = emptyArray(),
+                    sourceLocation = sourceLocationInfo
                 )
             )
             val ast = CompilerWorkflow.take(tokens)
             outputs.add(
                 ParserOutput(
                     errors = emptyArray(),
-                    ast = ast.accept(ASTExport())
+                    ast = ast.accept(ASTExport()),
+                    sourceLocation = sourceLocationInfo
                 )
             )
             val tacky = CompilerWorkflow.take(ast)
@@ -42,7 +62,8 @@ class CompilerExport {
             outputs.add(
                 TackyOutput(
                     tackyPretty = tackyProgram?.toPseudoCode(),
-                    errors = emptyArray()
+                    errors = emptyArray(),
+                    sourceLocation = sourceLocationInfo
                 )
             )
             val asm = CompilerWorkflow.take(tacky)
@@ -50,7 +71,8 @@ class CompilerExport {
             outputs.add(
                 AssemblyOutput(
                     errors = emptyArray(),
-                    assembly = finalAssemblyString
+                    assembly = finalAssemblyString,
+                    sourceLocation = sourceLocationInfo
                 )
             )
         } catch (e: CompilationException) {
@@ -70,10 +92,10 @@ class CompilerExport {
                 )
             overallErrors.add(error)
             when (stage) {
-                CompilerStage.LEXER -> outputs.add(LexerOutput(errors = arrayOf(error)))
-                CompilerStage.PARSER -> outputs.add(ParserOutput(errors = arrayOf(error)))
-                CompilerStage.TACKY -> outputs.add(TackyOutput(errors = arrayOf(error)))
-                CompilerStage.ASSEMBLY -> outputs.add(AssemblyOutput(errors = arrayOf(error)))
+                CompilerStage.LEXER -> outputs.add(LexerOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
+                CompilerStage.PARSER -> outputs.add(ParserOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
+                CompilerStage.TACKY -> outputs.add(TackyOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
+                CompilerStage.ASSEMBLY -> outputs.add(AssemblyOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
             }
         } catch (e: Exception) {
             // Fallback for any unexpected runtime errors
@@ -86,9 +108,9 @@ class CompilerExport {
             overallErrors.add(error)
             // ensure we return four stages
             while (outputs.size < 3) {
-                outputs.add(ParserOutput(errors = emptyArray()))
+                outputs.add(ParserOutput(errors = emptyArray(), sourceLocation = sourceLocationInfo))
             }
-            outputs.add(AssemblyOutput(errors = arrayOf(error)))
+            outputs.add(AssemblyOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
         }
 
         val result =
@@ -101,19 +123,27 @@ class CompilerExport {
         return result.toJsonString()
     }
 
-    fun List<Token>.toJsonString(): String {
-        val jsonTokens =
-            this.map { token ->
-                JsonObject(
-                    mapOf(
-                        "line" to JsonPrimitive(token.startLine),
-                        "column" to JsonPrimitive(token.startColumn),
-                        "type" to JsonPrimitive(token.type.toString()),
-                        "lexeme" to JsonPrimitive(token.lexeme)
+    fun exportTokens(tokens: List<Token>): String = tokens.toJsonString()
+}
+
+fun List<Token>.toJsonString(): String {
+    val jsonTokens =
+        this.map { token ->
+            JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive(token.type.toString()),
+                    "lexeme" to JsonPrimitive(token.lexeme),
+                    "location" to JsonObject(
+                        mapOf(
+                            "startLine" to JsonPrimitive(token.startLine),
+                            "startCol" to JsonPrimitive(token.startColumn),
+                            "endLine" to JsonPrimitive(token.endLine),
+                            "endCol" to JsonPrimitive(token.endColumn)
+                        )
                     )
                 )
-            }
+            )
+        }
 
-        return Json.encodeToString(JsonArray(jsonTokens))
-    }
+    return Json.encodeToString(JsonArray(jsonTokens))
 }
