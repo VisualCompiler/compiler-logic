@@ -9,6 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 class CompilerTestSuite {
 
@@ -201,6 +202,13 @@ class CompilerTestSuite {
     }
 
     private fun assertTackyInstructionEquals(expected: tacky.TackyInstruction, actual: tacky.TackyInstruction, message: String) {
+        // Check sourceId for all instructions
+        if (expected.sourceId.isEmpty()) {
+            assertTrue(actual.sourceId.isNotEmpty(), "$message - TackyInstruction sourceId should not be empty")
+        } else {
+            assertEquals(expected.sourceId, actual.sourceId, "$message - TackyInstruction sourceId mismatch")
+        }
+
         when (expected) {
             is tacky.TackyRet -> {
                 assertIs<tacky.TackyRet>(actual, "$message - Expected TackyRet but got ${actual::class.simpleName}")
@@ -247,12 +255,22 @@ class CompilerTestSuite {
                 assertTackyValueEquals(expected.condition, actual.condition, "$message - JumpIfNotZero condition mismatch")
                 assertTackyLabelEquals(expected.target, actual.target, "$message - JumpIfNotZero target mismatch")
             }
+            is tacky.TackyLabel -> {
+                assertIs<tacky.TackyLabel>(actual, "$message - Expected TackyLabel but got ${actual::class.simpleName}")
+                assertTackyLabelEquals(expected, actual, "$message - TackyLabel mismatch")
+            }
             else -> assertEquals(expected, actual, "$message - Tacky instruction type mismatch")
         }
     }
 
     private fun assertTackyLabelEquals(expected: tacky.TackyLabel, actual: tacky.TackyLabel, message: String) {
         assertEquals(expected.name, actual.name, "$message - TackyLabel name mismatch")
+        // For test data with empty sourceId, we expect actual sourceId to be non-empty
+        if (expected.sourceId.isEmpty()) {
+            assertTrue(actual.sourceId.isNotEmpty(), "$message - TackyLabel sourceId should not be empty")
+        } else {
+            assertEquals(expected.sourceId, actual.sourceId, "$message - TackyLabel sourceId mismatch")
+        }
     }
 
     private fun assertTackyValueEquals(expected: tacky.TackyVal, actual: tacky.TackyVal, message: String) {

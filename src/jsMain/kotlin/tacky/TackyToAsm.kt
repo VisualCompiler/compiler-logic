@@ -36,13 +36,13 @@ class TackyToAsm {
     }
 
     private fun convertFunction(tackyFunc: TackyFunction): AsmFunction {
-        val paramSetupInstructions = generateParamSetup(tackyFunc.args)
+        val paramSetupInstructions = generateParamSetup(tackyFunc.args, tackyFunc.sourceId)
         // Convert the rest of the body as before
         val bodyInstructions = tackyFunc.body.flatMap { convertInstruction(it) }
         return AsmFunction(tackyFunc.name, paramSetupInstructions + bodyInstructions)
     }
 
-    private fun generateParamSetup(params: List<String>): List<Instruction> {
+    private fun generateParamSetup(params: List<String>, sourceId: String): List<Instruction> {
         val instructions = mutableListOf<Instruction>()
         val argRegisters =
             listOf(
@@ -58,12 +58,12 @@ class TackyToAsm {
             if (index < argRegisters.size) {
                 val srcReg = Register(argRegisters[index])
                 val destPseudo = Pseudo(paramName)
-                instructions.add(Mov(srcReg, destPseudo))
+                instructions.add(Mov(srcReg, destPseudo, sourceId))
             } else {
                 val stackOffset = 16 + (index - argRegisters.size) * 8
                 val srcStack = Stack(stackOffset)
                 val destPseudo = Pseudo(paramName)
-                instructions.add(Mov(srcStack, destPseudo))
+                instructions.add(Mov(srcStack, destPseudo, sourceId))
             }
         }
         return instructions
@@ -74,7 +74,7 @@ class TackyToAsm {
             is TackyRet -> {
                 listOf(
                     Mov(convertVal(tackyInstr.value), Register(HardwareRegister.EAX), tackyInstr.sourceId),
-                    Ret
+                    Ret(tackyInstr.sourceId)
                 )
             }
             is TackyUnary ->
@@ -83,9 +83,9 @@ class TackyToAsm {
                         val src = convertVal(tackyInstr.src)
                         val dest = convertVal(tackyInstr.dest)
                         listOf(
-                            Cmp(Imm(0), src),
+                            Cmp(Imm(0), src, tackyInstr.sourceId),
                             Mov(Imm(0), dest, tackyInstr.sourceId), // Zero out destination
-                            SetCC(ConditionCode.E, dest) // Set if equal to zero
+                            SetCC(ConditionCode.E, dest, tackyInstr.sourceId) // Set if equal to zero
                         )
                     }
                     else -> {
@@ -121,14 +121,14 @@ class TackyToAsm {
                     TackyBinaryOP.DIVIDE ->
                         listOf(
                             Mov(src1, Register(HardwareRegister.EAX), tackyInstr.sourceId), // Dividend in EAX
-                            Cdq,
+                            Cdq(tackyInstr.sourceId),
                             Idiv(src2, tackyInstr.sourceId), // Divisor
                             Mov(Register(HardwareRegister.EAX), dest, tackyInstr.sourceId) // Quotient result is in EAX
                         )
                     TackyBinaryOP.REMAINDER ->
                         listOf(
                             Mov(src1, Register(HardwareRegister.EAX), tackyInstr.sourceId),
-                            Cdq,
+                            Cdq(tackyInstr.sourceId),
                             Idiv(src2, tackyInstr.sourceId),
                             Mov(Register(HardwareRegister.EDX), dest, tackyInstr.sourceId) // Remainder result is in EDX
                         )
@@ -154,18 +154,9 @@ class TackyToAsm {
                 }
             }
 
-            is JumpIfNotZero -> {
-                val condition = convertVal(tackyInstr.condition)
-                val target = Label(tackyInstr.target.name)
-                listOf(
-                    Cmp(Imm(0), condition, tackyInstr.sourceId),
-                    JmpCC(ConditionCode.NE, target, tackyInstr.sourceId)
-                )
-            }
-
             is JumpIfZero -> {
                 val condition = convertVal(tackyInstr.condition)
-                val target = Label(tackyInstr.target.name)
+                val target = Label(tackyInstr.target.name, tackyInstr.sourceId)
                 listOf(
                     Cmp(Imm(0), condition, tackyInstr.sourceId),
                     JmpCC(ConditionCode.E, target, tackyInstr.sourceId)
@@ -173,7 +164,7 @@ class TackyToAsm {
             }
             is JumpIfNotZero -> {
                 val condition = convertVal(tackyInstr.condition)
-                val target = Label(tackyInstr.target.name)
+                val target = Label(tackyInstr.target.name, tackyInstr.sourceId)
                 listOf(
                     Cmp(Imm(0), condition, tackyInstr.sourceId),
                     JmpCC(ConditionCode.NE, target, tackyInstr.sourceId)
@@ -181,9 +172,9 @@ class TackyToAsm {
             }
             is TackyCopy -> listOf(Mov(convertVal(tackyInstr.src), convertVal(tackyInstr.dest), tackyInstr.sourceId))
 
-            is TackyJump -> listOf(Jmp(Label(tackyInstr.target.name), tackyInstr.sourceId))
+            is TackyJump -> listOf(Jmp(Label(tackyInstr.target.name, tackyInstr.sourceId), tackyInstr.sourceId))
 
-            is TackyLabel -> listOf(Label(tackyInstr.name))
+            is TackyLabel -> listOf(Label(tackyInstr.name, ""))
 
             is TackyFunCall -> {
                 val instructions = mutableListOf<Instruction>()

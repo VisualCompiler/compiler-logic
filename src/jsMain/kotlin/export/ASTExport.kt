@@ -1,8 +1,7 @@
 package export
 
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import parser.AssignmentExpression
@@ -43,8 +42,8 @@ fun createJsonNode(
     edgeLabels: Boolean = false,
     location: parser.SourceLocation? = null,
     id: String? = null
-): String {
-    val nodeMap = mutableMapOf<String, kotlinx.serialization.json.JsonElement>(
+): JsonObject {
+    val nodeMap = mutableMapOf<String, JsonElement>(
         "type" to JsonPrimitive(type),
         "label" to JsonPrimitive(label),
         "children" to children,
@@ -66,8 +65,7 @@ fun createJsonNode(
         nodeMap["id"] = JsonPrimitive(it)
     }
 
-    val jsonNode = JsonObject(nodeMap)
-    return Json.encodeToString(jsonNode)
+    return JsonObject(nodeMap)
 }
 
 @OptIn(ExperimentalJsExport::class)
@@ -82,195 +80,195 @@ enum class NodeType {
     Declaration
 }
 
-class ASTExport : Visitor<String> {
-    override fun visit(node: SimpleProgram): String {
-        val decls = JsonArray(node.functionDeclaration.map { JsonPrimitive(it.accept(this)) })
-        return createJsonNode(NodeType.Program.name, "Program", JsonObject(mapOf("declarations" to decls)), location = node.location, id = node.id)
+class ASTExport : Visitor<JsonObject> {
+    override fun visit(node: SimpleProgram): JsonObject {
+        val decls = JsonArray(node.functionDeclaration.map { it.accept(this) })
+        return createJsonNode(NodeType.Program.name, "Program", JsonObject(mapOf("declarations" to decls)), false, node.location, node.id)
     }
 
-    override fun visit(node: ReturnStatement): String {
-        val children = JsonObject(mapOf("expression" to JsonPrimitive(node.expression.accept(this))))
-        return createJsonNode(NodeType.Statement.name, "ReturnStatement", children, location = node.location, id = node.id)
+    override fun visit(node: ReturnStatement): JsonObject {
+        val children = JsonObject(mapOf("expression" to node.expression.accept(this)))
+        return createJsonNode(NodeType.Statement.name, "ReturnStatement", children, false, node.location, node.id)
     }
 
-    override fun visit(node: ExpressionStatement): String {
-        val children = JsonObject(mapOf("expression" to JsonPrimitive(node.expression.accept(this))))
-        return createJsonNode(NodeType.Statement.name, "ExpressionStatement", children, location = node.location, id = node.id)
+    override fun visit(node: ExpressionStatement): JsonObject {
+        val children = JsonObject(mapOf("expression" to node.expression.accept(this)))
+        return createJsonNode(NodeType.Statement.name, "ExpressionStatement", children, false, node.location, node.id)
     }
 
-    override fun visit(node: NullStatement): String = createJsonNode(NodeType.Statement.name, "NullStatement", JsonObject(emptyMap()), location = node.location, id = node.id)
+    override fun visit(node: NullStatement): JsonObject = createJsonNode(NodeType.Statement.name, "NullStatement", JsonObject(emptyMap()), false, node.location, node.id)
 
-    override fun visit(node: BreakStatement): String = createJsonNode(NodeType.Statement.name, "BreakStatement", JsonObject(emptyMap()), location = node.location, id = node.id)
+    override fun visit(node: BreakStatement): JsonObject = createJsonNode(NodeType.Statement.name, "BreakStatement", JsonObject(emptyMap()), false, node.location, node.id)
 
-    override fun visit(node: ContinueStatement): String = createJsonNode(NodeType.Statement.name, "continue", JsonObject(emptyMap()), location = node.location, id = node.id)
+    override fun visit(node: ContinueStatement): JsonObject = createJsonNode(NodeType.Statement.name, "continue", JsonObject(emptyMap()), false, node.location, node.id)
 
-    override fun visit(node: WhileStatement): String {
+    override fun visit(node: WhileStatement): JsonObject {
         val children =
             JsonObject(
                 mapOf(
-                    "cond" to JsonPrimitive(node.condition.accept(this)),
-                    "body" to JsonPrimitive(node.body.accept(this))
+                    "cond" to node.condition.accept(this),
+                    "body" to node.body.accept(this)
                 )
             )
-        return createJsonNode(NodeType.Statement.name, "WhileLoop", children, edgeLabels = true, location = node.location, id = node.id)
+        return createJsonNode(NodeType.Statement.name, "WhileLoop", children, true, node.location, node.id)
     }
 
-    override fun visit(node: DoWhileStatement): String {
+    override fun visit(node: DoWhileStatement): JsonObject {
         val children =
             JsonObject(
                 mapOf(
-                    "body" to JsonPrimitive(node.body.accept(this)),
-                    "cond" to JsonPrimitive(node.condition.accept(this))
+                    "body" to node.body.accept(this),
+                    "cond" to node.condition.accept(this)
                 )
             )
-        return createJsonNode(NodeType.Statement.name, "DoWhileLoop", children, edgeLabels = true, location = node.location, id = node.id)
+        return createJsonNode(NodeType.Statement.name, "DoWhileLoop", children, true, node.location, node.id)
     }
 
-    override fun visit(node: ForStatement): String {
+    override fun visit(node: ForStatement): JsonObject {
         val childrenMap =
             mutableMapOf<String, kotlinx.serialization.json.JsonElement>(
-                "init" to JsonPrimitive(node.init.accept(this))
+                "init" to node.init.accept(this)
             )
-        node.condition?.let { childrenMap["cond"] = JsonPrimitive(it.accept(this)) }
-        node.post?.let { childrenMap["post"] = JsonPrimitive(it.accept(this)) }
-        childrenMap["body"] = JsonPrimitive(node.body.accept(this))
+        node.condition?.let { childrenMap["cond"] = it.accept(this) }
+        node.post?.let { childrenMap["post"] = it.accept(this) }
+        childrenMap["body"] = node.body.accept(this)
 
-        return createJsonNode(NodeType.Statement.name, "ForLoop", JsonObject(childrenMap), edgeLabels = true, location = node.location, id = node.id)
+        return createJsonNode(NodeType.Statement.name, "ForLoop", JsonObject(childrenMap), true, node.location, node.id)
     }
 
-    override fun visit(node: InitDeclaration): String {
-        val children = JsonObject(mapOf("declaration" to JsonPrimitive(node.varDeclaration.accept(this))))
-        return createJsonNode(NodeType.ASTNode.name, "Declaration", children, location = node.location, id = node.id)
+    override fun visit(node: InitDeclaration): JsonObject {
+        val children = JsonObject(mapOf("declaration" to node.varDeclaration.accept(this)))
+        return createJsonNode(NodeType.ASTNode.name, "Declaration", children, false, node.location, node.id)
     }
 
-    override fun visit(node: InitExpression): String {
+    override fun visit(node: InitExpression): JsonObject {
         val childrenMap = mutableMapOf<String, kotlinx.serialization.json.JsonElement>()
-        node.expression?.let { childrenMap["expression"] = JsonPrimitive(it.accept(this)) }
-        return createJsonNode(NodeType.Expression.name, "Expression", JsonObject(childrenMap), location = node.location, id = node.id)
+        node.expression?.let { childrenMap["expression"] = it.accept(this) }
+        return createJsonNode(NodeType.Expression.name, "Expression", JsonObject(childrenMap), false, node.location, node.id)
     }
 
-    override fun visit(node: FunctionDeclaration): String {
-        val childrenMap = mutableMapOf("name" to JsonPrimitive(node.name))
-        node.body?.let { childrenMap["body"] = JsonPrimitive(it.accept(this)) }
-        return createJsonNode(NodeType.Function.name, "Function(${node.name})", JsonObject(childrenMap), edgeLabels = true, location = node.location, id = node.id)
+    override fun visit(node: FunctionDeclaration): JsonObject {
+        val childrenMap = mutableMapOf<String, JsonElement>("name" to JsonPrimitive(node.name))
+        node.body?.let { childrenMap["body"] = it.accept(this) }
+        return createJsonNode(NodeType.Function.name, "Function(${node.name})", JsonObject(childrenMap), true, node.location, node.id)
     }
 
-    override fun visit(node: VarDecl): String {
-        val children = JsonObject(mapOf("variableDeclaration" to JsonPrimitive(node.varDecl.accept(this))))
-        return createJsonNode(NodeType.Declaration.name, "VarDeclaration", children, location = node.location, id = node.id)
+    override fun visit(node: VarDecl): JsonObject {
+        val children = JsonObject(mapOf("variableDeclaration" to node.varDecl.accept(this)))
+        return createJsonNode(NodeType.Declaration.name, "VarDeclaration", children, false, node.location, node.id)
     }
 
-    override fun visit(node: FunDecl): String {
-        val children = JsonObject(mapOf("functionDeclaration" to JsonPrimitive(node.funDecl.accept(this))))
-        return createJsonNode(NodeType.Declaration.name, "FuncDeclaration", children, location = node.location, id = node.id)
+    override fun visit(node: FunDecl): JsonObject {
+        val children = JsonObject(mapOf("functionDeclaration" to node.funDecl.accept(this)))
+        return createJsonNode(NodeType.Declaration.name, "FuncDeclaration", children, false, node.location, node.id)
     }
 
-    override fun visit(node: VariableExpression): String =
-        createJsonNode(NodeType.Expression.name, "Variable(${node.name})", JsonObject(emptyMap()), location = node.location, id = node.id)
+    override fun visit(node: VariableExpression): JsonObject =
+        createJsonNode(NodeType.Expression.name, "Variable(${node.name})", JsonObject(emptyMap()), false, node.location, node.id)
 
-    override fun visit(node: UnaryExpression): String {
+    override fun visit(node: UnaryExpression): JsonObject {
         val children =
             JsonObject(
                 mapOf(
                     "operator" to JsonPrimitive(node.operator.toString()),
-                    "expression" to JsonPrimitive(node.expression.accept(this))
+                    "expression" to node.expression.accept(this)
                 )
             )
         return createJsonNode(NodeType.Expression.name, "UnaryExpression(${node.operator.type})", children, location = node.location, id = node.id)
     }
 
-    override fun visit(node: BinaryExpression): String {
+    override fun visit(node: BinaryExpression): JsonObject {
         val children =
             JsonObject(
                 mapOf(
-                    "left" to JsonPrimitive(node.left.accept(this)),
-                    "right" to JsonPrimitive(node.right.accept(this))
+                    "left" to node.left.accept(this),
+                    "right" to node.right.accept(this)
                 )
             )
         return createJsonNode(NodeType.Expression.name, "BinaryExpression(${node.operator.type})", children, edgeLabels = true, location = node.location, id = node.id)
     }
 
-    override fun visit(node: IntExpression): String = createJsonNode(NodeType.Expression.name, "Int(${node.value})", JsonObject(emptyMap()), location = node.location, id = node.id)
+    override fun visit(node: IntExpression): JsonObject = createJsonNode(NodeType.Expression.name, "Int(${node.value})", JsonObject(emptyMap()), false, node.location, node.id)
 
-    override fun visit(node: IfStatement): String {
+    override fun visit(node: IfStatement): JsonObject {
         val childrenMap =
             mutableMapOf(
-                "cond" to JsonPrimitive(node.condition.accept(this)),
-                "then" to JsonPrimitive(node.then.accept(this))
+                "cond" to node.condition.accept(this),
+                "then" to node.then.accept(this)
             )
-        node._else?.let { childrenMap["else"] = JsonPrimitive(it.accept(this)) }
-        return createJsonNode(NodeType.Statement.name, "IfStatement", JsonObject(childrenMap), edgeLabels = true, location = node.location, id = node.id)
+        node._else?.let { childrenMap["else"] = it.accept(this) }
+        return createJsonNode(NodeType.Statement.name, "IfStatement", JsonObject(childrenMap), true, node.location, node.id)
     }
 
-    override fun visit(node: ConditionalExpression): String {
+    override fun visit(node: ConditionalExpression): JsonObject {
         val children =
             JsonObject(
                 mapOf(
-                    "cond" to JsonPrimitive(node.codition.accept(this)),
-                    "then" to JsonPrimitive(node.thenExpression.accept(this)),
-                    "else" to JsonPrimitive(node.elseExpression.accept(this))
+                    "cond" to node.codition.accept(this),
+                    "then" to node.thenExpression.accept(this),
+                    "else" to node.elseExpression.accept(this)
                 )
             )
-        return createJsonNode(NodeType.Expression.name, "ConditionalExpression", children, edgeLabels = true, location = node.location, id = node.id)
+        return createJsonNode(NodeType.Expression.name, "ConditionalExpression", children, true, node.location, node.id)
     }
 
-    override fun visit(node: GotoStatement): String {
+    override fun visit(node: GotoStatement): JsonObject {
         val children = JsonObject(mapOf("targetLabel" to JsonPrimitive(node.label)))
-        return createJsonNode(NodeType.Statement.name, "Goto(${node.label})", children, edgeLabels = true, location = node.location, id = node.id)
+        return createJsonNode(NodeType.Statement.name, "Goto(${node.label})", children, true, node.location, node.id)
     }
 
-    override fun visit(node: LabeledStatement): String {
+    override fun visit(node: LabeledStatement): JsonObject {
         val children =
             JsonObject(
                 mapOf(
                     "label" to JsonPrimitive(node.label),
-                    "statement" to JsonPrimitive(node.statement.accept(this))
+                    "statement" to node.statement.accept(this)
                 )
             )
-        return createJsonNode(NodeType.Statement.name, "LabeledStatement(${node.label})", children, edgeLabels = true, location = node.location, id = node.id)
+        return createJsonNode(NodeType.Statement.name, "LabeledStatement(${node.label})", children, true, node.location, node.id)
     }
 
-    override fun visit(node: AssignmentExpression): String {
+    override fun visit(node: AssignmentExpression): JsonObject {
         val children =
             JsonObject(
                 mapOf(
-                    "lvalue" to JsonPrimitive(node.lvalue.accept(this)),
-                    "rvalue" to JsonPrimitive(node.rvalue.accept(this))
+                    "lvalue" to node.lvalue.accept(this),
+                    "rvalue" to node.rvalue.accept(this)
                 )
             )
-        return createJsonNode(NodeType.Expression.name, "Assignment", children, edgeLabels = true, location = node.location, id = node.id)
+        return createJsonNode(NodeType.Expression.name, "Assignment", children, true, node.location, node.id)
     }
 
-    override fun visit(node: VariableDeclaration): String {
-        val childrenMap = mutableMapOf("name" to JsonPrimitive(node.name))
-        node.init?.let { childrenMap["initializer"] = JsonPrimitive(it.accept(this)) }
-        return createJsonNode(NodeType.Declaration.name, "Declaration(${node.name})", JsonObject(childrenMap), location = node.location, id = node.id)
+    override fun visit(node: VariableDeclaration): JsonObject {
+        val childrenMap = mutableMapOf<String, JsonElement>("name" to JsonPrimitive(node.name))
+        node.init?.let { childrenMap["initializer"] = it.accept(this) }
+        return createJsonNode(NodeType.Declaration.name, "Declaration(${node.name})", JsonObject(childrenMap), false, node.location, node.id)
     }
 
-    override fun visit(node: S): String = node.statement.accept(this)
+    override fun visit(node: S): JsonObject = node.statement.accept(this)
 
-    override fun visit(node: D): String = when (node.declaration) {
+    override fun visit(node: D): JsonObject = when (node.declaration) {
         is VarDecl -> node.declaration.accept(this)
         is FunDecl -> node.declaration.accept(this)
         is VariableDeclaration -> node.declaration.accept(this)
     }
 
-    override fun visit(node: Block): String {
+    override fun visit(node: Block): JsonObject {
         val blockItems = node.items.map { it.accept(this) }
-        val children = JsonObject(mapOf("block" to JsonArray(blockItems.map { JsonPrimitive(it) })))
-        return createJsonNode(NodeType.Block.name, "Block", children, location = node.location, id = node.id)
+        val children = JsonObject(mapOf("block" to JsonArray(blockItems)))
+        return createJsonNode(NodeType.Block.name, "Block", children, false, node.location, node.id)
     }
 
-    override fun visit(node: CompoundStatement): String = node.block.accept(this)
+    override fun visit(node: CompoundStatement): JsonObject = node.block.accept(this)
 
-    override fun visit(node: FunctionCall): String {
+    override fun visit(node: FunctionCall): JsonObject {
         val children =
             JsonObject(
                 mapOf(
                     "name" to JsonPrimitive(node.name),
-                    "arguments" to JsonArray(node.arguments.map { JsonPrimitive(it.accept(this)) })
+                    "arguments" to JsonArray(node.arguments.map { it.accept(this) })
                 )
             )
-        return createJsonNode(NodeType.Function.name, "FuncCall(${node.name})", children, location = node.location, id = node.id)
+        return createJsonNode(NodeType.Function.name, "FuncCall(${node.name})", children, false, node.location, node.id)
     }
 }

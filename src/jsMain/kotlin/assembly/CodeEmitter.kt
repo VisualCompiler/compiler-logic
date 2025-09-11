@@ -1,11 +1,23 @@
 package assembly
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class CodeEmitter {
     // TODO make it based on the device instead hard coded
     private val useLinuxPrefix = true
 
+    @kotlinx.serialization.Serializable
+    data class RawInstruction(val code: String, val sourceId: String?)
+
+    @kotlinx.serialization.Serializable
+    data class RawFunction(
+        val name: String,
+        val body: List<RawInstruction>,
+        val stackSize: Int
+    )
     fun emit(program: AsmProgram): String = program.functions.joinToString("\n\n") { emitFunction(it) }
 
+    fun emitRaw(program: AsmProgram): String = program.functions.joinToString("\n\n") { emitFunctionRaw(it) }
     private fun emitFunction(function: AsmFunction): String {
         val functionName = formatLabel(function.name)
         val bodyAsm = function.body.joinToString("\n") { emitInstruction(it) }
@@ -24,6 +36,39 @@ class CodeEmitter {
         }
     }
 
+    private fun emitFunctionRaw(function: AsmFunction): String {
+        val bodyRaw = function.body.map { emitInstructionRaw(it) }
+        val rawFunc = RawFunction(function.name, bodyRaw, function.stackSize)
+        return Json.encodeToString(rawFunc) // returns valid JSON
+    }
+
+    private fun emitInstructionRaw(instruction: Instruction): RawInstruction {
+        val indent = "  "
+        return when (instruction) {
+            is Call -> RawInstruction("call ${formatLabel(instruction.identifier)}", instruction.sourceId.toString())
+            is Push -> {
+                val operand = emitOperand(instruction.operand, size = OperandSize.QUAD)
+                RawInstruction("push $operand", instruction.sourceId.toString())
+            }
+            is DeAllocateStack -> RawInstruction("addq rsp, ${instruction.size}", instruction.sourceId.toString())
+            is Mov -> RawInstruction("mov ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}", instruction.sourceId.toString())
+            is AsmUnary -> RawInstruction("${instruction.op.text} ${emitOperand(instruction.dest)}", instruction.sourceId.toString())
+            is AsmBinary -> RawInstruction("${instruction.op.text} ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}", instruction.sourceId.toString())
+            is Cmp -> RawInstruction("cmp ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}", instruction.sourceId.toString())
+            is Idiv -> RawInstruction("idiv ${emitOperand(instruction.divisor)}", instruction.sourceId.toString())
+            is AllocateStack -> RawInstruction("subq rsp, ${instruction.size}", instruction.sourceId.toString())
+            is Cdq -> RawInstruction("cdq", instruction.sourceId.toString())
+            is Label -> RawInstruction("${formatLabel(instruction.name)}:", instruction.sourceId.toString())
+            is Jmp -> RawInstruction("jmp ${formatLabel(instruction.label.name)}", instruction.sourceId.toString())
+            is JmpCC -> RawInstruction("j${instruction.condition.text} ${formatLabel(instruction.label.name)}", instruction.sourceId.toString())
+            is SetCC -> {
+                val destOperand = emitOperand(instruction.dest, size = OperandSize.BYTE)
+                RawInstruction("set${instruction.condition.text} $destOperand", instruction.sourceId.toString())
+            }
+            is Ret -> RawInstruction("ret", instruction.sourceId.toString())
+        }
+    }
+
     private fun emitInstruction(instruction: Instruction): String {
         val indent = "  "
         return when (instruction) {
@@ -33,7 +78,6 @@ class CodeEmitter {
                 "${indent}push $operand"
             }
             is DeAllocateStack -> "${indent}addq rsp, ${instruction.size}"
-
             is Mov -> "${indent}mov ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}"
             is AsmUnary -> "${indent}${instruction.op.text} ${emitOperand(instruction.dest)}"
             is AsmBinary -> "${indent}${instruction.op.text} ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}"
@@ -44,15 +88,20 @@ class CodeEmitter {
             is Label -> formatLabel(instruction.name) + ":"
             is Jmp -> "${indent}jmp ${formatLabel(instruction.label.name)}"
             is JmpCC -> "${indent}j${instruction.condition.text} ${formatLabel(instruction.label.name)}"
-
             is SetCC -> {
                 val destOperand = emitOperand(instruction.dest, size = OperandSize.BYTE)
                 "${indent}set${instruction.condition.text} $destOperand"
             }
-
             is Ret -> ""
+        }
+    }
 
-            else -> throw NotImplementedError("Emission for ${instruction::class.simpleName} not implemented.")
+    private fun emitOperandRaw(operand: Operand): String {
+        return when (operand) {
+            is Imm -> "Imm(value=${operand.value})"
+            is Stack -> "Stack(offset=${operand.offset})"
+            is Register -> "Register(name=${operand.name})"
+            is Pseudo -> "Pseudo(name=${operand.name})"
         }
     }
 

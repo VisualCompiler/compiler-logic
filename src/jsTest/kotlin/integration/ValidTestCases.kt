@@ -221,7 +221,7 @@ object ValidTestCases {
                             stackSize = 56, // 7 temporary variables * 8 bytes = 56
                             body =
                             listOf(
-                                AllocateStack(64),
+                                AllocateStack(64, ""),
                                 // tmp.0 = 5 - 3
                                 Mov(Imm(5), Stack(-8)),
                                 AsmBinary(AsmBinaryOp.SUB, Imm(3), Stack(-8)),
@@ -240,13 +240,13 @@ object ValidTestCases {
                                 AsmUnary(AsmUnaryOp.NOT, Stack(-32)),
                                 // tmp.4 = tmp.3 / 6
                                 Mov(Stack(-32), Register(HardwareRegister.EAX)),
-                                Cdq,
+                                Cdq(""),
                                 Mov(Imm(6), Register(HardwareRegister.R10D)),
                                 Idiv(Register(HardwareRegister.R10D)),
                                 Mov(Register(HardwareRegister.EAX), Stack(-40)),
                                 // tmp.5 = tmp.4 % 3
                                 Mov(Stack(-40), Register(HardwareRegister.EAX)),
-                                Cdq,
+                                Cdq(""),
                                 Mov(Imm(3), Register(HardwareRegister.R10D)),
                                 Idiv(Register(HardwareRegister.R10D)),
                                 Mov(Register(HardwareRegister.EDX), Stack(-48)),
@@ -257,7 +257,7 @@ object ValidTestCases {
                                 AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-56)),
                                 // return tmp.6
                                 Mov(Stack(-56), Register(HardwareRegister.EAX)),
-                                Ret
+                                Ret("")
                                 // The implicit return 0
                             )
                         )
@@ -324,7 +324,7 @@ object ValidTestCases {
                             stackSize = 40, // 5 temporary variables * 8 bytes = 40
                             body =
                             listOf(
-                                AllocateStack(48),
+                                AllocateStack(48, ""),
                                 // tmp.1 = (1 == 0)
                                 Mov(Imm(1), Register(HardwareRegister.R11D)),
                                 Cmp(Imm(0), Register(HardwareRegister.R11D)),
@@ -370,7 +370,7 @@ object ValidTestCases {
                                 Label(".L_or_end_1"),
                                 // return tmp.0
                                 Mov(Stack(-40), Register(HardwareRegister.EAX)),
-                                Ret
+                                Ret("")
                             )
                         )
                     )
@@ -557,7 +557,7 @@ object ValidTestCases {
                             stackSize = 16,
                             body =
                             listOf(
-                                AllocateStack(16),
+                                AllocateStack(16, ""),
                                 // int a = 0;
                                 Mov(Imm(0), Stack(-8)),
                                 // tmp.0 = a == 0;
@@ -569,18 +569,18 @@ object ValidTestCases {
                                 JmpCC(ConditionCode.E, Label(".L_else_label_1")),
                                 // return 10;
                                 Mov(Imm(10), Register(HardwareRegister.EAX)),
-                                Ret,
+                                Ret(""),
                                 Jmp(Label(".L_end_0")),
                                 // .L_else_label_1:
                                 Label(".L_else_label_1"),
                                 // return 20;
                                 Mov(Imm(20), Register(HardwareRegister.EAX)),
-                                Ret,
+                                Ret(""),
                                 // .L_end_0:
                                 Label(".L_end_0"),
                                 // implicit return 0
                                 Mov(Imm(0), Register(HardwareRegister.EAX)),
-                                Ret
+                                Ret("")
                             )
                         )
                     )
@@ -641,7 +641,7 @@ object ValidTestCases {
                             stackSize = 24, // 1 variable (a) + 2 temporaries (tmp.0, tmp.1) = 3 * 8 = 24
                             body =
                             listOf(
-                                AllocateStack(32), // 12 rounded up to nearest 16
+                                AllocateStack(32, ""), // 12 rounded up to nearest 16
                                 // a = 0
                                 Mov(Imm(0), Stack(-8)), // Stack slot for a.0
                                 // start:
@@ -666,7 +666,7 @@ object ValidTestCases {
                                 Label(".L_end_0"),
                                 // return a
                                 Mov(Stack(-8), Register(HardwareRegister.EAX)),
-                                Ret
+                                Ret("")
                             )
                         )
                     )
@@ -723,7 +723,7 @@ object ValidTestCases {
                             stackSize = 24,
                             body =
                             listOf(
-                                AllocateStack(32),
+                                AllocateStack(32, ""),
                                 // Parameter setup: a.0 -> Stack(-8), b.1 -> Stack(-16)
                                 Mov(Register(HardwareRegister.EDI), Stack(-8)),
                                 Mov(Register(HardwareRegister.ESI), Stack(-16)),
@@ -734,7 +734,7 @@ object ValidTestCases {
                                 AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-24)),
                                 // return tmp.0
                                 Mov(Stack(-24), Register(HardwareRegister.EAX)),
-                                Ret
+                                Ret("")
                             )
                         ),
                         AsmFunction(
@@ -742,7 +742,7 @@ object ValidTestCases {
                             stackSize = 16,
                             body =
                             listOf(
-                                AllocateStack(16),
+                                AllocateStack(16, ""),
                                 // Call add(5, 3)
                                 Mov(Imm(5), Register(HardwareRegister.EDI)),
                                 Mov(Imm(3), Register(HardwareRegister.ESI)),
@@ -754,7 +754,7 @@ object ValidTestCases {
                                 Mov(Register(HardwareRegister.R10D), Stack(-16)),
                                 // return result
                                 Mov(Stack(-16), Register(HardwareRegister.EAX)),
-                                Ret
+                                Ret("")
                             )
                         )
                     )
@@ -817,7 +817,7 @@ object ValidTestCases {
                             listOf(
                                 // return 5;
                                 Mov(Imm(5), Register(HardwareRegister.EAX)),
-                                Ret
+                                Ret("")
                             )
                         ),
                         AsmFunction(
@@ -825,16 +825,16 @@ object ValidTestCases {
                             stackSize = 8,
                             body =
                             listOf(
-                                AllocateStack(16),
+                                AllocateStack(16, ""),
                                 // Implicit return 0
                                 Mov(Imm(0), Register(HardwareRegister.EAX)),
-                                Ret,
+                                Ret(""),
                                 // Call foo() (no arguments)
                                 Call("foo"),
                                 // Store result and return it
                                 Mov(Register(HardwareRegister.EAX), Stack(-8)),
                                 Mov(Stack(-8), Register(HardwareRegister.EAX)),
-                                Ret
+                                Ret("")
                             )
                         )
                     )

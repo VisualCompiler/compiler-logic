@@ -42,6 +42,8 @@ data class ParserOutput(
 @SerialName("TackyOutput")
 data class TackyOutput(
     override val stage: String = CompilerStage.TACKY.name.lowercase(),
+    val tacky: String? = null,
+
     val tackyPretty: String? = null,
     override val errors: Array<CompilationError>,
     val sourceLocation: SourceLocationInfo? = null
@@ -54,6 +56,7 @@ data class TackyOutput(
 data class AssemblyOutput(
     override val stage: String = CompilerStage.ASSEMBLY.name.lowercase(),
     val assembly: String? = null,
+    val rawAssembly: String? = null,
     override val errors: Array<CompilationError>,
     val sourceLocation: SourceLocationInfo? = null
 ) : CompilationOutput()

@@ -53,7 +53,7 @@ class CompilerExport {
             outputs.add(
                 ParserOutput(
                     errors = emptyArray(),
-                    ast = ast.accept(ASTExport()),
+                    ast = Json.encodeToString(ast.accept(ASTExport())),
                     sourceLocation = sourceLocationInfo
                 )
             )
@@ -61,6 +61,7 @@ class CompilerExport {
             val tackyProgram = tacky as? TackyProgram
             outputs.add(
                 TackyOutput(
+                    tacky = if (tackyProgram != null) Json.encodeToString(tackyProgram) else null,
                     tackyPretty = tackyProgram?.toPseudoCode(),
                     errors = emptyArray(),
                     sourceLocation = sourceLocationInfo
@@ -68,10 +69,12 @@ class CompilerExport {
             )
             val asm = CompilerWorkflow.take(tacky)
             val finalAssemblyString = codeEmitter.emit(asm as AsmProgram)
+            val rawAssembly = codeEmitter.emitRaw(asm as AsmProgram)
             outputs.add(
                 AssemblyOutput(
                     errors = emptyArray(),
                     assembly = finalAssemblyString,
+                    rawAssembly = rawAssembly,
                     sourceLocation = sourceLocationInfo
                 )
             )

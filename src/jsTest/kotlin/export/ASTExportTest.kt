@@ -1,6 +1,5 @@
 package export
 
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import parser.IntExpression
 import parser.SourceLocation
@@ -21,8 +20,8 @@ class ASTExportTest {
         val export = ASTExport()
         val jsonResult = intExpr.accept(export)
 
-        // Parse the JSON result
-        val json = Json.parseToJsonElement(jsonResult) as JsonObject
+        // Use the JSON result directly (it's already a JsonObject)
+        val json = jsonResult
 
         // Verify that location and ID are included
         assertTrue(json.containsKey("location"), "JSON should contain location information")
@@ -54,8 +53,8 @@ class ASTExportTest {
         val export = ASTExport()
         val jsonResult = varExpr.accept(export)
 
-        // Parse the JSON result
-        val json = Json.parseToJsonElement(jsonResult) as JsonObject
+        // Use the JSON result directly (it's already a JsonObject)
+        val json = jsonResult
 
         // Verify basic structure
         assertEquals("Expression", json["type"]?.toString()?.removeSurrounding("\""))

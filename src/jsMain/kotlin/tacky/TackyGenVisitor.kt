@@ -39,7 +39,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
 
     private fun newTemporary(): TackyVar = TackyVar("tmp.${tempCounter++}")
 
-    private fun newLabel(base: String): TackyLabel = TackyLabel(".L_${base}_${labelCounter++}")
+    private fun newLabel(base: String, sourceId: String = ""): TackyLabel = TackyLabel(".L_${base}_${labelCounter++}", sourceId)
 
     private val currentInstructions = mutableListOf<TackyInstruction>()
 
@@ -111,20 +111,20 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     override fun visit(node: NullStatement): TackyConstruct? = null
 
     override fun visit(node: BreakStatement): TackyConstruct? {
-        val breakLabel = TackyLabel("break_${node.label}")
+        val breakLabel = TackyLabel("break_${node.label}", node.id)
         currentInstructions += TackyJump(breakLabel, node.id)
         return null
     }
 
     override fun visit(node: ContinueStatement): TackyConstruct? {
-        val continueLabel = TackyLabel("continue_${node.label}")
+        val continueLabel = TackyLabel("continue_${node.label}", node.id)
         currentInstructions += TackyJump(continueLabel, node.id)
         return null
     }
 
     override fun visit(node: WhileStatement): TackyConstruct? {
-        val continueLabel = TackyLabel("continue_${node.label}")
-        val breakLabel = TackyLabel("break_${node.label}")
+        val continueLabel = TackyLabel("continue_${node.label}", node.id)
+        val breakLabel = TackyLabel("break_${node.label}", node.id)
         currentInstructions += continueLabel
         val condition = node.condition.accept(this) as TackyVal
         currentInstructions += JumpIfZero(condition, breakLabel, node.id)
@@ -135,22 +135,22 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     }
 
     override fun visit(node: DoWhileStatement): TackyConstruct? {
-        val startLabel = TackyLabel("start_${node.label}")
-        val continueLabel = TackyLabel("continue_${node.label}")
-        val breakLabel = TackyLabel("break_${node.label}")
+        val startLabel = TackyLabel("start_${node.label}", node.id)
+        val continueLabel = TackyLabel("continue_${node.label}", node.id)
+        val breakLabel = TackyLabel("break_${node.label}", node.id)
         currentInstructions += startLabel
         node.body.accept(this)
         currentInstructions += continueLabel
         val condition = node.condition.accept(this) as TackyVal
-        currentInstructions += JumpIfNotZero(condition, startLabel)
+        currentInstructions += JumpIfNotZero(condition, startLabel, node.id)
         currentInstructions += breakLabel
         return null
     }
 
     override fun visit(node: ForStatement): TackyConstruct? {
-        val startLabel = TackyLabel("start_${node.label}")
-        val continueLabel = TackyLabel("continue_${node.label}")
-        val breakLabel = TackyLabel("break_${node.label}")
+        val startLabel = TackyLabel("start_${node.label}", node.id)
+        val continueLabel = TackyLabel("continue_${node.label}", node.id)
+        val breakLabel = TackyLabel("break_${node.label}", node.id)
         node.init.accept(this)
         currentInstructions += startLabel
         if (node.condition != null) {
@@ -183,9 +183,9 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         node.body?.accept(this)
 
         if (currentInstructions.lastOrNull() !is TackyRet) {
-            currentInstructions += TackyRet(TackyConstant(0))
+            currentInstructions += TackyRet(TackyConstant(0), node.id)
         }
-        return TackyFunction(functionName, functionParams, currentInstructions.toList())
+        return TackyFunction(functionName, functionParams, currentInstructions.toList(), node.id)
     }
 
     override fun visit(node: VarDecl): TackyConstruct? {
@@ -211,8 +211,8 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     override fun visit(node: BinaryExpression): TackyConstruct {
         when (node.operator.type) {
             TokenType.AND -> {
-                val falseLabel = newLabel("and_false")
-                val endLabel = newLabel("and_end")
+                val falseLabel = newLabel("and_false", node.id)
+                val endLabel = newLabel("and_end", node.id)
                 val resultVar = newTemporary()
 
                 val left = node.left.accept(this) as TackyVal
@@ -228,14 +228,14 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
                 return resultVar
             }
             TokenType.OR -> {
-                val trueLabel = newLabel("or_true")
-                val endLabel = newLabel("or_end")
+                val trueLabel = newLabel("or_true", node.id)
+                val endLabel = newLabel("or_end", node.id)
                 val resultVar = newTemporary()
 
                 val left = node.left.accept(this) as TackyVal
-                currentInstructions += JumpIfNotZero(left, trueLabel)
+                currentInstructions += JumpIfNotZero(left, trueLabel, node.id)
                 val right = node.right.accept(this) as TackyVal
-                currentInstructions += JumpIfNotZero(right, trueLabel)
+                currentInstructions += JumpIfNotZero(right, trueLabel, node.id)
                 currentInstructions += TackyCopy(TackyConstant(0), resultVar, node.id)
                 currentInstructions += TackyJump(endLabel, node.id)
                 currentInstructions += trueLabel
@@ -259,7 +259,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     override fun visit(node: IntExpression): TackyConstruct = TackyConstant(node.value)
 
     override fun visit(node: IfStatement): TackyConstruct? {
-        val endLabel = newLabel("end")
+        val endLabel = newLabel("end", node.id)
 
         val condition = node.condition.accept(this) as TackyVal
         if (node._else == null) {
@@ -267,7 +267,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
             node.then.accept(this)
             currentInstructions += endLabel
         } else {
-            val elseLabel = newLabel("else_label")
+            val elseLabel = newLabel("else_label", node.id)
             currentInstructions += JumpIfZero(condition, elseLabel, node.id)
             node.then.accept(this)
             currentInstructions += TackyJump(endLabel, node.id)
@@ -281,8 +281,8 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     override fun visit(node: ConditionalExpression): TackyConstruct? {
         val resultVar = newTemporary()
 
-        val elseLabel = newLabel("cond_else")
-        val endLabel = newLabel("cond_end")
+        val elseLabel = newLabel("cond_else", node.id)
+        val endLabel = newLabel("cond_end", node.id)
 
         val conditionResult = node.codition.accept(this) as TackyVal
         currentInstructions += JumpIfZero(conditionResult, elseLabel, node.id)
@@ -299,13 +299,13 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     }
 
     override fun visit(node: GotoStatement): TackyConstruct? {
-        currentInstructions += TackyJump(TackyLabel(node.label), node.id)
+        currentInstructions += TackyJump(TackyLabel(node.label, node.id), node.id)
         return null
     }
 
     override fun visit(node: LabeledStatement): TackyConstruct? {
         val label = node.label
-        currentInstructions += TackyLabel(node.label)
+        currentInstructions += TackyLabel(node.label, node.id)
         node.statement.accept(this)
         return null
     }
