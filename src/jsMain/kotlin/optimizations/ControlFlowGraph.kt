@@ -1,0 +1,205 @@
+package optimizations
+
+import tacky.JumpIfNotZero
+import tacky.JumpIfZero
+import tacky.TackyInstruction
+import tacky.TackyJump
+import tacky.TackyLabel
+import tacky.TackyRet
+
+sealed class CFGNode {
+    abstract val id: Int
+    abstract val predecessors: MutableList<Int>
+    abstract val successors: MutableList<Int>
+}
+
+data class START(
+    override val id: Int,
+    override val successors: MutableList<Int> = mutableListOf()
+) : CFGNode() {
+    override val predecessors: MutableList<Int> = mutableListOf()
+}
+
+data class EXIT(
+    override val id: Int,
+    override val predecessors: MutableList<Int> = mutableListOf()
+) : CFGNode() {
+    override val successors: MutableList<Int> = mutableListOf()
+}
+
+data class Block(
+    override val id: Int,
+    val instructions: List<TackyInstruction>,
+    override val predecessors: MutableList<Int> = mutableListOf(),
+    override val successors: MutableList<Int> = mutableListOf()
+) : CFGNode()
+
+data class Edge(val from: CFGNode, val to: CFGNode)
+
+data class ControlFlowGraph(
+    val functionName: String? = null,
+    val root: CFGNode? = null,
+    val blocks: List<Block> = emptyList(),
+    val edges: List<Edge> = emptyList()
+) {
+    fun construct(functionName: String, functionBody: List<TackyInstruction>): ControlFlowGraph {
+        val nodes = toBasicBlocks(functionBody)
+        val blocks = nodes.filterIsInstance<Block>()
+        val edges = addEdges(nodes)
+        return ControlFlowGraph(
+            functionName = functionName,
+            root = nodes.firstOrNull(),
+            blocks = blocks,
+            edges = edges
+        )
+    }
+
+    fun toInstructions(): List<TackyInstruction> {
+        return blocks.flatMap { it.instructions }
+    }
+
+    fun toBasicBlocks(instructions: List<TackyInstruction>): List<CFGNode> {
+        val finished = mutableListOf<CFGNode>()
+        val current = mutableListOf<TackyInstruction>()
+        var blockId = 0
+
+        // Add ENTRY node
+        finished.add(START(id = blockId++))
+
+        for (instruction in instructions) {
+            when (instruction) {
+                is TackyLabel -> {
+                    if (current.isNotEmpty()) {
+                        finished.add(Block(id = blockId++, instructions = current.toList()))
+                        current.clear()
+                    }
+                    current += instruction
+                }
+
+                is TackyJump, is JumpIfZero, is JumpIfNotZero, is TackyRet -> {
+                    current.add(instruction)
+                    finished.add(Block(id = blockId++, instructions = current.toList()))
+                    current.clear()
+                }
+
+                else -> {
+                    current.add(instruction)
+                }
+            }
+        }
+        if (current.isNotEmpty()) {
+            finished.add(Block(id = blockId++, instructions = current.toList()))
+        }
+
+        // Add EXIT node
+        finished.add(EXIT(id = blockId++))
+
+        return finished
+    }
+
+    fun addEdges(nodes: List<CFGNode>): List<Edge> {
+        val edges = mutableListOf<Edge>()
+        val blocks = nodes.filterIsInstance<Block>()
+
+        if (blocks.isEmpty()) return edges
+
+        // Add edge from ENTRY to first block
+        val entryNode = nodes.firstOrNull { it is START }
+        val firstBlock = blocks.firstOrNull()
+        if (entryNode != null && firstBlock != null) {
+            edges.add(Edge(entryNode, firstBlock))
+            // Update predecessors and successors
+            firstBlock.predecessors.add(entryNode.id)
+            entryNode.successors.add(firstBlock.id)
+        }
+
+        // Process each block
+        for (i in blocks.indices) {
+            val currentBlock = blocks[i]
+            val nextBlock = if (i + 1 < blocks.size) blocks[i + 1] else null
+            val exitNode = nodes.firstOrNull { it is EXIT }
+
+            // Get the last instruction in the current block
+            val lastInstruction = currentBlock.instructions.lastOrNull()
+
+            when (lastInstruction) {
+                is TackyRet -> {
+                    // Return instruction -> add edge to EXIT
+                    if (exitNode != null) {
+                        edges.add(Edge(currentBlock, exitNode))
+                        // Update predecessors and successors
+                        exitNode.predecessors.add(currentBlock.id)
+                        currentBlock.successors.add(exitNode.id)
+                    }
+                }
+                is TackyJump -> {
+                    // Unconditional jump -> find target block and add edge
+                    val targetBlock = findBlockByLabel(blocks, lastInstruction.target)
+                    if (targetBlock != null) {
+                        edges.add(Edge(currentBlock, targetBlock))
+                        // Update predecessors and successors
+                        targetBlock.predecessors.add(currentBlock.id)
+                        currentBlock.successors.add(targetBlock.id)
+                    }
+                }
+                is JumpIfZero -> {
+                    // Conditional jump -> add edge to target and next block
+                    val targetBlock = findBlockByLabel(blocks, lastInstruction.target)
+                    if (targetBlock != null) {
+                        edges.add(Edge(currentBlock, targetBlock))
+                        // Update predecessors and successors
+                        targetBlock.predecessors.add(currentBlock.id)
+                        currentBlock.successors.add(targetBlock.id)
+                    }
+                    if (nextBlock != null) {
+                        edges.add(Edge(currentBlock, nextBlock))
+                        // Update predecessors and successors
+                        nextBlock.predecessors.add(currentBlock.id)
+                        currentBlock.successors.add(nextBlock.id)
+                    }
+                }
+                is JumpIfNotZero -> {
+                    // Conditional jump -> add edge to target and next block
+                    val targetBlock = findBlockByLabel(blocks, lastInstruction.target)
+                    if (targetBlock != null) {
+                        edges.add(Edge(currentBlock, targetBlock))
+                        // Update predecessors and successors
+                        targetBlock.predecessors.add(currentBlock.id)
+                        currentBlock.successors.add(targetBlock.id)
+                    }
+                    if (nextBlock != null) {
+                        edges.add(Edge(currentBlock, nextBlock))
+                        // Update predecessors and successors
+                        nextBlock.predecessors.add(currentBlock.id)
+                        currentBlock.successors.add(nextBlock.id)
+                    }
+                }
+                else -> {
+                    // Regular instruction -> add edge to next block
+                    if (nextBlock != null) {
+                        edges.add(Edge(currentBlock, nextBlock))
+                        // Update predecessors and successors
+                        nextBlock.predecessors.add(currentBlock.id)
+                        currentBlock.successors.add(nextBlock.id)
+                    } else if (exitNode != null) {
+                        // If this is the last block, add edge to EXIT
+                        edges.add(Edge(currentBlock, exitNode))
+                        // Update predecessors and successors
+                        exitNode.predecessors.add(currentBlock.id)
+                        currentBlock.successors.add(exitNode.id)
+                    }
+                }
+            }
+        }
+
+        return edges
+    }
+
+    private fun findBlockByLabel(blocks: List<Block>, label: TackyLabel): Block? {
+        return blocks.find { block ->
+            block.instructions.any { instruction ->
+                instruction is TackyLabel && instruction.name == label.name
+            }
+        }
+    }
+}

@@ -35,7 +35,7 @@ data class TackyProgram(
 data class TackyFunction(
     val name: String,
     val args: List<String>,
-    val body: List<TackyInstruction>
+    var body: List<TackyInstruction>
 ) : TackyConstruct() {
     override fun toPseudoCode(indentationLevel: Int): String {
         val paramString = args.joinToString(", ")
