@@ -172,7 +172,7 @@ class TypeChecker : Visitor<Unit> {
     }
 
     override fun visit(node: Block) {
-        node.block.forEach { it.accept(this) }
+        node.items.forEach { it.accept(this) }
     }
 
     override fun visit(node: CompoundStatement) {

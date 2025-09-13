@@ -5,7 +5,8 @@ package parser
 data class FunctionDeclaration(
     val name: String,
     val params: List<String>,
-    val body: Block?
-) : ASTNode() {
+    val body: Block?,
+    override val location: SourceLocation
+) : ASTNode(location) {
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
