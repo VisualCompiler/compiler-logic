@@ -8,7 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class LabelAnalysisTest {
-    private val labelAnalysis = LabelCollector.LabelAnalysis()
+    private fun createLabelAnalysis() = LabelCollector.LabelAnalysis()
 
     @Test
     fun `test valid labels and gotos complete successfully`() {
@@ -45,6 +45,7 @@ class LabelAnalysisTest {
             )
 
         // Act & Assert: This should complete without throwing an exception.
+        val labelAnalysis = createLabelAnalysis()
         labelAnalysis.analyze(ast)
         assertTrue(true, "Analysis of valid labels and gotos should complete successfully.")
     }
@@ -83,6 +84,7 @@ class LabelAnalysisTest {
 
         // Act & Assert: Expect the analysis to fail with the specific exception.
         assertFailsWith<DuplicateLabelException> {
+            val labelAnalysis = createLabelAnalysis()
             labelAnalysis.analyze(ast)
         }
     }
@@ -111,6 +113,7 @@ class LabelAnalysisTest {
 
         // Act & Assert: Expect the analysis to fail with the specific exception.
         assertFailsWith<UndeclaredLabelException> {
+            val labelAnalysis = createLabelAnalysis()
             labelAnalysis.analyze(ast)
         }
     }
@@ -146,6 +149,7 @@ class LabelAnalysisTest {
             )
 
         // Act & Assert: This should complete successfully without throwing an exception.
+        val labelAnalysis = createLabelAnalysis()
         labelAnalysis.analyze(ast)
         assertTrue(true, "Analysis of nested labels should complete successfully.")
     }

@@ -5,7 +5,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class CompilerExportTest {
-    private val compilerExport = CompilerExport()
+    private fun createCompilerExport() = CompilerExport()
 
     @Test
     fun `test successful compilation`() {
@@ -16,6 +16,7 @@ class CompilerExportTest {
             }
             """.trimIndent()
 
+        val compilerExport = createCompilerExport()
         val result = compilerExport.exportCompilationResults(code)
         assertNotNull(result)
         assertTrue(result.isNotEmpty())
@@ -36,6 +37,7 @@ class CompilerExportTest {
             """.trimIndent()
         // Missing semicolon
 
+        val compilerExport = createCompilerExport()
         val result = compilerExport.exportCompilationResults(code)
         assertNotNull(result)
         assertTrue(result.isNotEmpty())
@@ -46,6 +48,7 @@ class CompilerExportTest {
 
     @Test
     fun `test empty code`() {
+        val compilerExport = createCompilerExport()
         val result = compilerExport.exportCompilationResults("")
         assertNotNull(result)
         assertTrue(result.isNotEmpty())

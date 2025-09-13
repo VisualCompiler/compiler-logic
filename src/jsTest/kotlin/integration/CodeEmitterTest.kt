@@ -16,7 +16,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class CodeEmitterTest {
-    private val emitter = CodeEmitter()
+    private fun createEmitter() = CodeEmitter()
 
     @Test
     fun `it should emit a basic program with prologue, epilogue, and a simple body`() {
@@ -36,6 +36,7 @@ class CodeEmitterTest {
             )
 
         // Act
+        val emitter = createEmitter()
         val asm = emitter.emit(program)
 
         // Assert
@@ -66,6 +67,7 @@ class CodeEmitterTest {
             )
 
         // Act
+        val emitter = createEmitter()
         val asm = emitter.emit(program)
 
         // Assert
@@ -91,6 +93,7 @@ class CodeEmitterTest {
             )
 
         // Act
+        val emitter = createEmitter()
         val asm = emitter.emit(program)
 
         // Assert
@@ -117,6 +120,7 @@ class CodeEmitterTest {
             )
 
         // Act
+        val emitter = createEmitter()
         val asm = emitter.emit(program)
 
         // Assert
@@ -136,6 +140,7 @@ class CodeEmitterTest {
             )
 
         // Act
+        val emitter = createEmitter()
         val asm = emitter.emit(program)
 
         // Assert
@@ -173,6 +178,7 @@ class CodeEmitterTest {
             )
 
         // Act
+        val emitter = createEmitter()
         val asm = emitter.emit(program)
         val bodyLines = asm.lines().slice(4..6).map { it.trim() } // Get the 3 body instructions
 
@@ -195,6 +201,7 @@ class CodeEmitterTest {
             )
 
         // Act
+        val emitter = createEmitter()
         val asm = emitter.emit(program)
 
         // Assert
