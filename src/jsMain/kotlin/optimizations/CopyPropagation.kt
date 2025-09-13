@@ -24,7 +24,6 @@ class CopyPropagation : Optimization() {
     override val optimizationType: OptimizationType = OptimizationType.COPY_PROPAGATION
 
     override fun apply(cfg: ControlFlowGraph): ControlFlowGraph {
-        // Simple copy propagation implementation
         val newBlocks = cfg.blocks.map { block ->
             val newInstructions = mutableListOf<TackyInstruction>()
             val copyMap = mutableMapOf<String, TackyVal>()
@@ -32,18 +31,14 @@ class CopyPropagation : Optimization() {
             for (instr in block.instructions) {
                 when (instr) {
                     is TackyCopy -> {
-                        // Check if this is a redundant copy (x = x)
                         if (instr.src is TackyVar && instr.src.name == instr.dest.name) {
-                            // Skip redundant copy
                         } else {
-                            // Propagate the source if it's a variable with a known copy
                             val newSrc = if (instr.src is TackyVar && copyMap.containsKey(instr.src.name)) {
                                 copyMap[instr.src.name]!!
                             } else {
                                 instr.src
                             }
 
-                            // Track the copy: dest = newSrc
                             copyMap[instr.dest.name] = newSrc
                             newInstructions.add(TackyCopy(newSrc, instr.dest))
                         }
@@ -62,7 +57,6 @@ class CopyPropagation : Optimization() {
                         } else {
                             instr.src
                         }
-                        // Clear the destination variable from copy map since it's being redefined
                         copyMap.remove(instr.dest.name)
                         newInstructions.add(TackyUnary(instr.operator, newSrc, instr.dest))
                     }
@@ -77,7 +71,6 @@ class CopyPropagation : Optimization() {
                         } else {
                             instr.src2
                         }
-                        // Clear the destination variable from copy map since it's being redefined
                         copyMap.remove(instr.dest.name)
                         newInstructions.add(TackyBinary(instr.operator, newSrc1, newSrc2, instr.dest))
                     }
@@ -89,7 +82,6 @@ class CopyPropagation : Optimization() {
                                 arg
                             }
                         }
-                        // Clear the destination variable from copy map since it's being redefined
                         copyMap.remove(instr.dest.name)
                         newInstructions.add(TackyFunCall(instr.funName, newArgs, instr.dest))
                     }
@@ -124,26 +116,18 @@ class CopyPropagation : Optimization() {
         outSets = mutableMapOf()
         instructionReachingCopies.clear()
 
-        // 1. Find the set of ALL copy instructions in the function. This is our identity element.
         val allCopies = cfg.blocks.flatMap { it.instructions }.filterIsInstance<TackyCopy>().toSet()
 
-        // 2. Initialize OUT set of every block to all_copies.
         val worklist = cfg.blocks.toMutableList()
         cfg.blocks.forEach {
             outSets[it.id] = allCopies
         }
 
-        // 3. Iterative algorithm to reach a fixed point.
         while (worklist.isNotEmpty()) {
             val block = worklist.removeAt(0)
-
-            // 4. Meet Operator: Calculate IN[B]
             val inSet = meet(block, allCopies)
-
-            // 5. Transfer Function: Calculate OUT[B]
             val newOut = transfer(block, inSet)
 
-            // 6. Check for changes and update worklist.
             if (newOut != outSets[block.id]) {
                 outSets[block.id] = newOut
                 block.successors.forEach { succId ->
@@ -158,18 +142,14 @@ class CopyPropagation : Optimization() {
     }
 
     private fun meet(block: Block, allCopies: Set<TackyCopy>): Set<TackyCopy> {
-        // If the block has no predecessors (other than START), its IN set is empty.
-        if (block.predecessors.all { it == 0 }) { // Assuming START node has id 0
+        if (block.predecessors.all { it == 0 }) {
             return emptySet<TackyCopy>()
         }
 
-        // Start with the identity element (all copies).
         var incomingCopies: Set<TackyCopy> = allCopies
 
-        // Intersect with the OUT set of every predecessor.
         for (predId in block.predecessors) {
             val predOutSet = outSets[predId]
-            // If a predecessor hasn't been analyzed, its OUT set is allCopies, which doesn't affect the intersection.
             if (predOutSet != null) {
                 incomingCopies = incomingCopies.intersect(predOutSet)
             }
@@ -188,7 +168,6 @@ class CopyPropagation : Optimization() {
                     // Kill all previous copies to or from the destination variable.
                     currentCopies.forEach { if (it.src is TackyVar && it.src.name == destVar || it.dest.name == destVar) toRemove.add(it) }
                     currentCopies.removeAll(toRemove)
-                    // Generate the new copy.
                     currentCopies.add(instruction)
                 }
                 is TackyUnary -> {
@@ -209,7 +188,7 @@ class CopyPropagation : Optimization() {
                     currentCopies.forEach { if (it.src is TackyVar && it.src.name == destVar || it.dest.name == destVar) toRemove.add(it) }
                     currentCopies.removeAll(toRemove)
                 }
-                else -> { /* Other instructions (jumps, labels, ret) do not kill copies */ }
+                else -> {}
             }
         }
         return currentCopies
@@ -248,7 +227,7 @@ class CopyPropagation : Optimization() {
                 condition = substitute(instruction.condition, substitutionMap),
                 target = instruction.target
             )
-            else -> instruction // Labels, unconditional jumps are not changed.
+            else -> instruction
         }
     }
 
