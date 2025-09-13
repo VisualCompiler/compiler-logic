@@ -45,7 +45,7 @@ class CodeEmitterTest {
             main:
               push rbp
               mov rbp, rsp
-              mov rax, 3
+              mov eax, 3
               mov rsp, rbp
               pop rbp
               ret
@@ -70,7 +70,7 @@ class CodeEmitterTest {
 
         // Assert
         val bodyLine = asm.lines()[4].trim() // Prologue is 3 lines
-        assertEquals("subq rsp, 16", bodyLine)
+        assertEquals("sub rsp, 16", bodyLine)
     }
 
     @Test
@@ -179,7 +179,7 @@ class CodeEmitterTest {
         // Assert
         assertEquals("push 10", bodyLines[0])
         assertEquals("call my_function", bodyLines[1])
-        assertEquals("addq rsp, 8", bodyLines[2])
+        assertEquals("add rsp, 8", bodyLines[2])
     }
 
     @Test
@@ -204,7 +204,7 @@ class CodeEmitterTest {
             foo:
               push rbp
               mov rbp, rsp
-              mov rax, 1
+              mov eax, 1
               mov rsp, rbp
               pop rbp
               ret
@@ -213,7 +213,7 @@ class CodeEmitterTest {
             bar:
               push rbp
               mov rbp, rsp
-              mov rax, 2
+              mov eax, 2
               mov rsp, rbp
               pop rbp
               ret

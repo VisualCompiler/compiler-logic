@@ -45,27 +45,30 @@ class CodeEmitter {
     private fun emitInstructionRaw(instruction: Instruction): RawInstruction {
         val indent = "  "
         return when (instruction) {
-            is Call -> RawInstruction("call ${formatLabel(instruction.identifier)}", instruction.sourceId.toString())
+            is Call -> RawInstruction("${indent}call ${formatLabel(instruction.identifier)}", instruction.sourceId)
             is Push -> {
                 val operand = emitOperand(instruction.operand, size = OperandSize.QUAD)
-                RawInstruction("push $operand", instruction.sourceId.toString())
+                RawInstruction("${indent}push $operand", instruction.sourceId)
             }
-            is DeAllocateStack -> RawInstruction("addq rsp, ${instruction.size}", instruction.sourceId.toString())
-            is Mov -> RawInstruction("mov ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}", instruction.sourceId.toString())
-            is AsmUnary -> RawInstruction("${instruction.op.text} ${emitOperand(instruction.dest)}", instruction.sourceId.toString())
-            is AsmBinary -> RawInstruction("${instruction.op.text} ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}", instruction.sourceId.toString())
-            is Cmp -> RawInstruction("cmp ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}", instruction.sourceId.toString())
-            is Idiv -> RawInstruction("idiv ${emitOperand(instruction.divisor)}", instruction.sourceId.toString())
-            is AllocateStack -> RawInstruction("subq rsp, ${instruction.size}", instruction.sourceId.toString())
-            is Cdq -> RawInstruction("cdq", instruction.sourceId.toString())
-            is Label -> RawInstruction("${formatLabel(instruction.name)}:", instruction.sourceId.toString())
-            is Jmp -> RawInstruction("jmp ${formatLabel(instruction.label.name)}", instruction.sourceId.toString())
-            is JmpCC -> RawInstruction("j${instruction.condition.text} ${formatLabel(instruction.label.name)}", instruction.sourceId.toString())
+            is DeAllocateStack -> RawInstruction("${indent}add rsp, ${instruction.size}", instruction.sourceId)
+
+            is Mov -> RawInstruction("${indent}mov ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}", instruction.sourceId)
+            is AsmUnary -> RawInstruction("${indent}${instruction.op.text} ${emitOperand(instruction.dest)}", instruction.sourceId)
+            is AsmBinary -> RawInstruction("${indent}${instruction.op.text} ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}", instruction.sourceId)
+            is Cmp -> RawInstruction("${indent}cmp ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}", instruction.sourceId)
+            is Idiv -> RawInstruction("${indent}idiv ${emitOperand(instruction.divisor)}", instruction.sourceId)
+            is AllocateStack -> RawInstruction("${indent}sub rsp, ${instruction.size}", instruction.sourceId)
+            is Cdq -> RawInstruction("${indent}cdq", instruction.sourceId)
+            is Label -> RawInstruction(formatLabel(instruction.name) + ":", instruction.sourceId)
+            is Jmp -> RawInstruction("${indent}jmp ${formatLabel(instruction.label.name)}", instruction.sourceId)
+            is JmpCC -> RawInstruction("${indent}j${instruction.condition.text} ${formatLabel(instruction.label.name)}", instruction.sourceId)
+
             is SetCC -> {
                 val destOperand = emitOperand(instruction.dest, size = OperandSize.BYTE)
-                RawInstruction("set${instruction.condition.text} $destOperand", instruction.sourceId.toString())
+                RawInstruction("${indent}set${instruction.condition.text} $destOperand", instruction.sourceId)
             }
-            is Ret -> RawInstruction("ret", instruction.sourceId.toString())
+
+            is Ret -> RawInstruction("", instruction.sourceId)
         }
     }
 
@@ -77,13 +80,13 @@ class CodeEmitter {
                 val operand = emitOperand(instruction.operand, size = OperandSize.QUAD)
                 "${indent}push $operand"
             }
-            is DeAllocateStack -> "${indent}addq rsp, ${instruction.size}"
+            is DeAllocateStack -> "${indent}add rsp, ${instruction.size}"
             is Mov -> "${indent}mov ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}"
             is AsmUnary -> "${indent}${instruction.op.text} ${emitOperand(instruction.dest)}"
             is AsmBinary -> "${indent}${instruction.op.text} ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}"
             is Cmp -> "${indent}cmp ${emitOperand(instruction.dest)}, ${emitOperand(instruction.src)}"
             is Idiv -> "${indent}idiv ${emitOperand(instruction.divisor)}"
-            is AllocateStack -> "${indent}subq rsp, ${instruction.size}"
+            is AllocateStack -> "${indent}sub rsp, ${instruction.size}"
             is Cdq -> "${indent}cdq"
             is Label -> formatLabel(instruction.name) + ":"
             is Jmp -> "${indent}jmp ${formatLabel(instruction.label.name)}"
@@ -109,11 +112,19 @@ class CodeEmitter {
 
     private fun emitOperand(
         operand: Operand,
-        size: OperandSize = OperandSize.QUAD
+        size: OperandSize = OperandSize.LONG
     ): String =
         when (operand) {
             is Imm -> "${operand.value}"
-            is Stack -> "qword ptr[rbp ${operand.offset}]"
+            is Stack -> {
+                val ptrSize = when (size) {
+                    OperandSize.BYTE -> "byte ptr"
+                    OperandSize.LONG -> "dword ptr"
+                    OperandSize.QUAD -> "qword ptr"
+                }
+                val sign = if (operand.offset < 0) "" else "+"
+                "$ptrSize [rbp$sign${operand.offset}]"
+            }
             is Register ->
                 when (size) {
                     OperandSize.QUAD -> operand.name.x64Name.lowercase()
