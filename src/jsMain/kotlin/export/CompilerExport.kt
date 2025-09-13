@@ -99,7 +99,7 @@ class CompilerExport {
                     functionNames = tackyProgram.functions.map { it.name }.toTypedArray(),
                     precomputedCFGs = precomputeAllCFGs(tackyProgram),
                     errors = emptyArray(),
-                    tacky = if (tackyProgram != null) Json.encodeToString(tackyProgram) else null,
+                    tacky = Json.encodeToString(tackyProgram),
                     sourceLocation = sourceLocationInfo
                 )
             )

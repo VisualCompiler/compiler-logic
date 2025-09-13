@@ -5,8 +5,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import optimizations.ConstantFolding
-import optimizations.DeadStoreElimination
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
@@ -47,7 +45,8 @@ data class TackyOutput(
     val tacky: String? = null,
     val tackyPretty: String? = null,
     val precomputedCFGs: String = "",
-    val functionNames: Array<String?> = arrayOf(ConstantFolding::class.simpleName, DeadStoreElimination::class.simpleName),
+    val optimizations: Array<String?> = arrayOf("CONSTANT_FOLDING", "DEAD_STORE_ELIMINATION"),
+    val functionNames: Array<String?> = emptyArray(),
     override val errors: Array<CompilationError>,
     val sourceLocation: SourceLocationInfo? = null
 ) : CompilationOutput()
