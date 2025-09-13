@@ -5,8 +5,6 @@ import tacky.TackyProgram
 enum class OptimizationType {
     CONSTANT_FOLDING,
     DEAD_STORE_ELIMINATION,
-
-    // UNREACHABLE_CODE_ELIMINATION,
     COPY_PROPAGATION
 }
 
@@ -16,12 +14,11 @@ sealed class Optimization {
 }
 
 object OptimizationManager {
-    private fun createOptimization(type: OptimizationType): Optimization = when (type) {
-        OptimizationType.CONSTANT_FOLDING -> ConstantFolding()
-        OptimizationType.DEAD_STORE_ELIMINATION -> DeadStoreElimination()
-        // OptimizationType.UNREACHABLE_CODE_ELIMINATION -> UnreachableCodeElimination()
-        OptimizationType.COPY_PROPAGATION -> CopyPropagation()
-    }
+    private val optimizations: Map<OptimizationType, Optimization> = mapOf(
+        OptimizationType.CONSTANT_FOLDING to ConstantFolding(),
+        OptimizationType.DEAD_STORE_ELIMINATION to DeadStoreElimination(),
+        OptimizationType.COPY_PROPAGATION to CopyPropagation()
+    )
 
     fun optimizeProgram(program: TackyProgram, enabledOptimizations: Set<OptimizationType>): TackyProgram {
         val optimizedFunctions = program.functions.map { function ->
@@ -44,7 +41,7 @@ object OptimizationManager {
             val previousInstructions = currentCfg.toInstructions()
 
             for (optimizationType in enabledOptimizations) {
-                val optimization = createOptimization(optimizationType)
+                val optimization = optimizations[optimizationType] ?: continue
                 currentCfg = optimization.apply(currentCfg)
             }
 

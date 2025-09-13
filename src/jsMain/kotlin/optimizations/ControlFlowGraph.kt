@@ -45,7 +45,7 @@ data class ControlFlowGraph(
     fun construct(functionName: String, functionBody: List<TackyInstruction>): ControlFlowGraph {
         val nodes = toBasicBlocks(functionBody)
         val blocks = nodes.filterIsInstance<Block>()
-        val edges = addEdges(nodes)
+        val edges = buildEdges(nodes, blocks)
         return ControlFlowGraph(
             functionName = functionName,
             root = nodes.firstOrNull(),
@@ -54,139 +54,82 @@ data class ControlFlowGraph(
         )
     }
 
-    fun toInstructions(): List<TackyInstruction> {
-        return blocks.flatMap { it.instructions }
-    }
+    fun toInstructions(): List<TackyInstruction> =
+        blocks.flatMap { it.instructions }
 
-    fun toBasicBlocks(instructions: List<TackyInstruction>): List<CFGNode> {
-        val finished = mutableListOf<CFGNode>()
+    private fun toBasicBlocks(instructions: List<TackyInstruction>): List<CFGNode> {
+        val nodes = mutableListOf<CFGNode>()
         val current = mutableListOf<TackyInstruction>()
         var blockId = 0
 
-        // Add ENTRY node
-        finished.add(START(id = blockId++))
+        nodes += START(blockId++)
 
-        for (instruction in instructions) {
-            when (instruction) {
+        for (inst in instructions) {
+            when (inst) {
                 is TackyLabel -> {
                     if (current.isNotEmpty()) {
-                        finished.add(Block(id = blockId++, instructions = current.toList()))
+                        nodes += Block(blockId++, current.toList())
                         current.clear()
                     }
-                    current += instruction
+                    current += inst
                 }
-
                 is TackyJump, is JumpIfZero, is JumpIfNotZero, is TackyRet -> {
-                    current.add(instruction)
-                    finished.add(Block(id = blockId++, instructions = current.toList()))
+                    current += inst
+                    nodes += Block(blockId++, current.toList())
                     current.clear()
                 }
-
-                else -> {
-                    current.add(instruction)
-                }
+                else -> current += inst
             }
         }
+
         if (current.isNotEmpty()) {
-            finished.add(Block(id = blockId++, instructions = current.toList()))
+            nodes += Block(blockId++, current.toList())
         }
 
-        // Add EXIT node
-        finished.add(EXIT(id = blockId++))
-
-        return finished
+        nodes += EXIT(blockId++)
+        return nodes
     }
 
-    fun addEdges(nodes: List<CFGNode>): List<Edge> {
+    private fun buildEdges(nodes: List<CFGNode>, blocks: List<Block>): List<Edge> {
         val edges = mutableListOf<Edge>()
-        val blocks = nodes.filterIsInstance<Block>()
+        val entry = nodes.filterIsInstance<START>().firstOrNull()
+        val exit = nodes.filterIsInstance<EXIT>().firstOrNull()
 
-        if (blocks.isEmpty()) return edges
-
-        // Add edge from ENTRY to first block
-        val entryNode = nodes.firstOrNull { it is START }
-        val firstBlock = blocks.firstOrNull()
-        if (entryNode != null && firstBlock != null) {
-            edges.add(Edge(entryNode, firstBlock))
-            // Update predecessors and successors
-            firstBlock.predecessors.add(entryNode.id)
-            entryNode.successors.add(firstBlock.id)
+        fun connect(from: CFGNode, to: CFGNode) {
+            edges += Edge(from, to)
+            from.successors += to.id
+            to.predecessors += from.id
         }
 
-        // Process each block
-        for (i in blocks.indices) {
-            val currentBlock = blocks[i]
-            val nextBlock = if (i + 1 < blocks.size) blocks[i + 1] else null
-            val exitNode = nodes.firstOrNull { it is EXIT }
+        // entry -> first block
+        blocks.firstOrNull()?.let { connect(entry!!, it) }
 
-            // Get the last instruction in the current block
-            val lastInstruction = currentBlock.instructions.lastOrNull()
+        for ((i, block) in blocks.withIndex()) {
+            val last = block.instructions.lastOrNull()
+            val next = blocks.getOrNull(i + 1)
 
-            when (lastInstruction) {
-                is TackyRet -> {
-                    // Return instruction -> add edge to EXIT
-                    if (exitNode != null) {
-                        edges.add(Edge(currentBlock, exitNode))
-                        // Update predecessors and successors
-                        exitNode.predecessors.add(currentBlock.id)
-                        currentBlock.successors.add(exitNode.id)
-                    }
-                }
+            when (last) {
+                is TackyRet -> exit?.let { connect(block, it) }
+
                 is TackyJump -> {
-                    // Unconditional jump -> find target block and add edge
-                    val targetBlock = findBlockByLabel(blocks, lastInstruction.target)
-                    if (targetBlock != null) {
-                        edges.add(Edge(currentBlock, targetBlock))
-                        // Update predecessors and successors
-                        targetBlock.predecessors.add(currentBlock.id)
-                        currentBlock.successors.add(targetBlock.id)
-                    }
+                    findBlockByLabel(blocks, last.target)?.let { connect(block, it) }
                 }
-                is JumpIfZero -> {
-                    // Conditional jump -> add edge to target and next block
-                    val targetBlock = findBlockByLabel(blocks, lastInstruction.target)
-                    if (targetBlock != null) {
-                        edges.add(Edge(currentBlock, targetBlock))
-                        // Update predecessors and successors
-                        targetBlock.predecessors.add(currentBlock.id)
-                        currentBlock.successors.add(targetBlock.id)
+
+                is JumpIfZero, is JumpIfNotZero -> {
+                    val target = when (last) {
+                        is JumpIfZero -> last.target
+                        is JumpIfNotZero -> last.target
+                        else -> null
                     }
-                    if (nextBlock != null) {
-                        edges.add(Edge(currentBlock, nextBlock))
-                        // Update predecessors and successors
-                        nextBlock.predecessors.add(currentBlock.id)
-                        currentBlock.successors.add(nextBlock.id)
-                    }
+                    target?.let { t -> findBlockByLabel(blocks, t)?.let { connect(block, it) } }
+                    next?.let { connect(block, next) }
                 }
-                is JumpIfNotZero -> {
-                    // Conditional jump -> add edge to target and next block
-                    val targetBlock = findBlockByLabel(blocks, lastInstruction.target)
-                    if (targetBlock != null) {
-                        edges.add(Edge(currentBlock, targetBlock))
-                        // Update predecessors and successors
-                        targetBlock.predecessors.add(currentBlock.id)
-                        currentBlock.successors.add(targetBlock.id)
-                    }
-                    if (nextBlock != null) {
-                        edges.add(Edge(currentBlock, nextBlock))
-                        // Update predecessors and successors
-                        nextBlock.predecessors.add(currentBlock.id)
-                        currentBlock.successors.add(nextBlock.id)
-                    }
-                }
+
                 else -> {
-                    // Regular instruction -> add edge to next block
-                    if (nextBlock != null) {
-                        edges.add(Edge(currentBlock, nextBlock))
-                        // Update predecessors and successors
-                        nextBlock.predecessors.add(currentBlock.id)
-                        currentBlock.successors.add(nextBlock.id)
-                    } else if (exitNode != null) {
-                        // If this is the last block, add edge to EXIT
-                        edges.add(Edge(currentBlock, exitNode))
-                        // Update predecessors and successors
-                        exitNode.predecessors.add(currentBlock.id)
-                        currentBlock.successors.add(exitNode.id)
+                    if (next != null) {
+                        connect(block, next)
+                    } else {
+                        exit?.let { connect(block, it) }
                     }
                 }
             }
@@ -195,11 +138,6 @@ data class ControlFlowGraph(
         return edges
     }
 
-    private fun findBlockByLabel(blocks: List<Block>, label: TackyLabel): Block? {
-        return blocks.find { block ->
-            block.instructions.any { instruction ->
-                instruction is TackyLabel && instruction.name == label.name
-            }
-        }
-    }
+    private fun findBlockByLabel(blocks: List<Block>, label: TackyLabel): Block? =
+        blocks.find { blk -> blk.instructions.any { it is TackyLabel && it.name == label.name } }
 }
