@@ -42,7 +42,7 @@ data class TackyProgram(
 data class TackyFunction(
     val name: String,
     val args: List<String>,
-    val body: List<TackyInstruction>,
+    var body: List<TackyInstruction>,
     val sourceId: String = ""
 ) : TackyConstruct() {
     override fun toPseudoCode(indentationLevel: Int): String {

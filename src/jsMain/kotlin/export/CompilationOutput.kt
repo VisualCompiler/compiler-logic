@@ -47,7 +47,7 @@ data class TackyOutput(
     val tacky: String? = null,
     val tackyPretty: String? = null,
     val precomputedCFGs: String = "",
-    val functionNames: Array<String?> = arrayOf(ConstantFolding::class.simpleName),
+    val functionNames: Array<String?> = arrayOf(ConstantFolding::class.simpleName, DeadStoreElimination::class.simpleName),
     override val errors: Array<CompilationError>,
     val sourceLocation: SourceLocationInfo? = null
 ) : CompilationOutput()
