@@ -74,7 +74,7 @@ tasks.register("syncJvmSources") {
             copy {
                 from(jsMainDir)
                 into(jvmMainDir)
-                exclude("**/export/")
+                exclude("**/export/", "**/compiler/")
             }
         }
 
@@ -82,7 +82,7 @@ tasks.register("syncJvmSources") {
             copy {
                 from(jsTestDir)
                 into(jvmTestDir)
-                exclude("**/export/")
+                exclude("**/export")
             }
         }
     }

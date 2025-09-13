@@ -30,7 +30,7 @@ class DeadStoreElimination : Optimization() {
         return cfg.copy(blocks = optimizedBlocks)
     }
 
-    private fun isDeadStore(
+    internal fun isDeadStore(
         blockId: Int,
         idx: Int,
         instruction: TackyInstruction,
@@ -94,7 +94,7 @@ class LivenessAnalysis {
         return instructionLiveVars
     }
 
-    private fun transfer(
+    internal fun transfer(
         instruction: TackyInstruction,
         liveAfter: Set<String>,
         allStaticVariables: Set<String>
@@ -138,7 +138,7 @@ class LivenessAnalysis {
         return liveBefore
     }
 
-    private fun extractStaticVariables(cfg: ControlFlowGraph): Set<String> {
+    internal fun extractStaticVariables(cfg: ControlFlowGraph): Set<String> {
         // stub: no statics for now
         return emptySet()
     }
