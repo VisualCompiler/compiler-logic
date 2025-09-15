@@ -45,7 +45,7 @@ data class TackyOutput(
     val tacky: String? = null,
     val tackyPretty: String? = null,
     val precomputedCFGs: String = "",
-    val optimizations: Array<String?> = arrayOf("CONSTANT_FOLDING", "DEAD_STORE_ELIMINATION"),
+    val optimizations: Array<String?> = arrayOf("CONSTANT_FOLDING", "DEAD_STORE_ELIMINATION", "COPY_PROPAGATION", "UNREACHABLE_CODE_ELIMINATION"),
     val functionNames: Array<String?> = emptyArray(),
     override val errors: Array<CompilationError>,
     val sourceLocation: SourceLocationInfo? = null
