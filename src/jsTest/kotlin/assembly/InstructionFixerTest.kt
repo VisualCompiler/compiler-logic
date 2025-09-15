@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class InstructionFixerTest {
-    private val fixer = InstructionFixer()
+    private fun createFixer() = InstructionFixer()
 
     @Test
     fun `should expand an illegal Mov (Stack to Stack)`() {
@@ -13,6 +13,7 @@ class InstructionFixerTest {
         val program = AsmProgram(listOf(function)) // Wrap function in a list
 
         // Act
+        val fixer = createFixer()
         val result = fixer.fix(program) as AsmProgram
 
         // Assert
@@ -39,6 +40,7 @@ class InstructionFixerTest {
         val program = AsmProgram(listOf(function))
 
         // Act
+        val fixer = createFixer()
         val result = fixer.fix(program) as AsmProgram
 
         // Assert
@@ -63,6 +65,7 @@ class InstructionFixerTest {
         val program = AsmProgram(listOf(function))
 
         // Act
+        val fixer = createFixer()
         val result = fixer.fix(program) as AsmProgram
 
         // Assert
@@ -88,6 +91,7 @@ class InstructionFixerTest {
         val program = AsmProgram(listOf(function))
 
         // Act
+        val fixer = createFixer()
         val result = fixer.fix(program) as AsmProgram
 
         // Assert

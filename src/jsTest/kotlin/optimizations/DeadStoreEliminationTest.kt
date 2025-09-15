@@ -1,6 +1,5 @@
 package optimizations
 
-import tacky.JumpIfZero
 import tacky.TackyBinary
 import tacky.TackyBinaryOP
 import tacky.TackyConstant
@@ -17,8 +16,6 @@ import tacky.TackyUnaryOP
 import tacky.TackyVar
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class DeadStoreEliminationTest {
     private val optimization = DeadStoreElimination()
