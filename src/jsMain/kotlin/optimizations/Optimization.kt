@@ -6,7 +6,7 @@ enum class OptimizationType {
     CONSTANT_FOLDING,
     DEAD_STORE_ELIMINATION,
 
-    // UNREACHABLE_CODE_ELIMINATION,
+    UNREACHABLE_CODE_ELIMINATION,
     COPY_PROPAGATION
 }
 
@@ -19,7 +19,7 @@ object OptimizationManager {
     private val optimizations: Map<OptimizationType, Optimization> = mapOf(
         OptimizationType.CONSTANT_FOLDING to ConstantFolding(),
         OptimizationType.DEAD_STORE_ELIMINATION to DeadStoreElimination(),
-        // OptimizationType.UNREACHABLE_CODE_ELIMINATION to UnreachableCodeElimination(),
+        OptimizationType.UNREACHABLE_CODE_ELIMINATION to UnreachableCodeElimination(),
         OptimizationType.COPY_PROPAGATION to CopyPropagation()
     )
 
