@@ -40,6 +40,7 @@ import parser.NullStatement
 import parser.ReturnStatement
 import parser.S
 import parser.SimpleProgram
+import parser.SourceLocation
 import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
@@ -61,6 +62,9 @@ import tacky.TackyUnary
 import tacky.TackyUnaryOP
 import tacky.TackyVar
 
+// Helper constant for test locations
+val TEST_LOCATION = SourceLocation(1, 1, 1, 1)
+
 data class ValidTestCase(
     val title: String? = null,
     val code: String,
@@ -78,67 +82,72 @@ object ValidTestCases {
                 code = "int main(void)   \n { return (5 - 3) * 4 + ~(-5) / 6 % 3; }",
                 expectedTokenList =
                 listOf(
-                    Token(TokenType.KEYWORD_INT, "int", 1, 1),
-                    Token(TokenType.IDENTIFIER, "main", 1, 5),
-                    Token(TokenType.LEFT_PAREN, "(", 1, 9),
-                    Token(TokenType.KEYWORD_VOID, "void", 1, 10),
-                    Token(TokenType.RIGHT_PAREN, ")", 1, 14),
-                    Token(TokenType.LEFT_BRACK, "{", 2, 2),
-                    Token(TokenType.KEYWORD_RETURN, "return", 2, 4),
-                    Token(TokenType.LEFT_PAREN, "(", 2, 11),
-                    Token(TokenType.INT_LITERAL, "5", 2, 12),
-                    Token(TokenType.NEGATION, "-", 2, 14),
-                    Token(TokenType.INT_LITERAL, "3", 2, 16),
-                    Token(TokenType.RIGHT_PAREN, ")", 2, 17),
-                    Token(TokenType.MULTIPLY, "*", 2, 19),
-                    Token(TokenType.INT_LITERAL, "4", 2, 21),
-                    Token(TokenType.PLUS, "+", 2, 23),
-                    Token(TokenType.TILDE, "~", 2, 25),
-                    Token(TokenType.LEFT_PAREN, "(", 2, 26),
-                    Token(TokenType.NEGATION, "-", 2, 27),
-                    Token(TokenType.INT_LITERAL, "5", 2, 28),
-                    Token(TokenType.RIGHT_PAREN, ")", 2, 29),
-                    Token(TokenType.DIVIDE, "/", 2, 31),
-                    Token(TokenType.INT_LITERAL, "6", 2, 33),
-                    Token(TokenType.REMAINDER, "%", 2, 35),
-                    Token(TokenType.INT_LITERAL, "3", 2, 37),
-                    Token(TokenType.SEMICOLON, ";", 2, 38),
-                    Token(TokenType.RIGHT_BRACK, "}", 2, 40),
-                    Token(TokenType.EOF, "", 2, 41)
+                    Token(TokenType.KEYWORD_INT, "int", 1, 1, 1, 3),
+                    Token(TokenType.IDENTIFIER, "main", 1, 5, 1, 8),
+                    Token(TokenType.LEFT_PAREN, "(", 1, 9, 1, 9),
+                    Token(TokenType.KEYWORD_VOID, "void", 1, 10, 1, 13),
+                    Token(TokenType.RIGHT_PAREN, ")", 1, 14, 1, 14),
+                    Token(TokenType.LEFT_BRACK, "{", 2, 2, 2, 2),
+                    Token(TokenType.KEYWORD_RETURN, "return", 2, 4, 2, 9),
+                    Token(TokenType.LEFT_PAREN, "(", 2, 11, 2, 11),
+                    Token(TokenType.INT_LITERAL, "5", 2, 12, 2, 12),
+                    Token(TokenType.NEGATION, "-", 2, 14, 2, 14),
+                    Token(TokenType.INT_LITERAL, "3", 2, 16, 2, 16),
+                    Token(TokenType.RIGHT_PAREN, ")", 2, 17, 2, 17),
+                    Token(TokenType.MULTIPLY, "*", 2, 19, 2, 19),
+                    Token(TokenType.INT_LITERAL, "4", 2, 21, 2, 21),
+                    Token(TokenType.PLUS, "+", 2, 23, 2, 23),
+                    Token(TokenType.TILDE, "~", 2, 25, 2, 25),
+                    Token(TokenType.LEFT_PAREN, "(", 2, 26, 2, 26),
+                    Token(TokenType.NEGATION, "-", 2, 27, 2, 27),
+                    Token(TokenType.INT_LITERAL, "5", 2, 28, 2, 28),
+                    Token(TokenType.RIGHT_PAREN, ")", 2, 29, 2, 29),
+                    Token(TokenType.DIVIDE, "/", 2, 31, 2, 31),
+                    Token(TokenType.INT_LITERAL, "6", 2, 33, 2, 33),
+                    Token(TokenType.REMAINDER, "%", 2, 35, 2, 35),
+                    Token(TokenType.INT_LITERAL, "3", 2, 37, 2, 37),
+                    Token(TokenType.SEMICOLON, ";", 2, 38, 2, 38),
+                    Token(TokenType.RIGHT_BRACK, "}", 2, 40, 2, 40),
+                    Token(TokenType.EOF, "", 2, 41, 2, 41)
                 ),
                 expectedAst =
                 SimpleProgram(
+                    location = TEST_LOCATION,
                     functionDeclaration =
                     listOf(
                         FunctionDeclaration(
+                            location = TEST_LOCATION,
                             name = "main",
                             params = emptyList(),
                             body =
                             Block(
-                                listOf(
+                                items = listOf(
                                     S(
                                         ReturnStatement(
+                                            location = TEST_LOCATION,
                                             expression =
                                             BinaryExpression(
                                                 left =
                                                 BinaryExpression(
                                                     left =
                                                     BinaryExpression(
-                                                        left = IntExpression(5),
-                                                        operator = Token(TokenType.NEGATION, "-", 2, 14),
-                                                        right = IntExpression(3)
+                                                        left = IntExpression(5, location = TEST_LOCATION),
+                                                        operator = Token(TokenType.NEGATION, "-", 2, 14, 2, 14),
+                                                        right = IntExpression(3, location = TEST_LOCATION),
+                                                        location = TEST_LOCATION
                                                     ),
-                                                    operator = Token(TokenType.MULTIPLY, "*", 2, 19),
-                                                    right = IntExpression(4)
+                                                    operator = Token(TokenType.MULTIPLY, "*", 2, 19, 2, 19),
+                                                    right = IntExpression(4, location = TEST_LOCATION),
+                                                    location = TEST_LOCATION
                                                 ),
-                                                operator = Token(TokenType.PLUS, "+", 2, 23),
+                                                operator = Token(TokenType.PLUS, "+", 2, 23, 2, 23),
                                                 right =
                                                 BinaryExpression(
                                                     left =
                                                     BinaryExpression(
                                                         left =
                                                         UnaryExpression(
-                                                            operator = Token(TokenType.TILDE, "~", 2, 25),
+                                                            operator = Token(TokenType.TILDE, "~", 2, 25, 2, 25),
                                                             expression =
                                                             UnaryExpression(
                                                                 operator =
@@ -146,21 +155,29 @@ object ValidTestCases {
                                                                     TokenType.NEGATION,
                                                                     "-",
                                                                     2,
+                                                                    27,
+                                                                    2,
                                                                     27
                                                                 ),
-                                                                expression = IntExpression(5)
-                                                            )
+                                                                expression = IntExpression(5, location = TEST_LOCATION),
+                                                                location = TEST_LOCATION
+                                                            ),
+                                                            location = TEST_LOCATION
                                                         ),
-                                                        operator = Token(TokenType.DIVIDE, "/", 2, 31),
-                                                        right = IntExpression(6)
+                                                        operator = Token(TokenType.DIVIDE, "/", 2, 31, 2, 31),
+                                                        right = IntExpression(6, location = TEST_LOCATION),
+                                                        location = TEST_LOCATION
                                                     ),
-                                                    operator = Token(TokenType.REMAINDER, "%", 2, 35),
-                                                    right = IntExpression(3)
-                                                )
+                                                    operator = Token(TokenType.REMAINDER, "%", 2, 35, 2, 35),
+                                                    right = IntExpression(3, location = TEST_LOCATION),
+                                                    location = TEST_LOCATION
+                                                ),
+                                                location = TEST_LOCATION
                                             )
                                         )
                                     )
-                                )
+                                ),
+                                location = TEST_LOCATION
                             )
                         )
                     )
@@ -201,46 +218,46 @@ object ValidTestCases {
                     listOf( // AsmProgram now holds a LIST of functions
                         AsmFunction(
                             name = "main",
-                            stackSize = 28, // 7 temporary variables * 4 bytes
+                            stackSize = 56, // 7 temporary variables * 8 bytes = 56
                             body =
                             listOf(
-                                AllocateStack(32), // 28 rounded up to 16
+                                AllocateStack(64, ""),
                                 // tmp.0 = 5 - 3
-                                Mov(Imm(5), Stack(-4)),
-                                AsmBinary(AsmBinaryOp.SUB, Imm(3), Stack(-4)),
+                                Mov(Imm(5), Stack(-8)),
+                                AsmBinary(AsmBinaryOp.SUB, Imm(3), Stack(-8)),
                                 // tmp.1 = tmp.0 * 4
-                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-8)),
-                                Mov(Stack(-8), Register(HardwareRegister.R11D)),
-                                AsmBinary(AsmBinaryOp.MUL, Imm(4), Register(HardwareRegister.R11D)),
-                                Mov(Register(HardwareRegister.R11D), Stack(-8)),
-                                // tmp.2 = -5
-                                Mov(Imm(5), Stack(-12)),
-                                AsmUnary(AsmUnaryOp.NEG, Stack(-12)),
-                                // tmp.3 = ~tmp.2
-                                Mov(Stack(-12), Register(HardwareRegister.R10D)),
+                                Mov(Stack(-8), Register(HardwareRegister.R10D)),
                                 Mov(Register(HardwareRegister.R10D), Stack(-16)),
-                                AsmUnary(AsmUnaryOp.NOT, Stack(-16)),
+                                Mov(Stack(-16), Register(HardwareRegister.R11D)),
+                                AsmBinary(AsmBinaryOp.MUL, Imm(4), Register(HardwareRegister.R11D)),
+                                Mov(Register(HardwareRegister.R11D), Stack(-16)),
+                                // tmp.2 = -5
+                                Mov(Imm(5), Stack(-24)),
+                                AsmUnary(AsmUnaryOp.NEG, Stack(-24)),
+                                // tmp.3 = ~tmp.2
+                                Mov(Stack(-24), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-32)),
+                                AsmUnary(AsmUnaryOp.NOT, Stack(-32)),
                                 // tmp.4 = tmp.3 / 6
-                                Mov(Stack(-16), Register(HardwareRegister.EAX)),
-                                Cdq,
+                                Mov(Stack(-32), Register(HardwareRegister.EAX)),
+                                Cdq(""),
                                 Mov(Imm(6), Register(HardwareRegister.R10D)),
                                 Idiv(Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.EAX), Stack(-20)),
+                                Mov(Register(HardwareRegister.EAX), Stack(-40)),
                                 // tmp.5 = tmp.4 % 3
-                                Mov(Stack(-20), Register(HardwareRegister.EAX)),
-                                Cdq,
+                                Mov(Stack(-40), Register(HardwareRegister.EAX)),
+                                Cdq(""),
                                 Mov(Imm(3), Register(HardwareRegister.R10D)),
                                 Idiv(Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.EDX), Stack(-24)),
+                                Mov(Register(HardwareRegister.EDX), Stack(-48)),
                                 // tmp.6 = tmp.1 + tmp.5
-                                Mov(Stack(-8), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-28)),
-                                Mov(Stack(-24), Register(HardwareRegister.R10D)),
-                                AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-28)),
+                                Mov(Stack(-16), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-56)),
+                                Mov(Stack(-48), Register(HardwareRegister.R10D)),
+                                AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-56)),
                                 // return tmp.6
-                                Mov(Stack(-28), Register(HardwareRegister.EAX)),
-                                Ret
+                                Mov(Stack(-56), Register(HardwareRegister.EAX)),
+                                Ret("")
                                 // The implicit return 0
                             )
                         )
@@ -304,56 +321,56 @@ object ValidTestCases {
                     listOf( // AsmProgram holds a LIST of functions
                         AsmFunction(
                             name = "main",
-                            stackSize = 20, // 5 temporary variables * 4 bytes
+                            stackSize = 40, // 5 temporary variables * 8 bytes = 40
                             body =
                             listOf(
-                                AllocateStack(32), // 20 rounded up to 16 is 32
+                                AllocateStack(48, ""),
                                 // tmp.1 = (1 == 0)
                                 Mov(Imm(1), Register(HardwareRegister.R11D)),
                                 Cmp(Imm(0), Register(HardwareRegister.R11D)),
-                                Mov(Imm(0), Stack(-4)),
-                                SetCC(ConditionCode.E, Stack(-4)),
+                                Mov(Imm(0), Stack(-8)),
+                                SetCC(ConditionCode.E, Stack(-8)),
                                 // if (tmp.1 != 0) goto .L_or_true_0
-                                Cmp(Imm(0), Stack(-4)),
+                                Cmp(Imm(0), Stack(-8)),
                                 JmpCC(ConditionCode.NE, Label(".L_or_true_0")),
                                 // tmp.3 = (5 > 2)
                                 Mov(Imm(5), Register(HardwareRegister.R11D)),
                                 Cmp(Imm(2), Register(HardwareRegister.R11D)),
-                                Mov(Imm(0), Stack(-8)),
-                                SetCC(ConditionCode.G, Stack(-8)),
+                                Mov(Imm(0), Stack(-16)),
+                                SetCC(ConditionCode.G, Stack(-16)),
                                 // if (tmp.3 == 0) goto .L_and_false_2
-                                Cmp(Imm(0), Stack(-8)),
+                                Cmp(Imm(0), Stack(-16)),
                                 JmpCC(ConditionCode.E, Label(".L_and_false_2")),
                                 // tmp.4 = (10 <= 20)
                                 Mov(Imm(10), Register(HardwareRegister.R11D)),
                                 Cmp(Imm(20), Register(HardwareRegister.R11D)),
-                                Mov(Imm(0), Stack(-12)),
-                                SetCC(ConditionCode.LE, Stack(-12)),
+                                Mov(Imm(0), Stack(-24)),
+                                SetCC(ConditionCode.LE, Stack(-24)),
                                 // if (tmp.4 == 0) goto .L_and_false_2
-                                Cmp(Imm(0), Stack(-12)),
+                                Cmp(Imm(0), Stack(-24)),
                                 JmpCC(ConditionCode.E, Label(".L_and_false_2")),
                                 // tmp.2 = 1 (AND is true)
-                                Mov(Imm(1), Stack(-16)),
+                                Mov(Imm(1), Stack(-32)),
                                 Jmp(Label(".L_and_end_3")),
                                 // .L_and_false_2: (AND is false)
                                 Label(".L_and_false_2"),
-                                Mov(Imm(0), Stack(-16)),
+                                Mov(Imm(0), Stack(-32)),
                                 // .L_and_end_3:
                                 Label(".L_and_end_3"),
                                 // if (tmp.2 != 0) goto .L_or_true_0
-                                Cmp(Imm(0), Stack(-16)),
+                                Cmp(Imm(0), Stack(-32)),
                                 JmpCC(ConditionCode.NE, Label(".L_or_true_0")),
                                 // tmp.0 = 0 (OR is false)
-                                Mov(Imm(0), Stack(-20)),
+                                Mov(Imm(0), Stack(-40)),
                                 Jmp(Label(".L_or_end_1")),
                                 // .L_or_true_0: (OR is true)
                                 Label(".L_or_true_0"),
-                                Mov(Imm(1), Stack(-20)),
+                                Mov(Imm(1), Stack(-40)),
                                 // .L_or_end_1:
                                 Label(".L_or_end_1"),
                                 // return tmp.0
-                                Mov(Stack(-20), Register(HardwareRegister.EAX)),
-                                Ret
+                                Mov(Stack(-40), Register(HardwareRegister.EAX)),
+                                Ret("")
                             )
                         )
                     )
@@ -370,65 +387,66 @@ object ValidTestCases {
                     |;
                     |}
                 """.trimMargin(),
-                expectedTokenList =
-                listOf(
-                    Token(TokenType.KEYWORD_INT, "int", 1, 1),
-                    Token(TokenType.IDENTIFIER, "main", 1, 5),
-                    Token(TokenType.LEFT_PAREN, "(", 1, 9),
-                    Token(TokenType.KEYWORD_VOID, "void", 1, 10),
-                    Token(TokenType.RIGHT_PAREN, ")", 1, 14),
-                    Token(TokenType.LEFT_BRACK, "{", 1, 16),
+                expectedTokenList = listOf(
+                    Token(TokenType.KEYWORD_INT, "int", 1, 1, 1, 3),
+                    Token(TokenType.IDENTIFIER, "main", 1, 5, 1, 8),
+                    Token(TokenType.LEFT_PAREN, "(", 1, 9, 1, 9),
+                    Token(TokenType.KEYWORD_VOID, "void", 1, 10, 1, 13),
+                    Token(TokenType.RIGHT_PAREN, ")", 1, 14, 1, 14),
+                    Token(TokenType.LEFT_BRACK, "{", 1, 16, 1, 16),
                     // int b;
-                    Token(TokenType.KEYWORD_INT, "int", 2, 1),
-                    Token(TokenType.IDENTIFIER, "b", 2, 5),
-                    Token(TokenType.SEMICOLON, ";", 2, 6),
+                    Token(TokenType.KEYWORD_INT, "int", 2, 1, 2, 3), Token(TokenType.IDENTIFIER, "b", 2, 5, 2, 5),
+                    Token(TokenType.SEMICOLON, ";", 2, 6, 2, 6),
                     // int a = 10 + 1;
-                    Token(TokenType.KEYWORD_INT, "int", 3, 1),
-                    Token(TokenType.IDENTIFIER, "a", 3, 5),
-                    Token(TokenType.ASSIGN, "=", 3, 7),
-                    Token(TokenType.INT_LITERAL, "10", 3, 9),
-                    Token(TokenType.PLUS, "+", 3, 12),
-                    Token(TokenType.INT_LITERAL, "1", 3, 14),
-                    Token(TokenType.SEMICOLON, ";", 3, 15),
+                    Token(TokenType.KEYWORD_INT, "int", 3, 1, 3, 3), Token(TokenType.IDENTIFIER, "a", 3, 5, 3, 5),
+                    Token(TokenType.ASSIGN, "=", 3, 7, 3, 7),
+                    Token(TokenType.INT_LITERAL, "10", 3, 9, 3, 10), Token(TokenType.PLUS, "+", 3, 12, 3, 12),
+                    Token(TokenType.INT_LITERAL, "1", 3, 14, 3, 14),
+                    Token(TokenType.SEMICOLON, ";", 3, 15, 3, 15),
                     // b = (a=2) * 2;
-                    Token(TokenType.IDENTIFIER, "b", 4, 1),
-                    Token(TokenType.ASSIGN, "=", 4, 3),
-                    Token(TokenType.LEFT_PAREN, "(", 4, 5),
-                    Token(TokenType.IDENTIFIER, "a", 4, 6),
-                    Token(TokenType.ASSIGN, "=", 4, 7),
-                    Token(TokenType.INT_LITERAL, "2", 4, 8),
-                    Token(TokenType.RIGHT_PAREN, ")", 4, 9),
-                    Token(TokenType.MULTIPLY, "*", 4, 11),
-                    Token(TokenType.INT_LITERAL, "2", 4, 13),
-                    Token(TokenType.SEMICOLON, ";", 4, 14),
+                    Token(TokenType.IDENTIFIER, "b", 4, 1, 4, 1),
+                    Token(TokenType.ASSIGN, "=", 4, 3, 4, 3),
+                    Token(TokenType.LEFT_PAREN, "(", 4, 5, 4, 5),
+                    Token(TokenType.IDENTIFIER, "a", 4, 6, 4, 6),
+                    Token(TokenType.ASSIGN, "=", 4, 7, 4, 7),
+                    Token(TokenType.INT_LITERAL, "2", 4, 8, 4, 8),
+                    Token(TokenType.RIGHT_PAREN, ")", 4, 9, 4, 9),
+                    Token(TokenType.MULTIPLY, "*", 4, 11, 4, 11),
+                    Token(TokenType.INT_LITERAL, "2", 4, 13, 4, 13),
+                    Token(TokenType.SEMICOLON, ";", 4, 14, 4, 14),
                     // return b;
-                    Token(TokenType.KEYWORD_RETURN, "return", 5, 1),
-                    Token(TokenType.IDENTIFIER, "b", 5, 8),
-                    Token(TokenType.SEMICOLON, ";", 5, 9),
-                    Token(TokenType.SEMICOLON, ";", 6, 1),
-                    Token(TokenType.RIGHT_BRACK, "}", 7, 1),
-                    Token(TokenType.EOF, "", 7, 2)
+                    Token(TokenType.KEYWORD_RETURN, "return", 5, 1, 5, 6),
+                    Token(TokenType.IDENTIFIER, "b", 5, 8, 5, 8),
+                    Token(TokenType.SEMICOLON, ";", 5, 9, 5, 9),
+                    Token(TokenType.SEMICOLON, ";", 6, 1, 6, 1),
+                    Token(TokenType.RIGHT_BRACK, "}", 7, 1, 7, 1),
+                    Token(TokenType.EOF, "", 7, 2, 7, 2)
                 ),
                 expectedAst =
                 SimpleProgram(
+                    location = TEST_LOCATION,
                     functionDeclaration =
                     listOf(
                         FunctionDeclaration(
+                            location = TEST_LOCATION,
                             name = "main",
                             params = emptyList(),
                             body = Block(
-                                block =
+                                location = TEST_LOCATION,
+                                items =
                                 listOf(
-                                    D(VarDecl(VariableDeclaration(name = "b.0", init = null))),
+                                    D(VarDecl(VariableDeclaration(location = TEST_LOCATION, name = "b.0", init = null))),
                                     D(
                                         VarDecl(
                                             VariableDeclaration(
+                                                location = TEST_LOCATION,
                                                 name = "a.1",
                                                 init =
                                                 BinaryExpression(
-                                                    left = IntExpression(10),
-                                                    operator = Token(TokenType.PLUS, "+", 3, 12),
-                                                    right = IntExpression(1)
+                                                    left = IntExpression(10, location = TEST_LOCATION),
+                                                    operator = Token(TokenType.PLUS, "+", 3, 12, 3, 12),
+                                                    right = IntExpression(1, location = TEST_LOCATION),
+                                                    location = TEST_LOCATION
                                                 )
                                             )
                                         )
@@ -436,26 +454,29 @@ object ValidTestCases {
                                     S(
                                         ExpressionStatement(
                                             AssignmentExpression(
-                                                lvalue = VariableExpression("b.0"),
-                                                rvalue =
+                                                VariableExpression("b.0", location = TEST_LOCATION),
                                                 BinaryExpression(
-                                                    left =
                                                     AssignmentExpression(
-                                                        lvalue = VariableExpression("a.1"),
-                                                        rvalue = IntExpression(2)
+                                                        VariableExpression("a.1", location = TEST_LOCATION),
+                                                        IntExpression(2, location = TEST_LOCATION),
+                                                        location = TEST_LOCATION
                                                     ),
-                                                    operator = Token(TokenType.MULTIPLY, "*", 4, 11),
-                                                    right = IntExpression(2)
-                                                )
-                                            )
+                                                    Token(TokenType.MULTIPLY, "*", 4, 11, 4, 11),
+                                                    IntExpression(2, location = TEST_LOCATION),
+                                                    location = TEST_LOCATION
+                                                ),
+                                                location = TEST_LOCATION
+                                            ),
+                                            location = TEST_LOCATION
                                         )
                                     ),
                                     S(
                                         ReturnStatement(
-                                            expression = VariableExpression("b.0")
+                                            location = TEST_LOCATION,
+                                            expression = VariableExpression("b.0", location = TEST_LOCATION)
                                         )
                                     ),
-                                    S(NullStatement())
+                                    S(NullStatement(location = TEST_LOCATION))
                                 )
                             )
                         )
@@ -533,33 +554,33 @@ object ValidTestCases {
                     listOf(
                         AsmFunction(
                             name = "main",
-                            stackSize = 8,
+                            stackSize = 16,
                             body =
                             listOf(
-                                AllocateStack(16),
+                                AllocateStack(16, ""),
                                 // int a = 0;
-                                Mov(Imm(0), Stack(-4)),
-                                // tmp.0 = a == 0;
-                                Cmp(Imm(0), Stack(-4)),
                                 Mov(Imm(0), Stack(-8)),
-                                SetCC(ConditionCode.E, Stack(-8)),
-                                // if (tmp.0 == 0) goto .L_else_label_1
+                                // tmp.0 = a == 0;
                                 Cmp(Imm(0), Stack(-8)),
+                                Mov(Imm(0), Stack(-16)),
+                                SetCC(ConditionCode.E, Stack(-16)),
+                                // if (tmp.0 == 0) goto .L_else_label_1
+                                Cmp(Imm(0), Stack(-16)),
                                 JmpCC(ConditionCode.E, Label(".L_else_label_1")),
                                 // return 10;
                                 Mov(Imm(10), Register(HardwareRegister.EAX)),
-                                Ret,
+                                Ret(""),
                                 Jmp(Label(".L_end_0")),
                                 // .L_else_label_1:
                                 Label(".L_else_label_1"),
                                 // return 20;
                                 Mov(Imm(20), Register(HardwareRegister.EAX)),
-                                Ret,
+                                Ret(""),
                                 // .L_end_0:
                                 Label(".L_end_0"),
                                 // implicit return 0
                                 Mov(Imm(0), Register(HardwareRegister.EAX)),
-                                Ret
+                                Ret("")
                             )
                         )
                     )
@@ -617,35 +638,35 @@ object ValidTestCases {
                     listOf( // AsmProgram holds a LIST of functions
                         AsmFunction(
                             name = "main",
-                            stackSize = 12, // 1 variable (a) + 2 temporaries (tmp.0, tmp.1) = 3 * 4 = 12
+                            stackSize = 24, // 1 variable (a) + 2 temporaries (tmp.0, tmp.1) = 3 * 8 = 24
                             body =
                             listOf(
-                                AllocateStack(16), // 12 rounded up to nearest 16
+                                AllocateStack(32, ""), // 12 rounded up to nearest 16
                                 // a = 0
-                                Mov(Imm(0), Stack(-4)), // Stack slot for a.0
+                                Mov(Imm(0), Stack(-8)), // Stack slot for a.0
                                 // start:
                                 Label("start"),
                                 // tmp.0 = a + 1
-                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-8)), // Stack slot for tmp.0
-                                AsmBinary(AsmBinaryOp.ADD, Imm(1), Stack(-8)),
-                                // a = tmp.0
                                 Mov(Stack(-8), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-4)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-16)), // Stack slot for tmp.0
+                                AsmBinary(AsmBinaryOp.ADD, Imm(1), Stack(-16)),
+                                // a = tmp.0
+                                Mov(Stack(-16), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-8)),
                                 // tmp.1 = a < 3
-                                Cmp(Imm(3), Stack(-4)),
-                                Mov(Imm(0), Stack(-12)), // Stack slot for tmp.1
-                                SetCC(ConditionCode.L, Stack(-12)),
+                                Cmp(Imm(3), Stack(-8)),
+                                Mov(Imm(0), Stack(-24)), // Stack slot for tmp.1
+                                SetCC(ConditionCode.L, Stack(-24)),
                                 // if (tmp.1 == 0) goto .L_end_0
-                                Cmp(Imm(0), Stack(-12)),
+                                Cmp(Imm(0), Stack(-24)),
                                 JmpCC(ConditionCode.E, Label(".L_end_0")),
                                 // goto start
                                 Jmp(Label("start")),
                                 // .L_end_0:
                                 Label(".L_end_0"),
                                 // return a
-                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
-                                Ret
+                                Mov(Stack(-8), Register(HardwareRegister.EAX)),
+                                Ret("")
                             )
                         )
                     )
@@ -699,41 +720,41 @@ object ValidTestCases {
                     listOf(
                         AsmFunction(
                             name = "add",
-                            stackSize = 12,
+                            stackSize = 24,
                             body =
                             listOf(
-                                AllocateStack(16),
-                                // Parameter setup: a.0 -> Stack(-4), b.1 -> Stack(-8)
-                                Mov(Register(HardwareRegister.EDI), Stack(-4)),
-                                Mov(Register(HardwareRegister.ESI), Stack(-8)),
+                                AllocateStack(32, ""),
+                                // Parameter setup: a.0 -> Stack(-8), b.1 -> Stack(-16)
+                                Mov(Register(HardwareRegister.EDI), Stack(-8)),
+                                Mov(Register(HardwareRegister.ESI), Stack(-16)),
                                 // tmp.0 = a + b (using R10D for temporary)
-                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-12)),
                                 Mov(Stack(-8), Register(HardwareRegister.R10D)),
-                                AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-12)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-24)),
+                                Mov(Stack(-16), Register(HardwareRegister.R10D)),
+                                AsmBinary(AsmBinaryOp.ADD, Register(HardwareRegister.R10D), Stack(-24)),
                                 // return tmp.0
-                                Mov(Stack(-12), Register(HardwareRegister.EAX)),
-                                Ret
+                                Mov(Stack(-24), Register(HardwareRegister.EAX)),
+                                Ret("")
                             )
                         ),
                         AsmFunction(
                             name = "main",
-                            stackSize = 8,
+                            stackSize = 16,
                             body =
                             listOf(
-                                AllocateStack(16),
+                                AllocateStack(16, ""),
                                 // Call add(5, 3)
                                 Mov(Imm(5), Register(HardwareRegister.EDI)),
                                 Mov(Imm(3), Register(HardwareRegister.ESI)),
                                 Call("add"),
                                 // Store result in result.2
-                                Mov(Register(HardwareRegister.EAX), Stack(-4)),
+                                Mov(Register(HardwareRegister.EAX), Stack(-8)),
                                 // Copy result to R10D for intermediate storage
-                                Mov(Stack(-4), Register(HardwareRegister.R10D)),
-                                Mov(Register(HardwareRegister.R10D), Stack(-8)),
+                                Mov(Stack(-8), Register(HardwareRegister.R10D)),
+                                Mov(Register(HardwareRegister.R10D), Stack(-16)),
                                 // return result
-                                Mov(Stack(-8), Register(HardwareRegister.EAX)),
-                                Ret
+                                Mov(Stack(-16), Register(HardwareRegister.EAX)),
+                                Ret("")
                             )
                         )
                     )
@@ -796,24 +817,24 @@ object ValidTestCases {
                             listOf(
                                 // return 5;
                                 Mov(Imm(5), Register(HardwareRegister.EAX)),
-                                Ret
+                                Ret("")
                             )
                         ),
                         AsmFunction(
                             name = "main",
-                            stackSize = 4,
+                            stackSize = 8,
                             body =
                             listOf(
-                                AllocateStack(16),
+                                AllocateStack(16, ""),
                                 // Implicit return 0
                                 Mov(Imm(0), Register(HardwareRegister.EAX)),
-                                Ret,
+                                Ret(""),
                                 // Call foo() (no arguments)
                                 Call("foo"),
                                 // Store result and return it
-                                Mov(Register(HardwareRegister.EAX), Stack(-4)),
-                                Mov(Stack(-4), Register(HardwareRegister.EAX)),
-                                Ret
+                                Mov(Register(HardwareRegister.EAX), Stack(-8)),
+                                Mov(Stack(-8), Register(HardwareRegister.EAX)),
+                                Ret("")
                             )
                         )
                     )
@@ -839,219 +860,230 @@ object ValidTestCases {
                 """.trimMargin(),
                 expectedTokenList =
                 listOf(
-                    Token(TokenType.KEYWORD_INT, "int", 1, 1),
-                    Token(TokenType.IDENTIFIER, "main", 1, 5),
-                    Token(TokenType.LEFT_PAREN, "(", 1, 9),
-                    Token(TokenType.KEYWORD_VOID, "void", 1, 10),
-                    Token(TokenType.RIGHT_PAREN, ")", 1, 14),
-                    Token(TokenType.LEFT_BRACK, "{", 1, 16),
+                    Token(TokenType.KEYWORD_INT, "int", 1, 1, 1, 3),
+                    Token(TokenType.IDENTIFIER, "main", 1, 5, 1, 8),
+                    Token(TokenType.LEFT_PAREN, "(", 1, 9, 1, 9),
+                    Token(TokenType.KEYWORD_VOID, "void", 1, 10, 1, 13),
+                    Token(TokenType.RIGHT_PAREN, ")", 1, 14, 1, 14),
+                    Token(TokenType.LEFT_BRACK, "{", 1, 16, 1, 16),
                     // int a = 10;
-                    Token(TokenType.KEYWORD_INT, "int", 2, 1),
-                    Token(TokenType.IDENTIFIER, "a", 2, 5),
-                    Token(TokenType.ASSIGN, "=", 2, 7),
-                    Token(TokenType.INT_LITERAL, "10", 2, 9),
-                    Token(TokenType.SEMICOLON, ";", 2, 11),
+                    Token(TokenType.KEYWORD_INT, "int", 2, 1, 2, 3),
+                    Token(TokenType.IDENTIFIER, "a", 2, 5, 2, 5),
+                    Token(TokenType.ASSIGN, "=", 2, 7, 2, 7),
+                    Token(TokenType.INT_LITERAL, "10", 2, 9, 2, 10),
+                    Token(TokenType.SEMICOLON, ";", 2, 11, 2, 11),
                     // while(a > 0)
-                    Token(TokenType.KEYWORD_WHILE, "while", 3, 1),
-                    Token(TokenType.LEFT_PAREN, "(", 3, 6),
-                    Token(TokenType.IDENTIFIER, "a", 3, 7),
-                    Token(TokenType.GREATER, ">", 3, 9),
-                    Token(TokenType.INT_LITERAL, "0", 3, 11),
-                    Token(TokenType.RIGHT_PAREN, ")", 3, 12),
+                    Token(TokenType.KEYWORD_WHILE, "while", 3, 1, 3, 5),
+                    Token(TokenType.LEFT_PAREN, "(", 3, 6, 3, 6),
+                    Token(TokenType.IDENTIFIER, "a", 3, 7, 3, 7),
+                    Token(TokenType.GREATER, ">", 3, 9, 3, 9),
+                    Token(TokenType.INT_LITERAL, "0", 3, 11, 3, 11),
+                    Token(TokenType.RIGHT_PAREN, ")", 3, 12, 3, 12),
                     // a = a - 1;
-                    Token(TokenType.IDENTIFIER, "a", 4, 4),
-                    Token(TokenType.ASSIGN, "=", 4, 6),
-                    Token(TokenType.IDENTIFIER, "a", 4, 8),
-                    Token(TokenType.NEGATION, "-", 4, 10),
-                    Token(TokenType.INT_LITERAL, "1", 4, 12),
-                    Token(TokenType.SEMICOLON, ";", 4, 13),
+                    Token(TokenType.IDENTIFIER, "a", 4, 4, 4, 4),
+                    Token(TokenType.ASSIGN, "=", 4, 6, 4, 6),
+                    Token(TokenType.IDENTIFIER, "a", 4, 8, 4, 8),
+                    Token(TokenType.NEGATION, "-", 4, 10, 4, 10),
+                    Token(TokenType.INT_LITERAL, "1", 4, 12, 4, 12),
+                    Token(TokenType.SEMICOLON, ";", 4, 13, 4, 13),
                     // for(int i = 0; i < 10; i = i + 1)
-                    Token(TokenType.KEYWORD_FOR, "for", 5, 1),
-                    Token(TokenType.LEFT_PAREN, "(", 5, 4),
-                    Token(TokenType.KEYWORD_INT, "int", 5, 5),
-                    Token(TokenType.IDENTIFIER, "i", 5, 9),
-                    Token(TokenType.ASSIGN, "=", 5, 11),
-                    Token(TokenType.INT_LITERAL, "0", 5, 13),
-                    Token(TokenType.SEMICOLON, ";", 5, 14),
-                    Token(TokenType.IDENTIFIER, "i", 5, 16),
-                    Token(TokenType.LESS, "<", 5, 18),
-                    Token(TokenType.INT_LITERAL, "10", 5, 20),
-                    Token(TokenType.SEMICOLON, ";", 5, 22),
-                    Token(TokenType.IDENTIFIER, "i", 5, 24),
-                    Token(TokenType.ASSIGN, "=", 5, 26),
-                    Token(TokenType.IDENTIFIER, "i", 5, 28),
-                    Token(TokenType.PLUS, "+", 5, 30),
-                    Token(TokenType.INT_LITERAL, "1", 5, 32),
-                    Token(TokenType.RIGHT_PAREN, ")", 5, 33),
+                    Token(TokenType.KEYWORD_FOR, "for", 5, 1, 5, 3),
+                    Token(TokenType.LEFT_PAREN, "(", 5, 4, 5, 4),
+                    Token(TokenType.KEYWORD_INT, "int", 5, 5, 5, 7),
+                    Token(TokenType.IDENTIFIER, "i", 5, 9, 5, 9),
+                    Token(TokenType.ASSIGN, "=", 5, 11, 5, 11),
+                    Token(TokenType.INT_LITERAL, "0", 5, 13, 5, 13),
+                    Token(TokenType.SEMICOLON, ";", 5, 14, 5, 14),
+                    Token(TokenType.IDENTIFIER, "i", 5, 16, 5, 16),
+                    Token(TokenType.LESS, "<", 5, 18, 5, 18),
+                    Token(TokenType.INT_LITERAL, "10", 5, 20, 5, 21),
+                    Token(TokenType.SEMICOLON, ";", 5, 22, 5, 22),
+                    Token(TokenType.IDENTIFIER, "i", 5, 24, 5, 24),
+                    Token(TokenType.ASSIGN, "=", 5, 26, 5, 26),
+                    Token(TokenType.IDENTIFIER, "i", 5, 28, 5, 28),
+                    Token(TokenType.PLUS, "+", 5, 30, 5, 30),
+                    Token(TokenType.INT_LITERAL, "1", 5, 32, 5, 32),
+                    Token(TokenType.RIGHT_PAREN, ")", 5, 33, 5, 33),
                     // a = a + 1;
-                    Token(TokenType.IDENTIFIER, "a", 6, 4),
-                    Token(TokenType.ASSIGN, "=", 6, 6),
-                    Token(TokenType.IDENTIFIER, "a", 6, 8),
-                    Token(TokenType.PLUS, "+", 6, 10),
-                    Token(TokenType.INT_LITERAL, "1", 6, 12),
-                    Token(TokenType.SEMICOLON, ";", 6, 13),
+                    Token(TokenType.IDENTIFIER, "a", 6, 4, 6, 4),
+                    Token(TokenType.ASSIGN, "=", 6, 6, 6, 6),
+                    Token(TokenType.IDENTIFIER, "a", 6, 8, 6, 8),
+                    Token(TokenType.PLUS, "+", 6, 10, 6, 10),
+                    Token(TokenType.INT_LITERAL, "1", 6, 12, 6, 12),
+                    Token(TokenType.SEMICOLON, ";", 6, 13, 6, 13),
                     // for(;a > 0;)
-                    Token(TokenType.KEYWORD_FOR, "for", 7, 1),
-                    Token(TokenType.LEFT_PAREN, "(", 7, 4),
-                    Token(TokenType.SEMICOLON, ";", 7, 5),
-                    Token(TokenType.IDENTIFIER, "a", 7, 6),
-                    Token(TokenType.GREATER, ">", 7, 8),
-                    Token(TokenType.INT_LITERAL, "0", 7, 10),
-                    Token(TokenType.SEMICOLON, ";", 7, 11),
-                    Token(TokenType.RIGHT_PAREN, ")", 7, 12),
+                    Token(TokenType.KEYWORD_FOR, "for", 7, 1, 7, 3),
+                    Token(TokenType.LEFT_PAREN, "(", 7, 4, 7, 4),
+                    Token(TokenType.SEMICOLON, ";", 7, 5, 7, 5),
+                    Token(TokenType.IDENTIFIER, "a", 7, 6, 7, 6),
+                    Token(TokenType.GREATER, ">", 7, 8, 7, 8),
+                    Token(TokenType.INT_LITERAL, "0", 7, 10, 7, 10),
+                    Token(TokenType.SEMICOLON, ";", 7, 11, 7, 11),
+                    Token(TokenType.RIGHT_PAREN, ")", 7, 12, 7, 12),
                     // a = a + 1;
-                    Token(TokenType.IDENTIFIER, "a", 8, 4),
-                    Token(TokenType.ASSIGN, "=", 8, 6),
-                    Token(TokenType.IDENTIFIER, "a", 8, 8),
-                    Token(TokenType.PLUS, "+", 8, 10),
-                    Token(TokenType.INT_LITERAL, "1", 8, 12),
-                    Token(TokenType.SEMICOLON, ";", 8, 13),
+                    Token(TokenType.IDENTIFIER, "a", 8, 4, 8, 4),
+                    Token(TokenType.ASSIGN, "=", 8, 6, 8, 6),
+                    Token(TokenType.IDENTIFIER, "a", 8, 8, 8, 8),
+                    Token(TokenType.PLUS, "+", 8, 10, 8, 10),
+                    Token(TokenType.INT_LITERAL, "1", 8, 12, 8, 12),
+                    Token(TokenType.SEMICOLON, ";", 8, 13, 8, 13),
                     // do
-                    Token(TokenType.KEYWORD_DO, "do", 9, 1),
+                    Token(TokenType.KEYWORD_DO, "do", 9, 1, 9, 2),
                     // a = a + 1;
-                    Token(TokenType.IDENTIFIER, "a", 10, 4),
-                    Token(TokenType.ASSIGN, "=", 10, 6),
-                    Token(TokenType.IDENTIFIER, "a", 10, 8),
-                    Token(TokenType.PLUS, "+", 10, 10),
-                    Token(TokenType.INT_LITERAL, "1", 10, 12),
-                    Token(TokenType.SEMICOLON, ";", 10, 13),
+                    Token(TokenType.IDENTIFIER, "a", 10, 4, 10, 4),
+                    Token(TokenType.ASSIGN, "=", 10, 6, 10, 6),
+                    Token(TokenType.IDENTIFIER, "a", 10, 8, 10, 8),
+                    Token(TokenType.PLUS, "+", 10, 10, 10, 10),
+                    Token(TokenType.INT_LITERAL, "1", 10, 12, 10, 12),
+                    Token(TokenType.SEMICOLON, ";", 10, 13, 10, 13),
                     // while(a > 0);
-                    Token(TokenType.KEYWORD_WHILE, "while", 11, 1),
-                    Token(TokenType.LEFT_PAREN, "(", 11, 6),
-                    Token(TokenType.IDENTIFIER, "a", 11, 7),
-                    Token(TokenType.GREATER, ">", 11, 9),
-                    Token(TokenType.INT_LITERAL, "0", 11, 11),
-                    Token(TokenType.RIGHT_PAREN, ")", 11, 12),
-                    Token(TokenType.SEMICOLON, ";", 11, 13),
+                    Token(TokenType.KEYWORD_WHILE, "while", 11, 1, 11, 5),
+                    Token(TokenType.LEFT_PAREN, "(", 11, 6, 11, 6),
+                    Token(TokenType.IDENTIFIER, "a", 11, 7, 11, 7),
+                    Token(TokenType.GREATER, ">", 11, 9, 11, 9),
+                    Token(TokenType.INT_LITERAL, "0", 11, 11, 11, 11),
+                    Token(TokenType.RIGHT_PAREN, ")", 11, 12, 11, 12),
+                    Token(TokenType.SEMICOLON, ";", 11, 13, 11, 13),
                     // return 0;
-                    Token(TokenType.KEYWORD_RETURN, "return", 12, 1),
-                    Token(TokenType.INT_LITERAL, "0", 12, 8),
-                    Token(TokenType.SEMICOLON, ";", 12, 9),
-                    Token(TokenType.RIGHT_BRACK, "}", 13, 1),
-                    Token(TokenType.EOF, "", 13, 2)
+                    Token(TokenType.KEYWORD_RETURN, "return", 12, 1, 12, 6),
+                    Token(TokenType.INT_LITERAL, "0", 12, 8, 12, 8),
+                    Token(TokenType.SEMICOLON, ";", 12, 9, 12, 9),
+                    Token(TokenType.RIGHT_BRACK, "}", 13, 1, 13, 1),
+                    Token(TokenType.EOF, "", 13, 2, 13, 2)
                 ),
                 expectedAst =
                 SimpleProgram(
+                    location = TEST_LOCATION,
                     functionDeclaration = listOf(
                         FunctionDeclaration(
+                            location = TEST_LOCATION,
                             name = "main",
                             params = emptyList(),
                             body = Block(
-                                block =
+                                location = TEST_LOCATION,
+                                items =
                                 listOf(
-                                    D(VarDecl(VariableDeclaration(name = "a.0", init = IntExpression(10)))),
+                                    D(VarDecl(VariableDeclaration(location = TEST_LOCATION, name = "a.0", init = IntExpression(10, location = TEST_LOCATION)))),
                                     S(
                                         WhileStatement(
-                                            condition =
                                             BinaryExpression(
-                                                left = VariableExpression("a.0"),
-                                                operator = Token(TokenType.GREATER, ">", 3, 9),
-                                                right = IntExpression(0)
+                                                VariableExpression("a.0", location = TEST_LOCATION),
+                                                Token(TokenType.GREATER, ">", 3, 9, 3, 9),
+                                                IntExpression(0, location = TEST_LOCATION),
+                                                location = TEST_LOCATION
                                             ),
-                                            body =
                                             ExpressionStatement(
                                                 AssignmentExpression(
-                                                    lvalue = VariableExpression("a.0"),
-                                                    rvalue =
+                                                    VariableExpression("a.0", location = TEST_LOCATION),
                                                     BinaryExpression(
-                                                        left = VariableExpression("a.0"),
-                                                        operator = Token(TokenType.NEGATION, "-", 4, 10),
-                                                        right = IntExpression(1)
-                                                    )
-                                                )
+                                                        VariableExpression("a.0", location = TEST_LOCATION),
+                                                        Token(TokenType.NEGATION, "-", 4, 10, 4, 10),
+                                                        IntExpression(1, location = TEST_LOCATION),
+                                                        location = TEST_LOCATION
+                                                    ),
+                                                    location = TEST_LOCATION
+                                                ),
+                                                location = TEST_LOCATION
                                             ),
-                                            label = "loop.0"
+                                            "loop.0",
+                                            location = TEST_LOCATION
                                         )
                                     ),
                                     S(
                                         ForStatement(
-                                            init =
                                             InitDeclaration(
-                                                VariableDeclaration(name = "i.1", init = IntExpression(0))
+                                                VariableDeclaration("i.1", IntExpression(0, location = TEST_LOCATION), location = TEST_LOCATION),
+                                                location = TEST_LOCATION
                                             ),
-                                            condition =
                                             BinaryExpression(
-                                                left = VariableExpression("i.1"),
-                                                operator = Token(TokenType.LESS, "<", 5, 18),
-                                                right = IntExpression(10)
+                                                VariableExpression("i.1", location = TEST_LOCATION),
+                                                Token(TokenType.LESS, "<", 5, 18, 5, 18),
+                                                IntExpression(10, location = TEST_LOCATION),
+                                                location = TEST_LOCATION
                                             ),
-                                            post =
                                             AssignmentExpression(
-                                                lvalue = VariableExpression("i.1"),
-                                                rvalue =
+                                                VariableExpression("i.1", location = TEST_LOCATION),
                                                 BinaryExpression(
-                                                    left = VariableExpression("i.1"),
-                                                    operator = Token(TokenType.PLUS, "+", 5, 30),
-                                                    right = IntExpression(1)
-                                                )
+                                                    VariableExpression("i.1", location = TEST_LOCATION),
+                                                    Token(TokenType.PLUS, "+", 5, 30, 5, 30),
+                                                    IntExpression(1, location = TEST_LOCATION),
+                                                    location = TEST_LOCATION
+                                                ),
+                                                location = TEST_LOCATION
                                             ),
-                                            body =
                                             ExpressionStatement(
                                                 AssignmentExpression(
-                                                    lvalue = VariableExpression("a.0"),
-                                                    rvalue =
+                                                    VariableExpression("a.0", location = TEST_LOCATION),
                                                     BinaryExpression(
-                                                        left = VariableExpression("a.0"),
-                                                        operator = Token(TokenType.PLUS, "+", 6, 10),
-                                                        right = IntExpression(1)
-                                                    )
-                                                )
+                                                        VariableExpression("a.0", location = TEST_LOCATION),
+                                                        Token(TokenType.PLUS, "+", 6, 10, 6, 10),
+                                                        IntExpression(1, location = TEST_LOCATION),
+                                                        location = TEST_LOCATION
+                                                    ),
+                                                    location = TEST_LOCATION
+                                                ),
+                                                location = TEST_LOCATION
                                             ),
-                                            label = "loop.1"
+                                            "loop.1",
+                                            location = TEST_LOCATION
                                         )
                                     ),
                                     S(
                                         ForStatement(
-                                            init =
                                             InitExpression(
-                                                expression = null
+                                                null,
+                                                location = TEST_LOCATION
                                             ),
-                                            condition =
                                             BinaryExpression(
-                                                left = VariableExpression("a.0"),
-                                                operator = Token(TokenType.GREATER, ">", 7, 8),
-                                                right = IntExpression(0)
+                                                VariableExpression("a.0", location = TEST_LOCATION),
+                                                Token(TokenType.GREATER, ">", 7, 8, 7, 8),
+                                                IntExpression(0, location = TEST_LOCATION),
+                                                location = TEST_LOCATION
                                             ),
-                                            post = null,
-                                            body =
+                                            null,
                                             ExpressionStatement(
                                                 AssignmentExpression(
-                                                    lvalue = VariableExpression("a.0"),
-                                                    rvalue =
+                                                    VariableExpression("a.0", location = TEST_LOCATION),
                                                     BinaryExpression(
-                                                        left = VariableExpression("a.0"),
-                                                        operator = Token(TokenType.PLUS, "+", 8, 10),
-                                                        right = IntExpression(1)
-                                                    )
-                                                )
+                                                        VariableExpression("a.0", location = TEST_LOCATION),
+                                                        Token(TokenType.PLUS, "+", 8, 10, 8, 10),
+                                                        IntExpression(1, location = TEST_LOCATION),
+                                                        location = TEST_LOCATION
+                                                    ),
+                                                    location = TEST_LOCATION
+                                                ),
+                                                location = TEST_LOCATION
                                             ),
-                                            label = "loop.2"
+                                            "loop.2",
+                                            location = TEST_LOCATION
                                         )
                                     ),
                                     S(
                                         DoWhileStatement(
-                                            condition =
                                             BinaryExpression(
-                                                left = VariableExpression("a.0"),
-                                                operator = Token(TokenType.GREATER, ">", 11, 9),
-                                                right = IntExpression(0)
+                                                VariableExpression("a.0", location = TEST_LOCATION),
+                                                Token(TokenType.GREATER, ">", 11, 9, 11, 9),
+                                                IntExpression(0, location = TEST_LOCATION),
+                                                location = TEST_LOCATION
                                             ),
-                                            body =
                                             ExpressionStatement(
                                                 AssignmentExpression(
-                                                    lvalue = VariableExpression("a.0"),
-                                                    rvalue =
+                                                    VariableExpression("a.0", location = TEST_LOCATION),
                                                     BinaryExpression(
-                                                        left = VariableExpression("a.0"),
-                                                        operator = Token(TokenType.PLUS, "+", 10, 10),
-                                                        right = IntExpression(1)
-                                                    )
-                                                )
+                                                        VariableExpression("a.0", location = TEST_LOCATION),
+                                                        Token(TokenType.PLUS, "+", 10, 10, 10, 10),
+                                                        IntExpression(1, location = TEST_LOCATION),
+                                                        location = TEST_LOCATION
+                                                    ),
+                                                    location = TEST_LOCATION
+                                                ),
+                                                location = TEST_LOCATION
                                             ),
-                                            label = "loop.3"
+                                            "loop.3",
+                                            location = TEST_LOCATION
                                         )
                                     ),
-                                    S(ReturnStatement(expression = IntExpression(0)))
+                                    S(ReturnStatement(location = TEST_LOCATION, expression = IntExpression(0, location = TEST_LOCATION)))
                                 )
                             )
                         )

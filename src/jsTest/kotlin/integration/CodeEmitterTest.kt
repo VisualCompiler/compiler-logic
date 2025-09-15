@@ -44,11 +44,11 @@ class CodeEmitterTest {
             """
             .globl main
             main:
-              pushq %rbp
-              movq %rsp, %rbp
-              movl $3, %eax
-              movq %rbp, %rsp
-              popq %rbp
+              push rbp
+              mov rbp, rsp
+              mov eax, 3
+              mov rsp, rbp
+              pop rbp
               ret
             """.trimIndent()
 
@@ -72,7 +72,7 @@ class CodeEmitterTest {
 
         // Assert
         val bodyLine = asm.lines()[4].trim() // Prologue is 3 lines
-        assertEquals("subq $16, %rsp", bodyLine)
+        assertEquals("sub rsp, 16", bodyLine)
     }
 
     @Test
@@ -125,7 +125,7 @@ class CodeEmitterTest {
 
         // Assert
         val bodyLine = asm.lines()[4].trim()
-        assertEquals("setg %al", bodyLine)
+        assertEquals("setg al", bodyLine)
     }
 
     @Test
@@ -148,10 +148,10 @@ class CodeEmitterTest {
             """
             .globl main
             main:
-              pushq %rbp
-              movq %rsp, %rbp
-              movq %rbp, %rsp
-              popq %rbp
+              push rbp
+              mov rbp, rsp
+              mov rsp, rbp
+              pop rbp
               ret
             """.trimIndent()
 
@@ -183,9 +183,9 @@ class CodeEmitterTest {
         val bodyLines = asm.lines().slice(4..6).map { it.trim() } // Get the 3 body instructions
 
         // Assert
-        assertEquals("pushq $10", bodyLines[0])
+        assertEquals("push 10", bodyLines[0])
         assertEquals("call my_function", bodyLines[1])
-        assertEquals("addq $8, %rsp", bodyLines[2])
+        assertEquals("add rsp, 8", bodyLines[2])
     }
 
     @Test
@@ -209,20 +209,20 @@ class CodeEmitterTest {
             """
             .globl foo
             foo:
-              pushq %rbp
-              movq %rsp, %rbp
-              movl $1, %eax
-              movq %rbp, %rsp
-              popq %rbp
+              push rbp
+              mov rbp, rsp
+              mov eax, 1
+              mov rsp, rbp
+              pop rbp
               ret
 
               .globl bar
             bar:
-              pushq %rbp
-              movq %rsp, %rbp
-              movl $2, %eax
-              movq %rbp, %rsp
-              popq %rbp
+              push rbp
+              mov rbp, rsp
+              mov eax, 2
+              mov rsp, rbp
+              pop rbp
               ret
             """.trimIndent()
 

@@ -21,7 +21,8 @@ sealed class CompilationOutput {
 data class LexerOutput(
     override val stage: String = CompilerStage.LEXER.name.lowercase(),
     val tokens: String? = null,
-    override val errors: Array<CompilationError>
+    override val errors: Array<CompilationError>,
+    val sourceLocation: SourceLocationInfo? = null
 ) : CompilationOutput()
 
 @OptIn(ExperimentalJsExport::class)
@@ -31,7 +32,8 @@ data class LexerOutput(
 data class ParserOutput(
     override val stage: String = CompilerStage.PARSER.name.lowercase(),
     val ast: String? = null,
-    override val errors: Array<CompilationError>
+    override val errors: Array<CompilationError>,
+    val sourceLocation: SourceLocationInfo? = null
 ) : CompilationOutput()
 
 @OptIn(ExperimentalJsExport::class)
@@ -40,8 +42,13 @@ data class ParserOutput(
 @SerialName("TackyOutput")
 data class TackyOutput(
     override val stage: String = CompilerStage.TACKY.name.lowercase(),
+    val tacky: String? = null,
     val tackyPretty: String? = null,
-    override val errors: Array<CompilationError>
+    val precomputedCFGs: String = "",
+    val optimizations: Array<String?> = arrayOf("CONSTANT_FOLDING", "DEAD_STORE_ELIMINATION"),
+    val functionNames: Array<String?> = emptyArray(),
+    override val errors: Array<CompilationError>,
+    val sourceLocation: SourceLocationInfo? = null
 ) : CompilationOutput()
 
 @OptIn(ExperimentalJsExport::class)
@@ -51,8 +58,21 @@ data class TackyOutput(
 data class AssemblyOutput(
     override val stage: String = CompilerStage.ASSEMBLY.name.lowercase(),
     val assembly: String? = null,
-    override val errors: Array<CompilationError>
+    val rawAssembly: String? = null,
+    override val errors: Array<CompilationError>,
+    val sourceLocation: SourceLocationInfo? = null
 ) : CompilationOutput()
+
+@OptIn(ExperimentalJsExport::class)
+@JsExport
+@Serializable
+data class SourceLocationInfo(
+    val startLine: Int,
+    val startColumn: Int,
+    val endLine: Int,
+    val endColumn: Int,
+    val totalLines: Int
+)
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport

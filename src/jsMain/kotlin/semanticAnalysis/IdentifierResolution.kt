@@ -100,17 +100,17 @@ class IdentifierResolution : Visitor<ASTNode> {
 
     override fun visit(node: SimpleProgram): ASTNode {
         val newDecls = node.functionDeclaration.map { it.accept(this) as FunctionDeclaration }
-        return SimpleProgram(newDecls)
+        return SimpleProgram(newDecls, node.location)
     }
 
     override fun visit(node: ReturnStatement): ASTNode {
         val exp = node.expression.accept(this) as Expression
-        return ReturnStatement(exp)
+        return ReturnStatement(exp, node.location)
     }
 
     override fun visit(node: ExpressionStatement): ASTNode {
         val exp = node.expression.accept(this) as Expression
-        return ExpressionStatement(exp)
+        return ExpressionStatement(exp, node.location)
     }
 
     override fun visit(node: NullStatement): ASTNode = node
@@ -122,13 +122,13 @@ class IdentifierResolution : Visitor<ASTNode> {
     override fun visit(node: WhileStatement): ASTNode {
         val cond = node.condition.accept(this) as Expression
         val newBody = node.body.accept(this) as Statement
-        return WhileStatement(cond, newBody, node.label)
+        return WhileStatement(cond, newBody, node.label, node.location)
     }
 
     override fun visit(node: DoWhileStatement): ASTNode {
         val cond = node.condition.accept(this) as Expression
         val newBody = node.body.accept(this) as Statement
-        return DoWhileStatement(cond, newBody, node.label)
+        return DoWhileStatement(cond, newBody, node.label, node.location)
     }
 
     override fun visit(node: ForStatement): ASTNode {
@@ -142,17 +142,17 @@ class IdentifierResolution : Visitor<ASTNode> {
 
         leaveScope()
 
-        return ForStatement(newInit, newCond, newPost, newBody)
+        return ForStatement(newInit, newCond, newPost, newBody, node.label, node.location)
     }
 
     override fun visit(node: InitDeclaration): ASTNode {
         val newDecl = node.varDeclaration.accept(this) as VariableDeclaration
-        return InitDeclaration(newDecl)
+        return InitDeclaration(newDecl, node.location)
     }
 
     override fun visit(node: InitExpression): ASTNode {
         val newExp = node.expression?.accept(this) as Expression?
-        return InitExpression(newExp)
+        return InitExpression(newExp, node.location)
     }
 
     override fun visit(node: FunctionDeclaration): ASTNode {
@@ -164,7 +164,7 @@ class IdentifierResolution : Visitor<ASTNode> {
                 throw NestedFunctionException()
             } else {
                 declare(node.name, hasLinkage = true)
-                return FunctionDeclaration(node.name, node.params, null)
+                return FunctionDeclaration(node.name, node.params, null, node.location)
             }
         } else {
             declare(node.name, hasLinkage = true)
@@ -179,24 +179,24 @@ class IdentifierResolution : Visitor<ASTNode> {
 
             leaveScope()
 
-            return FunctionDeclaration(node.name, newParams, newBody)
+            return FunctionDeclaration(node.name, newParams, newBody, node.location)
         }
     }
 
     override fun visit(node: VariableExpression): ASTNode {
         val symbol = resolve(node.name)
-        return VariableExpression(symbol.uniqueName)
+        return VariableExpression(symbol.uniqueName, node.location)
     }
 
     override fun visit(node: UnaryExpression): ASTNode {
         val exp = node.expression.accept(this) as Expression
-        return UnaryExpression(node.operator, exp)
+        return UnaryExpression(node.operator, exp, node.location)
     }
 
     override fun visit(node: BinaryExpression): ASTNode {
         val left = node.left.accept(this) as Expression
         val right = node.right.accept(this) as Expression
-        return BinaryExpression(left, node.operator, right)
+        return BinaryExpression(left, node.operator, right, node.location)
     }
 
     override fun visit(node: IntExpression): ASTNode = node
@@ -205,27 +205,27 @@ class IdentifierResolution : Visitor<ASTNode> {
         val condition = node.condition.accept(this) as Expression
         val thenStatement = node.then.accept(this) as Statement
         val elseStatement = node._else?.accept(this) as Statement?
-        return IfStatement(condition, thenStatement, elseStatement)
+        return IfStatement(condition, thenStatement, elseStatement, node.location)
     }
 
     override fun visit(node: ConditionalExpression): ASTNode {
         val condition = node.codition.accept(this) as Expression
         val thenExpression = node.thenExpression.accept(this) as Expression
         val elseExpression = node.elseExpression.accept(this) as Expression
-        return ConditionalExpression(condition, thenExpression, elseExpression)
+        return ConditionalExpression(condition, thenExpression, elseExpression, node.location)
     }
 
     override fun visit(node: GotoStatement): ASTNode = node
 
     override fun visit(node: LabeledStatement): ASTNode {
         val statement = node.statement.accept(this) as Statement
-        return LabeledStatement(node.label, statement)
+        return LabeledStatement(node.label, statement, node.location)
     }
 
     override fun visit(node: AssignmentExpression): ASTNode {
         val lvalue = node.lvalue.accept(this) as VariableExpression
         val rvalue = node.rvalue.accept(this) as Expression
-        return AssignmentExpression(lvalue, rvalue)
+        return AssignmentExpression(lvalue, rvalue, node.location)
     }
 
     override fun visit(node: VariableDeclaration): ASTNode {
@@ -233,7 +233,7 @@ class IdentifierResolution : Visitor<ASTNode> {
 
         val uniqueName = declare(node.name, hasLinkage = false)
 
-        return VariableDeclaration(uniqueName, newInit)
+        return VariableDeclaration(uniqueName, newInit, node.location)
     }
 
     override fun visit(node: S): ASTNode {
@@ -267,20 +267,20 @@ class IdentifierResolution : Visitor<ASTNode> {
 
     override fun visit(node: Block): ASTNode {
         enterScope()
-        val newItems = node.block.map { it.accept(this) as BlockItem }
+        val newItems = node.items.map { it.accept(this) as BlockItem }
         leaveScope()
-        return Block(newItems)
+        return Block(newItems, node.location)
     }
 
     override fun visit(node: CompoundStatement): ASTNode {
         val newBlock = node.block.accept(this) as Block
-        return CompoundStatement(newBlock)
+        return CompoundStatement(newBlock, node.location)
     }
 
     override fun visit(node: FunctionCall): ASTNode {
         val symbol = resolve(node.name)
         val newArgs = node.arguments.map { it.accept(this) as Expression }
         // The unique name for a function is just its original name.
-        return FunctionCall(symbol.uniqueName, newArgs)
+        return FunctionCall(symbol.uniqueName, newArgs, node.location)
     }
 }

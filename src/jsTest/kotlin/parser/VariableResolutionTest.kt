@@ -7,116 +7,127 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
+// Helper constant for test locations
+val VAR_TEST_LOCATION = SourceLocation(1, 1, 1, 1)
+
 class VariableResolutionTest {
+    private val identifierResolution = IdentifierResolution()
+
     @Test
     fun testVariableRenamingAndResolution() {
-        val ast: ASTNode =
+        val ast =
             SimpleProgram(
-                functionDeclaration =
-                listOf(
+                functionDeclaration = listOf(
                     FunctionDeclaration(
                         name = "main",
                         params = emptyList(),
-                        body =
-                        Block(
-                            listOf(
-                                D(VarDecl(VariableDeclaration(name = "a", init = null))),
+                        body = Block(
+                            items = listOf(
+                                D(VarDecl(VariableDeclaration("a", null, VAR_TEST_LOCATION))),
                                 S(
                                     ExpressionStatement(
                                         AssignmentExpression(
-                                            lvalue = VariableExpression("a"),
-                                            rvalue = IntExpression(1)
-                                        )
+                                            VariableExpression("a", VAR_TEST_LOCATION),
+                                            IntExpression(1, VAR_TEST_LOCATION),
+                                            VAR_TEST_LOCATION
+                                        ),
+                                        VAR_TEST_LOCATION
                                     )
                                 ),
-                                S(ReturnStatement(expression = VariableExpression("a")))
-                            )
-                        )
+                                S(ReturnStatement(VariableExpression("a", VAR_TEST_LOCATION), VAR_TEST_LOCATION))
+                            ),
+                            VAR_TEST_LOCATION
+                        ),
+                        VAR_TEST_LOCATION
                     )
-                )
+                ),
+                VAR_TEST_LOCATION
             )
 
-        val resolved = IdentifierResolution().analyze(ast as SimpleProgram) as SimpleProgram
+        // Act
+        val resolved = identifierResolution.analyze(ast)
 
-        val expected: ASTNode =
+        // Assert: Also add the dummy location to the expected output
+        val expected =
             SimpleProgram(
-                functionDeclaration =
-                listOf(
+                functionDeclaration = listOf(
                     FunctionDeclaration(
                         name = "main",
                         params = emptyList(),
-                        body =
-                        Block(
-                            block =
-                            listOf(
-                                D(VarDecl(VariableDeclaration(name = "a.0", init = null))),
+                        body = Block(
+                            items = listOf(
+                                D(VarDecl(VariableDeclaration("a.0", null, VAR_TEST_LOCATION))),
                                 S(
                                     ExpressionStatement(
                                         AssignmentExpression(
-                                            lvalue = VariableExpression("a.0"),
-                                            rvalue = IntExpression(1)
-                                        )
+                                            VariableExpression("a.0", VAR_TEST_LOCATION),
+                                            IntExpression(1, VAR_TEST_LOCATION),
+                                            VAR_TEST_LOCATION
+                                        ),
+                                        VAR_TEST_LOCATION
                                     )
                                 ),
-                                S(ReturnStatement(expression = VariableExpression("a.0")))
-                            )
-                        )
+                                S(ReturnStatement(VariableExpression("a.0", VAR_TEST_LOCATION), VAR_TEST_LOCATION))
+                            ),
+                            VAR_TEST_LOCATION
+                        ),
+                        VAR_TEST_LOCATION
                     )
-                )
+                ),
+                VAR_TEST_LOCATION
             )
+
         assertEquals(expected, resolved)
     }
 
     @Test
     fun testDuplicateDeclarationThrows() {
-        val ast: ASTNode =
+        val ast =
             SimpleProgram(
-                functionDeclaration =
-                listOf(
+                functionDeclaration = listOf(
                     FunctionDeclaration(
-                        name = "main",
-                        params = emptyList(),
-                        body =
+                        "main",
+                        emptyList(),
                         Block(
-                            block =
                             listOf(
-                                D(VarDecl(VariableDeclaration(name = "a", init = null))),
-                                D(VarDecl(VariableDeclaration(name = "a", init = null)))
-                            )
-                        )
+                                D(VarDecl(VariableDeclaration("a", null, VAR_TEST_LOCATION))),
+                                D(VarDecl(VariableDeclaration("a", null, VAR_TEST_LOCATION)))
+                            ),
+                            VAR_TEST_LOCATION
+                        ),
+                        VAR_TEST_LOCATION
                     )
-                )
+                ),
+                VAR_TEST_LOCATION
             )
 
-        // Act & Assert
         assertFailsWith<DuplicateVariableDeclaration> {
-            IdentifierResolution().analyze(ast as SimpleProgram)
+            identifierResolution.analyze(ast)
         }
     }
 
     @Test
     fun testUndeclaredVariableThrows() {
-        val ast: ASTNode =
+        val ast =
             SimpleProgram(
-                functionDeclaration =
-                listOf(
+                functionDeclaration = listOf(
                     FunctionDeclaration(
-                        name = "main",
-                        params = emptyList(),
-                        body =
+                        "main",
+                        emptyList(),
                         Block(
-                            block =
                             listOf(
-                                S(ReturnStatement(expression = VariableExpression("x")))
-                            )
-                        )
+                                S(ReturnStatement(VariableExpression("x", VAR_TEST_LOCATION), VAR_TEST_LOCATION))
+                            ),
+                            VAR_TEST_LOCATION
+                        ),
+                        VAR_TEST_LOCATION
                     )
-                )
+                ),
+                VAR_TEST_LOCATION
             )
 
-        // Act & Assert
         assertFailsWith<MissingDeclarationException> {
-            IdentifierResolution().analyze(ast as SimpleProgram)
+            identifierResolution.analyze(ast)
         }
     }
 }

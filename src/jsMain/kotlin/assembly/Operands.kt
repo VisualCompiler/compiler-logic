@@ -1,19 +1,31 @@
 package assembly
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
 sealed class Operand : AsmConstruct()
 
+@Serializable
+@SerialName("Imm")
 data class Imm(
     val value: Int
 ) : Operand()
 
+@Serializable
+@SerialName("Register")
 data class Register(
     val name: HardwareRegister
 ) : Operand()
 
+@Serializable
+@SerialName("Pseudo")
 data class Pseudo(
     val name: String
 ) : Operand()
 
+@Serializable
+@SerialName("Stack")
 data class Stack(
     val offset: Int
 ) : Operand()

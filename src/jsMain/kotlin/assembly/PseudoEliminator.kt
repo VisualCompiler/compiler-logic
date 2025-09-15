@@ -16,7 +16,7 @@ class PseudoEliminator {
             pseudoToOffset[name]?.let { offset ->
                 Stack(offset)
             } ?: run {
-                nextAvailableOffset -= 4
+                nextAvailableOffset -= 8
                 pseudoToOffset[name] = nextAvailableOffset
                 Stack(nextAvailableOffset)
             }
@@ -26,14 +26,14 @@ class PseudoEliminator {
         val newInstructions =
             function.body.map { instruction ->
                 when (instruction) {
-                    is Mov -> Mov(replace(instruction.src), replace(instruction.dest))
-                    is AsmUnary -> AsmUnary(instruction.op, replace(instruction.dest))
-                    is AsmBinary -> AsmBinary(instruction.op, replace(instruction.src), replace(instruction.dest))
-                    is Cmp -> Cmp(replace(instruction.src), replace(instruction.dest))
-                    is SetCC -> SetCC(instruction.condition, replace(instruction.dest))
-                    is Push -> Push(replace(instruction.operand))
+                    is Mov -> Mov(replace(instruction.src), replace(instruction.dest), instruction.sourceId)
+                    is AsmUnary -> AsmUnary(instruction.op, replace(instruction.dest), instruction.sourceId)
+                    is AsmBinary -> AsmBinary(instruction.op, replace(instruction.src), replace(instruction.dest), instruction.sourceId)
+                    is Cmp -> Cmp(replace(instruction.src), replace(instruction.dest), instruction.sourceId)
+                    is SetCC -> SetCC(instruction.condition, replace(instruction.dest), instruction.sourceId)
+                    is Push -> Push(replace(instruction.operand), instruction.sourceId)
                     is Call -> instruction
-                    is Idiv -> Idiv(replace(instruction.divisor))
+                    is Idiv -> Idiv(replace(instruction.divisor), instruction.sourceId)
                     else -> instruction
                 }
             }

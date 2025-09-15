@@ -74,7 +74,7 @@ tasks.register("syncJvmSources") {
             copy {
                 from(jsMainDir)
                 into(jvmMainDir)
-                exclude("**/export/")
+                exclude("**/export/", "**/compiler/")
             }
         }
 
@@ -82,7 +82,7 @@ tasks.register("syncJvmSources") {
             copy {
                 from(jsTestDir)
                 into(jvmTestDir)
-                exclude("**/export/")
+                exclude("**/export")
             }
         }
     }
@@ -113,11 +113,6 @@ tasks.named("jsTest") {
     dependsOn("syncJvmSources")
 }
 
-// Also make jsTest depend on syncJvmSources to ensure consistency
-tasks.named("jsTest") {
-    dependsOn("syncJvmSources")
-}
-
 tasks.named<Delete>("clean") {
     delete(
         file("src/jvmMain"),
@@ -129,11 +124,6 @@ tasks.named<Delete>("clean") {
 tasks.named("build") {
     dependsOn("jsTest", "jvmTest")
     finalizedBy("koverHtmlReport")
-}
-
-// Ensure koverHtmlReport depends on test execution to have coverage data
-tasks.named("koverHtmlReport") {
-    dependsOn("jsTest", "jvmTest")
 }
 
 // Ensure koverHtmlReport depends on test execution to have coverage data
