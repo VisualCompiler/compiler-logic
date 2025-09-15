@@ -61,8 +61,6 @@ class UnreachableCodeElimination : Optimization() {
             when (lastInstruction) {
                 is TackyJump -> {
                     val targetBlock = findBlockByLabel(cfg.blocks, lastInstruction.target)
-                    println("sortedBlocks: $sortedBlocks")
-
                     if (targetBlock?.id == nextBlock.id) {
                         jumpsToRemove.add(lastInstruction)
                     }

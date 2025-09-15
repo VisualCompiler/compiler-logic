@@ -4,13 +4,9 @@ import tacky.TackyProgram
 
 enum class OptimizationType {
     CONSTANT_FOLDING,
-
     DEAD_STORE_ELIMINATION,
-
     UNREACHABLE_CODE_ELIMINATION,
-    COPY_PROPAGATION,
-    DEAD_STORE_ELIMINATION
-
+    COPY_PROPAGATION
 }
 
 sealed class Optimization {
@@ -24,7 +20,6 @@ object OptimizationManager {
         OptimizationType.DEAD_STORE_ELIMINATION to DeadStoreElimination(),
         OptimizationType.UNREACHABLE_CODE_ELIMINATION to UnreachableCodeElimination(),
         OptimizationType.COPY_PROPAGATION to CopyPropagation()
-        OptimizationType.DEAD_STORE_ELIMINATION to DeadStoreElimination()
     )
 
     fun optimizeProgram(program: TackyProgram, enabledOptimizations: Set<OptimizationType>): TackyProgram {
