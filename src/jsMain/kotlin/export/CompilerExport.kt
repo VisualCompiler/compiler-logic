@@ -181,7 +181,9 @@ class CompilerExport {
 
     private val optTypeMap = mapOf(
         "CONSTANT_FOLDING" to OptimizationType.CONSTANT_FOLDING,
-        "DEAD_STORE_ELIMINATION" to OptimizationType.DEAD_STORE_ELIMINATION
+        "DEAD_STORE_ELIMINATION" to OptimizationType.DEAD_STORE_ELIMINATION,
+        "COPY_PROPAGATION" to OptimizationType.COPY_PROPAGATION,
+        "UNREACHABLE_CODE_ELIMINATION" to OptimizationType.UNREACHABLE_CODE_ELIMINATION
     )
 
     private fun generateOptimizationCombinations(): List<Set<String>> {
