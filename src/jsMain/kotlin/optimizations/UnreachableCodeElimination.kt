@@ -37,8 +37,13 @@ class UnreachableCodeElimination : Optimization() {
         }
 
         val reachableBlocks = cfg.blocks.filter { it.id in reachableNodeIds }
+
         val reachableEdges = cfg.edges.filter { edge ->
-            edge.from.id in reachableNodeIds && edge.to.id in reachableNodeIds
+            val fromReachable = edge.from.id in reachableNodeIds
+            val toReachable = edge.to.id in reachableNodeIds
+            val toExit = edge.to is EXIT
+
+            fromReachable && (toReachable || toExit)
         }
 
         return ControlFlowGraph(
