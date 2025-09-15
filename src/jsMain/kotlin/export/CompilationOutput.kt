@@ -45,6 +45,7 @@ data class TackyOutput(
     val tacky: String? = null,
     val tackyPretty: String? = null,
     val precomputedCFGs: String = "",
+    val precomputedAssembly: String = "",
     val optimizations: Array<String?> = arrayOf("CONSTANT_FOLDING", "DEAD_STORE_ELIMINATION"),
     val functionNames: Array<String?> = emptyArray(),
     override val errors: Array<CompilationError>,
@@ -59,6 +60,8 @@ data class AssemblyOutput(
     override val stage: String = CompilerStage.ASSEMBLY.name.lowercase(),
     val assembly: String? = null,
     val rawAssembly: String? = null,
+    val precomputedAssembly: String = "",
+    val selectedOptimizations: Array<String> = emptyArray(),
     override val errors: Array<CompilationError>,
     val sourceLocation: SourceLocationInfo? = null
 ) : CompilationOutput()
