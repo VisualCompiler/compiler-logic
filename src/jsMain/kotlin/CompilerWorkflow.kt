@@ -7,8 +7,10 @@ import lexer.Lexer
 import lexer.Token
 import optimizations.ConstantFolding
 import optimizations.ControlFlowGraph
+import optimizations.CopyPropagation
 import optimizations.DeadStoreElimination
 import optimizations.OptimizationType
+import optimizations.UnreachableCodeElimination
 import parser.ASTNode
 import parser.Parser
 import parser.SimpleProgram
@@ -41,6 +43,8 @@ sealed class CompilerWorkflow {
         private val pseudoEliminator = PseudoEliminator()
         private val constantFolding = ConstantFolding()
         private val deadStoreElimination = DeadStoreElimination()
+        private val copyPropagation = CopyPropagation()
+        private val unreachableCodeElimination = UnreachableCodeElimination()
 
         fun fullCompile(code: String): Map<CompilerStage, Any> {
             val tokens = take(code)
@@ -75,17 +79,31 @@ sealed class CompilerWorkflow {
             return tacky
         }
 
-        fun take(tacky: TackyProgram, optimizations: Set<OptimizationType>): TackyProgram {
+        fun take(
+            tackyProgram: TackyProgram,
+            optimizations: Set<OptimizationType>
+        ): TackyProgram {
+            val tacky = tackyProgram.copy()
             tacky.functions.forEach {
-                var cfg = ControlFlowGraph().construct(it.name, it.body)
-                for (optimization in optimizations) {
-                    if (optimization == OptimizationType.CONSTANT_FOLDING) {
-                        cfg = constantFolding.apply(cfg)
-                    } else if (optimization == OptimizationType.DEAD_STORE_ELIMINATION) {
-                        cfg = deadStoreElimination.apply(cfg)
+                while (true) {
+                    var cfg = ControlFlowGraph().construct(it.name, it.body)
+                    for (optimization in optimizations) {
+                        if (optimization == OptimizationType.CONSTANT_FOLDING) {
+                            cfg = constantFolding.apply(cfg)
+                        } else if (optimization == OptimizationType.DEAD_STORE_ELIMINATION) {
+                            cfg = deadStoreElimination.apply(cfg)
+                        } else if (optimization == OptimizationType.COPY_PROPAGATION) {
+                            cfg = copyPropagation.apply(cfg)
+                        } else {
+                            cfg = unreachableCodeElimination.apply(cfg)
+                        }
+                    }
+                    val optimizedBody = cfg.toInstructions()
+                    it.body = optimizedBody
+                    if (optimizedBody == it.body || optimizedBody.isEmpty()) {
+                        break
                     }
                 }
-                it.body = cfg.toInstructions()
             }
             return tacky
         }

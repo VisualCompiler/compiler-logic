@@ -48,10 +48,16 @@ data class CFGEntry(
     val cfg: String
 )
 
+@Serializable
+data class AssemblyEntry(
+    val functionName: String,
+    val optimizations: List<String>,
+    val asmCode: String
+)
+
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 class CompilerExport {
-
     private fun calculateSourceLocationInfo(code: String): SourceLocationInfo {
         val lines = code.split('\n')
         val totalLines = lines.size
@@ -98,14 +104,26 @@ class CompilerExport {
                     tackyPretty = tackyProgram.toPseudoCode(),
                     functionNames = tackyProgram.functions.map { it.name }.toTypedArray(),
                     precomputedCFGs = precomputeAllCFGs(tackyProgram),
+                    precomputedAssembly = precomputeAllAssembly(tackyProgram),
                     errors = emptyArray(),
                     tacky = Json.encodeToString(tackyProgram),
                     sourceLocation = sourceLocationInfo
                 )
             )
-            val asm = CompilerWorkflow.take(tacky as TackyProgram)
+            val optimizedTacky =
+                CompilerWorkflow.take(
+                    tacky,
+                    optimizations =
+                    setOf(
+                        OptimizationType.CONSTANT_FOLDING,
+                        OptimizationType.DEAD_STORE_ELIMINATION,
+                        OptimizationType.COPY_PROPAGATION,
+                        OptimizationType.UNREACHABLE_CODE_ELIMINATION
+                    )
+                )
+            val asm = CompilerWorkflow.take(optimizedTacky)
             val finalAssemblyString = codeEmitter.emit(asm as AsmProgram)
-            val rawAssembly = codeEmitter.emitRaw(asm as AsmProgram)
+            val rawAssembly = codeEmitter.emitRaw(asm)
             outputs.add(
                 AssemblyOutput(
                     errors = emptyArray(),
@@ -164,27 +182,64 @@ class CompilerExport {
 
     private fun precomputeAllCFGs(program: TackyProgram): String {
         val allOptSets = generateOptimizationCombinations()
-        val cfgs = program.functions.filter { it.body.isNotEmpty() }.flatMap { fn ->
-            allOptSets.map { optSet ->
-                try {
-                    val cfg = ControlFlowGraph().construct(fn.name, fn.body)
-                    val types = optSet.mapNotNull(optTypeMap::get).toSet()
-                    val optimized = OptimizationManager.applyOptimizations(cfg, types)
-                    CFGEntry(fn.name, optSet.sorted(), exportControlFlowGraph(optimized))
-                } catch (_: Exception) {
-                    CFGEntry(fn.name, optSet.sorted(), createEmptyCFGJson(fn.name))
+        val cfgs =
+            program.functions.filter { it.body.isNotEmpty() }.flatMap { fn ->
+                allOptSets.map { optSet ->
+                    try {
+                        val cfg = ControlFlowGraph().construct(fn.name, fn.body)
+                        val types = optSet.mapNotNull(optTypeMap::get).toSet()
+                        val optimized = OptimizationManager.applyOptimizations(cfg, types)
+                        CFGEntry(fn.name, optSet.sorted(), exportControlFlowGraph(optimized))
+                    } catch (_: Exception) {
+                        CFGEntry(fn.name, optSet.sorted(), createEmptyCFGJson(fn.name))
+                    }
                 }
             }
-        }
         return Json.encodeToString(cfgs)
     }
 
-    private val optTypeMap = mapOf(
-        "CONSTANT_FOLDING" to OptimizationType.CONSTANT_FOLDING,
-        "DEAD_STORE_ELIMINATION" to OptimizationType.DEAD_STORE_ELIMINATION,
-        "COPY_PROPAGATION" to OptimizationType.COPY_PROPAGATION,
-        "UNREACHABLE_CODE_ELIMINATION" to OptimizationType.UNREACHABLE_CODE_ELIMINATION
-    )
+    private fun precomputeAllAssembly(program: TackyProgram): String {
+        val allOptSets = generateOptimizationCombinations()
+        val assemblies = mutableListOf<AssemblyEntry>()
+
+        println("Precomputing assembly for ${program.functions.size} functions with ${allOptSets.size} optimization combinations")
+
+        for (optSet in allOptSets) {
+            try {
+                val optimizedTacky = CompilerWorkflow.take(
+                    program,
+                    optimizations = optSet.mapNotNull(optTypeMap::get).toSet()
+                )
+                val asm = CompilerWorkflow.take(optimizedTacky)
+                val finalAssemblyString = CodeEmitter().emit(asm as AsmProgram)
+
+                println("Generated assembly with optimizations $optSet: ${finalAssemblyString.length} chars")
+
+                // Create entries for each function with the full assembly
+                for (fn in program.functions.filter { it.body.isNotEmpty() }) {
+                    assemblies.add(AssemblyEntry(fn.name, optSet.sorted(), finalAssemblyString))
+                }
+            } catch (e: Exception) {
+                println("Error generating assembly with optimizations $optSet: ${e.message}")
+                // Create empty entries for each function
+                for (fn in program.functions.filter { it.body.isNotEmpty() }) {
+                    assemblies.add(AssemblyEntry(fn.name, optSet.sorted(), ""))
+                }
+            }
+        }
+
+        val result = Json.encodeToString(assemblies)
+        println("Precomputed assembly result: ${result.length} chars, ${assemblies.size} entries")
+        return result
+    }
+
+    private val optTypeMap =
+        mapOf(
+            "CONSTANT_FOLDING" to OptimizationType.CONSTANT_FOLDING,
+            "DEAD_STORE_ELIMINATION" to OptimizationType.DEAD_STORE_ELIMINATION,
+            "COPY_PROPAGATION" to OptimizationType.COPY_PROPAGATION,
+            "UNREACHABLE_CODE_ELIMINATION" to OptimizationType.UNREACHABLE_CODE_ELIMINATION
+        )
 
     private fun generateOptimizationCombinations(): List<Set<String>> {
         val opts = optTypeMap.keys.toList()
@@ -204,51 +259,60 @@ class CompilerExport {
 
     private fun exportControlFlowGraph(cfg: ControlFlowGraph): String {
         val nodes = mutableListOf(CFGNode("entry", "Entry", "entry"))
-        nodes += cfg.blocks.mapIndexed { i, block ->
-            val id = "block_$i"
-            val label = block.instructions.joinToString(";\n") { it.toPseudoCode(0) }.ifEmpty { "Empty Block" }
-            CFGNode(id, label, "block")
-        }
+        nodes +=
+            cfg.blocks.mapIndexed { i, block ->
+                val id = "block_$i"
+                val label = block.instructions.joinToString(";\n") { it.toPseudoCode(0) }.ifEmpty { "Empty Block" }
+                CFGNode(id, label, "block")
+            }
         nodes += CFGNode("exit", "Exit", "exit")
 
-        val edges = cfg.edges.map { edge ->
-            val fromId = when (edge.from) {
-                is START -> "entry"
-                is EXIT -> "exit"
-                is Block -> {
-                    // Find block by ID instead of object equality
-                    val index = cfg.blocks.indexOfFirst { it.id == edge.from.id }
-                    if (index >= 0) "block_$index" else "unknown_block"
-                }
-                else -> "unknown_block"
+        val edges =
+            cfg.edges.map { edge ->
+                val fromId =
+                    when (edge.from) {
+                        is START -> "entry"
+                        is EXIT -> "exit"
+                        is Block -> {
+                            // Find block by ID instead of object equality
+                            val index = cfg.blocks.indexOfFirst { it.id == edge.from.id }
+                            if (index >= 0) "block_$index" else "unknown_block"
+                        }
+                        else -> "unknown_block"
+                    }
+                val toId =
+                    when (edge.to) {
+                        is START -> "entry"
+                        is EXIT -> "exit"
+                        is Block -> {
+                            // Find block by ID instead of object equality
+                            val index = cfg.blocks.indexOfFirst { it.id == edge.to.id }
+                            if (index >= 0) "block_$index" else "unknown_block"
+                        }
+                        else -> "unknown_block"
+                    }
+                CFGEdge(fromId, toId)
             }
-            val toId = when (edge.to) {
-                is START -> "entry"
-                is EXIT -> "exit"
-                is Block -> {
-                    // Find block by ID instead of object equality
-                    val index = cfg.blocks.indexOfFirst { it.id == edge.to.id }
-                    if (index >= 0) "block_$index" else "unknown_block"
-                }
-                else -> "unknown_block"
-            }
-            CFGEdge(fromId, toId)
-        }
 
         return Json.encodeToString(CFGExport(cfg.functionName ?: "unknown", nodes, edges))
     }
 
-    private fun Any.toId(cfg: ControlFlowGraph): String = when (this) {
-        is START -> "entry"
-        is EXIT -> "exit"
-        is Block -> {
-            val index = cfg.blocks.indexOf(this)
-            if (index >= 0) "block_$index" else "unknown_block"
+    private fun Any.toId(cfg: ControlFlowGraph): String =
+        when (this) {
+            is START -> "entry"
+            is EXIT -> "exit"
+            is Block -> {
+                val index = cfg.blocks.indexOf(this)
+                if (index >= 0) "block_$index" else "unknown_block"
+            }
+            else -> "unknown"
         }
-        else -> "unknown"
-    }
 
-    fun getCFGForFunction(precomputed: String?, fn: String, enabledOpts: Array<String>): String {
+    fun getCFGForFunction(
+        precomputed: String?,
+        fn: String,
+        enabledOpts: Array<String>
+    ): String {
         if (precomputed == null) return createEmptyCFGJson(fn)
         val sortedOpts = enabledOpts.sorted()
         return try {
@@ -268,14 +332,15 @@ fun List<Token>.toJsonString(): String {
                 mapOf(
                     "type" to JsonPrimitive(token.type.toString()),
                     "lexeme" to JsonPrimitive(token.lexeme),
-                    "location" to JsonObject(
-                        mapOf(
-                            "startLine" to JsonPrimitive(token.startLine),
-                            "startCol" to JsonPrimitive(token.startColumn),
-                            "endLine" to JsonPrimitive(token.endLine),
-                            "endCol" to JsonPrimitive(token.endColumn)
+                    "location" to
+                        JsonObject(
+                            mapOf(
+                                "startLine" to JsonPrimitive(token.startLine),
+                                "startCol" to JsonPrimitive(token.startColumn),
+                                "endLine" to JsonPrimitive(token.endLine),
+                                "endCol" to JsonPrimitive(token.endColumn)
+                            )
                         )
-                    )
                 )
             )
         }
