@@ -1,6 +1,6 @@
 package compiler
 
-import assembly.AsmConstruct
+import assembly.AsmProgram
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
 import lexer.Lexer
@@ -108,10 +108,10 @@ sealed class CompilerWorkflow {
             return tacky
         }
 
-        fun take(tacky: TackyProgram): AsmConstruct {
+        fun take(tacky: TackyProgram): AsmProgram {
             val asm = tackyToAsmConverter.convert(tacky)
             val asmWithStackSizes = pseudoEliminator.eliminate(asm)
-            val finalAsmProgram = instructionFixer.fix(asmWithStackSizes)
+            val finalAsmProgram = instructionFixer.fix(asmWithStackSizes) as AsmProgram
             return finalAsmProgram
         }
     }

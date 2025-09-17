@@ -122,8 +122,9 @@ class CompilerExport {
                     )
                 )
             val asm = CompilerWorkflow.take(optimizedTacky)
+            val rawAsm = CompilerWorkflow.take(tacky)
             val finalAssemblyString = codeEmitter.emit(asm as AsmProgram)
-            val rawAssembly = codeEmitter.emitRaw(asm)
+            val rawAssembly = codeEmitter.emitRaw(rawAsm)
             outputs.add(
                 AssemblyOutput(
                     errors = emptyArray(),
