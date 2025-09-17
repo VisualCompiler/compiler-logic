@@ -14,14 +14,14 @@ sealed class CFGNode {
 }
 
 data class START(
-    override val id: Int,
+    override val id: Int = -1,
     override val successors: MutableList<Int> = mutableListOf()
 ) : CFGNode() {
     override val predecessors: MutableList<Int> = mutableListOf()
 }
 
 data class EXIT(
-    override val id: Int,
+    override val id: Int = -2,
     override val predecessors: MutableList<Int> = mutableListOf()
 ) : CFGNode() {
     override val successors: MutableList<Int> = mutableListOf()
@@ -34,7 +34,10 @@ data class Block(
     override val successors: MutableList<Int> = mutableListOf()
 ) : CFGNode()
 
-data class Edge(val from: CFGNode, val to: CFGNode)
+data class Edge(
+    val from: CFGNode,
+    val to: CFGNode
+)
 
 data class ControlFlowGraph(
     val functionName: String? = null,
@@ -42,7 +45,10 @@ data class ControlFlowGraph(
     val blocks: List<Block> = emptyList(),
     val edges: List<Edge> = emptyList()
 ) {
-    fun construct(functionName: String, functionBody: List<TackyInstruction>): ControlFlowGraph {
+    fun construct(
+        functionName: String,
+        functionBody: List<TackyInstruction>
+    ): ControlFlowGraph {
         val nodes = toBasicBlocks(functionBody)
         val blocks = nodes.filterIsInstance<Block>()
         val edges = buildEdges(nodes, blocks)
@@ -54,15 +60,14 @@ data class ControlFlowGraph(
         )
     }
 
-    fun toInstructions(): List<TackyInstruction> =
-        blocks.flatMap { it.instructions }
+    fun toInstructions(): List<TackyInstruction> = blocks.flatMap { it.instructions }
 
     private fun toBasicBlocks(instructions: List<TackyInstruction>): List<CFGNode> {
         val nodes = mutableListOf<CFGNode>()
         val current = mutableListOf<TackyInstruction>()
         var blockId = 0
 
-        nodes += START(blockId++)
+        nodes += START()
 
         for (inst in instructions) {
             when (inst) {
@@ -86,16 +91,22 @@ data class ControlFlowGraph(
             nodes += Block(blockId++, current.toList())
         }
 
-        nodes += EXIT(blockId++)
+        nodes += EXIT()
         return nodes
     }
 
-    private fun buildEdges(nodes: List<CFGNode>, blocks: List<Block>): List<Edge> {
+    private fun buildEdges(
+        nodes: List<CFGNode>,
+        blocks: List<Block>
+    ): List<Edge> {
         val edges = mutableListOf<Edge>()
         val entry = nodes.filterIsInstance<START>().firstOrNull()
         val exit = nodes.filterIsInstance<EXIT>().firstOrNull()
 
-        fun connect(from: CFGNode, to: CFGNode) {
+        fun connect(
+            from: CFGNode,
+            to: CFGNode
+        ) {
             edges += Edge(from, to)
             from.successors += to.id
             to.predecessors += from.id
@@ -116,11 +127,12 @@ data class ControlFlowGraph(
                 }
 
                 is JumpIfZero, is JumpIfNotZero -> {
-                    val target = when (last) {
-                        is JumpIfZero -> last.target
-                        is JumpIfNotZero -> last.target
-                        else -> null
-                    }
+                    val target =
+                        when (last) {
+                            is JumpIfZero -> last.target
+                            is JumpIfNotZero -> last.target
+                            else -> null
+                        }
                     target?.let { t -> findBlockByLabel(blocks, t)?.let { connect(block, it) } }
                     next?.let { connect(block, next) }
                 }
@@ -138,6 +150,8 @@ data class ControlFlowGraph(
         return edges
     }
 
-    private fun findBlockByLabel(blocks: List<Block>, label: TackyLabel): Block? =
-        blocks.find { blk -> blk.instructions.any { it is TackyLabel && it.name == label.name } }
+    private fun findBlockByLabel(
+        blocks: List<Block>,
+        label: TackyLabel
+    ): Block? = blocks.find { blk -> blk.instructions.any { it is TackyLabel && it.name == label.name } }
 }
