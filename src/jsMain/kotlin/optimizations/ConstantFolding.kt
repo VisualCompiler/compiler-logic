@@ -39,7 +39,7 @@ class ConstantFolding : Optimization() {
             TackyUnaryOP.NEGATE -> -src.value
             TackyUnaryOP.NOT -> if (src.value == 0) 1 else 0
         }
-        return TackyCopy(TackyConstant(result), inst.dest)
+        return TackyCopy(TackyConstant(result), inst.dest, inst.sourceId)
     }
 
     private fun foldBinary(inst: TackyBinary): TackyInstruction {
@@ -60,7 +60,7 @@ class ConstantFolding : Optimization() {
             TackyBinaryOP.NOT_EQUAL -> if (lhs.value != rhs.value) 1 else 0
         }
 
-        return TackyCopy(TackyConstant(result), inst.dest)
+        return TackyCopy(TackyConstant(result), inst.dest, inst.sourceId)
     }
 
     private fun foldJump(condition: TackyVal, expectZero: Boolean, target: TackyLabel): TackyInstruction? {
