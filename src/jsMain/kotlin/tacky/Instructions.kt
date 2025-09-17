@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class TackyInstruction() : TackyConstruct() {
     abstract val sourceId: String
+    abstract fun deepCopy(): TackyInstruction
 }
 
 @Serializable
@@ -16,6 +17,8 @@ data class TackyRet(
 ) : TackyInstruction() {
 
     override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}return ${value.toPseudoCode()}"
+
+    override fun deepCopy(): TackyInstruction = TackyRet(value.deepCopy(), sourceId)
 }
 
 enum class TackyUnaryOP(
@@ -36,6 +39,8 @@ data class TackyUnary(
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}${dest.toPseudoCode()} = ${operator.text}${src.toPseudoCode()}"
+
+    override fun deepCopy(): TackyInstruction = TackyUnary(operator, src.deepCopy(), dest.deepCopy() as TackyVar, sourceId)
 }
 
 enum class TackyBinaryOP(
@@ -65,6 +70,8 @@ data class TackyBinary(
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}${dest.toPseudoCode()} = ${src1.toPseudoCode()} ${operator.text} ${src2.toPseudoCode()}"
+
+    override fun deepCopy(): TackyInstruction = TackyBinary(operator, src1.deepCopy(), src2.deepCopy(), dest.deepCopy() as TackyVar, sourceId)
 }
 
 @Serializable
@@ -75,6 +82,8 @@ data class TackyCopy(
     override val sourceId: String = ""
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}${dest.toPseudoCode()} = ${src.toPseudoCode()}"
+
+    override fun deepCopy(): TackyInstruction = TackyCopy(src.deepCopy(), dest.deepCopy() as TackyVar, sourceId)
 }
 
 @Serializable
@@ -84,6 +93,8 @@ data class TackyJump(
     override val sourceId: String = ""
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String = "${indent(indentationLevel)}goto ${target.name}"
+
+    override fun deepCopy(): TackyInstruction = TackyJump(target.deepCopy() as TackyLabel, sourceId)
 }
 
 @Serializable
@@ -95,6 +106,8 @@ data class JumpIfZero(
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}if (${condition.toPseudoCode()} == 0) goto ${target.name}"
+
+    override fun deepCopy(): TackyInstruction = JumpIfZero(condition.deepCopy(), target.deepCopy() as TackyLabel, sourceId)
 }
 
 @Serializable
@@ -106,6 +119,8 @@ data class JumpIfNotZero(
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String =
         "${indent(indentationLevel)}if (${condition.toPseudoCode()} != 0) goto ${target.name}"
+
+    override fun deepCopy(): TackyInstruction = JumpIfNotZero(condition.deepCopy(), target.deepCopy() as TackyLabel, sourceId)
 }
 
 @Serializable
@@ -120,6 +135,8 @@ data class TackyFunCall(
         val argString = args.joinToString(", ") { it.toPseudoCode() }
         return "${indent(indentationLevel)}${dest.toPseudoCode()} = $funName($argString)"
     }
+
+    override fun deepCopy(): TackyInstruction = TackyFunCall(funName, args.map { it.deepCopy() }, dest.deepCopy() as TackyVar, sourceId)
 }
 
 @Serializable
@@ -129,4 +146,6 @@ data class TackyLabel(
     override val sourceId: String = ""
 ) : TackyInstruction() {
     override fun toPseudoCode(indentationLevel: Int): String = "$name:"
+
+    override fun deepCopy(): TackyInstruction = TackyLabel(name, sourceId)
 }

@@ -83,7 +83,7 @@ sealed class CompilerWorkflow {
             tackyProgram: TackyProgram,
             optimizations: Set<OptimizationType>
         ): TackyProgram {
-            val tacky = tackyProgram.copy()
+            val tacky = tackyProgram.deepCopy()
             tacky.functions.forEach {
                 while (true) {
                     var cfg = ControlFlowGraph().construct(it.name, it.body)

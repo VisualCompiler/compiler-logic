@@ -11,7 +11,9 @@ sealed class TackyConstruct() {
 }
 
 @Serializable
-sealed class TackyVal() : TackyConstruct()
+sealed class TackyVal() : TackyConstruct() {
+    abstract fun deepCopy(): TackyVal
+}
 
 @Serializable
 @SerialName("TackyConstant")
@@ -19,6 +21,8 @@ data class TackyConstant(
     val value: Int
 ) : TackyVal() {
     override fun toPseudoCode(indentationLevel: Int): String = value.toString()
+
+    override fun deepCopy(): TackyVal = TackyConstant(value)
 }
 
 @Serializable
@@ -27,6 +31,8 @@ data class TackyVar(
     val name: String
 ) : TackyVal() {
     override fun toPseudoCode(indentationLevel: Int): String = name
+
+    override fun deepCopy(): TackyVal = TackyVar(name)
 }
 
 @Serializable
@@ -35,6 +41,10 @@ data class TackyProgram(
     val functions: List<TackyFunction>
 ) : TackyConstruct() {
     override fun toPseudoCode(indentationLevel: Int): String = functions.joinToString("\n\n") { it.toPseudoCode(indentationLevel) }
+
+    fun deepCopy(): TackyProgram {
+        return TackyProgram(functions.map { it.deepCopy() })
+    }
 }
 
 @Serializable
@@ -53,5 +63,14 @@ data class TackyFunction(
             appendLine("${indent(indentationLevel)}def $name($paramString):")
             append(bodyAsCode)
         }
+    }
+
+    fun deepCopy(): TackyFunction {
+        return TackyFunction(
+            name = name,
+            args = args.toList(), // Create a new list
+            body = body.map { it.deepCopy() },
+            sourceId = sourceId
+        )
     }
 }
