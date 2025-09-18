@@ -1,6 +1,6 @@
 package compiler
 
-import assembly.AsmProgram
+import assembly.AsmConstruct
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
 import lexer.Lexer
@@ -50,7 +50,17 @@ sealed class CompilerWorkflow {
             val tokens = take(code)
             val ast = take(tokens)
             val tacky = take(ast)
-            val asm = take(tacky as TackyProgram)
+            val optimizedTacky =
+                take(
+                    tacky as TackyProgram,
+                    listOf(
+                        OptimizationType.CONSTANT_FOLDING,
+                        OptimizationType.DEAD_STORE_ELIMINATION,
+                        OptimizationType.UNREACHABLE_CODE_ELIMINATION,
+                        OptimizationType.COPY_PROPAGATION
+                    )
+                )
+            val asm = take(tacky)
 
             return mapOf(
                 CompilerStage.LEXER to tokens,
@@ -81,13 +91,13 @@ sealed class CompilerWorkflow {
 
         fun take(
             tackyProgram: TackyProgram,
-            optimizations: Set<OptimizationType>
+            optimizations: List<OptimizationType>
         ): TackyProgram {
             val tacky = tackyProgram.deepCopy()
             tacky.functions.forEach {
                 while (true) {
                     var cfg = ControlFlowGraph().construct(it.name, it.body)
-                    for (optimization in optimizations) {
+                    for (optimization in optimizations.sorted()) {
                         if (optimization == OptimizationType.CONSTANT_FOLDING) {
                             cfg = constantFolding.apply(cfg)
                         } else if (optimization == OptimizationType.DEAD_STORE_ELIMINATION) {
@@ -108,10 +118,10 @@ sealed class CompilerWorkflow {
             return tacky
         }
 
-        fun take(tacky: TackyProgram): AsmProgram {
+        fun take(tacky: TackyProgram): AsmConstruct {
             val asm = tackyToAsmConverter.convert(tacky)
             val asmWithStackSizes = pseudoEliminator.eliminate(asm)
-            val finalAsmProgram = instructionFixer.fix(asmWithStackSizes) as AsmProgram
+            val finalAsmProgram = instructionFixer.fix(asmWithStackSizes)
             return finalAsmProgram
         }
     }

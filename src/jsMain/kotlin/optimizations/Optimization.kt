@@ -24,7 +24,7 @@ object OptimizationManager {
 
     fun applyOptimizations(
         cfg: ControlFlowGraph,
-        enabledOptimizations: Set<OptimizationType>
+        enabledOptimizations: List<OptimizationType>
     ): ControlFlowGraph {
         var currentCfg = cfg
 

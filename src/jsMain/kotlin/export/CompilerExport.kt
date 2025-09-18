@@ -113,7 +113,7 @@ class CompilerExport {
                 CompilerWorkflow.take(
                     tacky,
                     optimizations =
-                    setOf(
+                    listOf(
                         OptimizationType.CONSTANT_FOLDING,
                         OptimizationType.DEAD_STORE_ELIMINATION,
                         OptimizationType.COPY_PROPAGATION,
@@ -180,17 +180,17 @@ class CompilerExport {
     }
 
     private fun precomputeAllCFGs(program: TackyProgram): String {
-        val allOptSets = generateOptimizationCombinations()
+        val allOptLists = generateOptimizationCombinations()
         val cfgs =
             program.functions.filter { it.body.isNotEmpty() }.flatMap { fn ->
-                allOptSets.map { optSet ->
+                allOptLists.map { optList ->
                     try {
                         val cfg = ControlFlowGraph().construct(fn.name, fn.body)
-                        val types = optSet.mapNotNull(optTypeMap::get).toSet()
+                        val types = optList.mapNotNull(optTypeMap::get)
                         val optimized = OptimizationManager.applyOptimizations(cfg, types)
-                        CFGEntry(fn.name, optSet.sorted(), exportControlFlowGraph(optimized))
+                        CFGEntry(fn.name, optList, exportControlFlowGraph(optimized))
                     } catch (_: Exception) {
-                        CFGEntry(fn.name, optSet.sorted(), createEmptyCFGJson(fn.name))
+                        CFGEntry(fn.name, optList.sorted(), createEmptyCFGJson(fn.name))
                     }
                 }
             }
@@ -198,37 +198,23 @@ class CompilerExport {
     }
 
     private fun precomputeAllAssembly(program: TackyProgram): String {
-        val allOptSets = generateOptimizationCombinations()
+        val allOptLists = generateOptimizationCombinations()
         val assemblies = mutableListOf<AssemblyEntry>()
 
-        println("Precomputing assembly for ${program.functions.size} functions with ${allOptSets.size} optimization combinations")
-
-        for (optSet in allOptSets) {
-            try {
-                val optimizedTacky = CompilerWorkflow.take(
+        for (optList in allOptLists) {
+            val optimizedTacky =
+                CompilerWorkflow.take(
                     program,
-                    optimizations = optSet.mapNotNull(optTypeMap::get).toSet()
+                    optimizations = optList.mapNotNull(optTypeMap::get)
                 )
-                val asm = CompilerWorkflow.take(optimizedTacky)
-                val finalAssemblyString = CodeEmitter().emitRaw(asm as AsmProgram)
+            val asm = CompilerWorkflow.take(optimizedTacky)
+            val finalAssemblyString = CodeEmitter().emit(asm as AsmProgram)
 
-                println("Generated assembly with optimizations $optSet: ${finalAssemblyString.length} chars")
-
-                // Create entries for each function with the full assembly
-                for (fn in program.functions.filter { it.body.isNotEmpty() }) {
-                    assemblies.add(AssemblyEntry(optSet.toList().sorted(), finalAssemblyString))
-                }
-            } catch (e: Exception) {
-                println("Error generating assembly with optimizations $optSet: ${e.message}")
-                // Create empty entries for each function
-                for (fn in program.functions.filter { it.body.isNotEmpty() }) {
-                    assemblies.add(AssemblyEntry(optSet.toList().sorted(), ""))
-                }
-            }
+            // Create one entry per optimization set with the full program assembly
+            assemblies.add(AssemblyEntry(optList, finalAssemblyString))
         }
 
         val result = Json.encodeToString(assemblies)
-        println("Precomputed assembly result: ${result.length} chars, ${assemblies.size} entries")
         return result
     }
 
@@ -240,10 +226,10 @@ class CompilerExport {
             "UNREACHABLE_CODE_ELIMINATION" to OptimizationType.UNREACHABLE_CODE_ELIMINATION
         )
 
-    private fun generateOptimizationCombinations(): List<Set<String>> {
-        val opts = optTypeMap.keys.toList()
+    private fun generateOptimizationCombinations(): List<List<String>> {
+        val opts = optTypeMap.keys.sorted()
         return (0 until (1 shl opts.size)).map { mask ->
-            opts.filterIndexed { i, _ -> mask and (1 shl i) != 0 }.toSet()
+            opts.filterIndexed { i, _ -> mask and (1 shl i) != 0 }
         }
     }
 
@@ -277,7 +263,6 @@ class CompilerExport {
                             val index = cfg.blocks.indexOfFirst { it.id == edge.from.id }
                             if (index >= 0) "block_$index" else "unknown_block"
                         }
-                        else -> "unknown_block"
                     }
                 val toId =
                     when (edge.to) {
@@ -288,7 +273,6 @@ class CompilerExport {
                             val index = cfg.blocks.indexOfFirst { it.id == edge.to.id }
                             if (index >= 0) "block_$index" else "unknown_block"
                         }
-                        else -> "unknown_block"
                     }
                 CFGEdge(fromId, toId)
             }
