@@ -50,7 +50,6 @@ data class CFGEntry(
 
 @Serializable
 data class AssemblyEntry(
-    val functionName: String,
     val optimizations: List<String>,
     val asmCode: String
 )
@@ -211,19 +210,19 @@ class CompilerExport {
                     optimizations = optSet.mapNotNull(optTypeMap::get).toSet()
                 )
                 val asm = CompilerWorkflow.take(optimizedTacky)
-                val finalAssemblyString = CodeEmitter().emit(asm as AsmProgram)
+                val finalAssemblyString = CodeEmitter().emitRaw(asm as AsmProgram)
 
                 println("Generated assembly with optimizations $optSet: ${finalAssemblyString.length} chars")
 
                 // Create entries for each function with the full assembly
                 for (fn in program.functions.filter { it.body.isNotEmpty() }) {
-                    assemblies.add(AssemblyEntry(fn.name, optSet.sorted(), finalAssemblyString))
+                    assemblies.add(AssemblyEntry(optSet.toList().sorted(), finalAssemblyString))
                 }
             } catch (e: Exception) {
                 println("Error generating assembly with optimizations $optSet: ${e.message}")
                 // Create empty entries for each function
                 for (fn in program.functions.filter { it.body.isNotEmpty() }) {
-                    assemblies.add(AssemblyEntry(fn.name, optSet.sorted(), ""))
+                    assemblies.add(AssemblyEntry(optSet.toList().sorted(), ""))
                 }
             }
         }
