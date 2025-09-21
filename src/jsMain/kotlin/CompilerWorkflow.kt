@@ -27,6 +27,7 @@ enum class CompilerStage {
     LEXER,
     PARSER,
     TACKY,
+    OPTIMIZATIONS,
     ASSEMBLY
 }
 
@@ -60,12 +61,13 @@ sealed class CompilerWorkflow {
                         OptimizationType.COPY_PROPAGATION
                     )
                 )
-            val asm = take(tacky)
+            val asm = take(optimizedTacky)
 
             return mapOf(
                 CompilerStage.LEXER to tokens,
                 CompilerStage.PARSER to ast,
                 CompilerStage.TACKY to tacky,
+                CompilerStage.OPTIMIZATIONS to optimizedTacky,
                 CompilerStage.ASSEMBLY to asm
             )
         }

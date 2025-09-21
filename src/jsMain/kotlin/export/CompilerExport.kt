@@ -38,7 +38,8 @@ data class CFGEdge(
 data class CFGExport(
     val functionName: String,
     val nodes: List<CFGNode>,
-    val edges: List<CFGEdge>
+    val edges: List<CFGEdge>,
+    val instructionCount: Int
 )
 
 @Serializable
@@ -113,12 +114,12 @@ class CompilerExport {
                 CompilerWorkflow.take(
                     tacky,
                     optimizations =
-                    listOf(
-                        OptimizationType.CONSTANT_FOLDING,
-                        OptimizationType.DEAD_STORE_ELIMINATION,
-                        OptimizationType.COPY_PROPAGATION,
-                        OptimizationType.UNREACHABLE_CODE_ELIMINATION
-                    )
+                        listOf(
+                            OptimizationType.CONSTANT_FOLDING,
+                            OptimizationType.DEAD_STORE_ELIMINATION,
+                            OptimizationType.COPY_PROPAGATION,
+                            OptimizationType.UNREACHABLE_CODE_ELIMINATION
+                        )
                 )
             val asm = CompilerWorkflow.take(optimizedTacky)
             val finalAssemblyString = codeEmitter.emit(asm as AsmProgram)
@@ -152,6 +153,7 @@ class CompilerExport {
                 CompilerStage.PARSER -> outputs.add(ParserOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
                 CompilerStage.TACKY -> outputs.add(TackyOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
                 CompilerStage.ASSEMBLY -> outputs.add(AssemblyOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
+                CompilerStage.OPTIMIZATIONS -> null // TODO We're currently exporting optimization results inside TackyOutput, we should move it to its own object
             }
         } catch (e: Exception) {
             // Fallback for any unexpected runtime errors
@@ -238,7 +240,8 @@ class CompilerExport {
             CFGExport(
                 functionName = fn,
                 nodes = listOf(CFGNode("entry", "Entry", "entry"), CFGNode("exit", "Exit", "exit")),
-                edges = listOf(CFGEdge("entry", "exit"))
+                edges = listOf(CFGEdge("entry", "exit")),
+                instructionCount = 0
             )
         )
 
@@ -277,7 +280,10 @@ class CompilerExport {
                 CFGEdge(fromId, toId)
             }
 
-        return Json.encodeToString(CFGExport(cfg.functionName ?: "unknown", nodes, edges))
+        // Calculate total instruction count across all blocks
+        val instructionCount = cfg.blocks.sumOf { it.instructions.size }
+
+        return Json.encodeToString(CFGExport(cfg.functionName ?: "unknown", nodes, edges, instructionCount))
     }
 
     private fun Any.toId(cfg: ControlFlowGraph): String =
