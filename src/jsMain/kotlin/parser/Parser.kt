@@ -59,15 +59,16 @@ class Parser {
         val name = parseIdentifier(tokens)
         expect(TokenType.LEFT_PAREN, tokens)
         val params = mutableListOf<String>()
-        if (tokens.firstOrNull()?.type != TokenType.KEYWORD_VOID) {
+        if (tokens.firstOrNull()?.type == TokenType.KEYWORD_VOID) {
+            tokens.removeFirst() // consume 'void'
+        } else if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
             // get params
             do {
                 expect(TokenType.KEYWORD_INT, tokens)
                 params.add(parseIdentifier(tokens))
             } while (tokens.firstOrNull()?.type == TokenType.COMMA && tokens.removeFirst().type == TokenType.COMMA)
-        } else {
-            tokens.removeFirst() // consume 'void'
         }
+        // If neither void nor int, assume no parameters (empty parameter list)
         val endParan = expect(TokenType.RIGHT_PAREN, tokens)
         val body: Block?
         val endLine: Int
@@ -89,15 +90,16 @@ class Parser {
     private fun parseFunctionDeclarationFromBody(tokens: MutableList<Token>, name: String, location: SourceLocation): FunctionDeclaration {
         expect(TokenType.LEFT_PAREN, tokens)
         val params = mutableListOf<String>()
-        if (tokens.firstOrNull()?.type != TokenType.KEYWORD_VOID) {
+        if (tokens.firstOrNull()?.type == TokenType.KEYWORD_VOID) {
+            tokens.removeFirst() // consume 'void'
+        } else if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
             // get params
             do {
                 expect(TokenType.KEYWORD_INT, tokens)
                 params.add(parseIdentifier(tokens))
             } while (tokens.firstOrNull()?.type == TokenType.COMMA && tokens.removeFirst().type == TokenType.COMMA)
-        } else {
-            tokens.removeFirst() // consume 'void'
         }
+        // If neither void nor int, assume no parameters (empty parameter list)
         val end = expect(TokenType.RIGHT_PAREN, tokens)
         val body: Block?
         val finalLocation: SourceLocation
@@ -131,7 +133,7 @@ class Parser {
             val name = parseIdentifier(lookaheadTokens)
 
             if (lookaheadTokens.firstOrNull()?.type == TokenType.LEFT_PAREN) {
-                expect(TokenType.KEYWORD_INT, tokens)
+                expect(TokenType.KEYWORD_INT, tokens) // consume the int keyword
                 val actualName = parseIdentifier(tokens)
                 D(FunDecl(parseFunctionDeclarationFromBody(tokens, actualName, SourceLocation(start.startLine, start.startColumn, start.endLine, start.endColumn))))
             } else {
