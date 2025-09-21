@@ -40,3 +40,13 @@ To generate a test coverage report,
     ``./gradlew koverHtmlReport``
 
     _\* These two commands are also part of the build command_ 
+
+We also included the test suite of the book "Writing a C Compiler" by Nora Sandler. To run these tests, follow these steps:
+
+```
+# Build the compiler
+./gradlew createCompilerJar
+# Run the test script
+cd src/resources/write_a_c_compiler-tests
+./test_compiler_kotlin.sh ../../../build/libs/compiler-1.0-SNAPSHOT.jar
+```
