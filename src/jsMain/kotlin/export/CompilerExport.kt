@@ -114,12 +114,12 @@ class CompilerExport {
                 CompilerWorkflow.take(
                     tacky,
                     optimizations =
-                        listOf(
-                            OptimizationType.CONSTANT_FOLDING,
-                            OptimizationType.DEAD_STORE_ELIMINATION,
-                            OptimizationType.COPY_PROPAGATION,
-                            OptimizationType.UNREACHABLE_CODE_ELIMINATION
-                        )
+                    listOf(
+                        OptimizationType.CONSTANT_FOLDING,
+                        OptimizationType.DEAD_STORE_ELIMINATION,
+                        OptimizationType.COPY_PROPAGATION,
+                        OptimizationType.UNREACHABLE_CODE_ELIMINATION
+                    )
                 )
             val asm = CompilerWorkflow.take(optimizedTacky)
             val finalAssemblyString = codeEmitter.emit(asm as AsmProgram)

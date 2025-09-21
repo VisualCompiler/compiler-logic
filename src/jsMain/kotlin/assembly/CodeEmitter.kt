@@ -21,6 +21,7 @@ class CodeEmitter {
     private fun emitFunction(function: AsmFunction): String {
         val functionName = formatLabel(function.name)
         val bodyAsm = function.body.joinToString("\n") { emitInstruction(it) }
+        val endsWithRet = function.body.lastOrNull() is Ret
 
         return buildString {
             appendLine("  .globl $functionName")
@@ -30,9 +31,11 @@ class CodeEmitter {
             if (bodyAsm.isNotEmpty()) {
                 appendLine(bodyAsm)
             }
-            appendLine("  mov rsp, rbp")
-            appendLine("  pop rbp")
-            append("  ret")
+            if (!endsWithRet) {
+                appendLine("  mov rsp, rbp")
+                appendLine("  pop rbp")
+                append("  ret")
+            }
         }
     }
 
@@ -68,7 +71,7 @@ class CodeEmitter {
                 RawInstruction("${indent}set${instruction.condition.text} $destOperand", instruction.sourceId)
             }
 
-            is Ret -> RawInstruction("", instruction.sourceId)
+            is Ret -> RawInstruction("${indent}mov rsp, rbp\n${indent}pop rbp\n${indent}ret", instruction.sourceId)
         }
     }
 
@@ -95,7 +98,7 @@ class CodeEmitter {
                 val destOperand = emitOperand(instruction.dest, size = OperandSize.BYTE)
                 "${indent}set${instruction.condition.text} $destOperand"
             }
-            is Ret -> ""
+            is Ret -> "${indent}mov rsp, rbp\n${indent}pop rbp\n${indent}ret"
         }
     }
 
