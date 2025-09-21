@@ -55,7 +55,7 @@ enum class TackyBinaryOP(
     GREATER(">"),
     LESS_EQUAL("<="),
     GREATER_EQUAL(">="),
-    EQUAL("="),
+    EQUAL("=="),
     NOT_EQUAL("!=")
 }
 
