@@ -42,7 +42,10 @@ class TackyToAsm {
         return AsmFunction(tackyFunc.name, paramSetupInstructions + bodyInstructions)
     }
 
-    private fun generateParamSetup(params: List<String>, sourceId: String): List<Instruction> {
+    private fun generateParamSetup(
+        params: List<String>,
+        sourceId: String
+    ): List<Instruction> {
         val instructions = mutableListOf<Instruction>()
         val argRegisters =
             listOf(
@@ -197,6 +200,12 @@ class TackyToAsm {
                     instructions.add(AllocateStack(stackPadding, tackyInstr.sourceId))
                 }
 
+                // Pass arguments in registers
+                registerArgs.forEachIndexed { index, arg ->
+                    val asmArg = convertVal(arg)
+                    instructions.add(Mov(asmArg, Register(argRegisters[index]), tackyInstr.sourceId))
+                }
+
                 // Pass arguments on the stack in reverse order
                 stackArgs.asReversed().forEach { arg ->
                     val asmArg = convertVal(arg)
@@ -206,12 +215,6 @@ class TackyToAsm {
                     } else {
                         instructions.add(Push(asmArg, tackyInstr.sourceId))
                     }
-                }
-
-                // Pass arguments in registers
-                registerArgs.forEachIndexed { index, arg ->
-                    val asmArg = convertVal(arg)
-                    instructions.add(Mov(asmArg, Register(argRegisters[index]), tackyInstr.sourceId))
                 }
 
                 instructions.add(Call(tackyInstr.funName, tackyInstr.sourceId))
