@@ -90,7 +90,7 @@ class TypeChecker : Visitor<Unit> {
             }
             isAlreadyDefined = existingSymbol.isDefined
             if (isAlreadyDefined && hasBody) {
-                throw ReDeclarationFunctionException("Function '${node.name}' cannot be defined more than once.")
+                throw ReDeclarationFunctionException(node.name)
             }
         }
 
@@ -101,7 +101,7 @@ class TypeChecker : Visitor<Unit> {
             node.params.forEach { paramName ->
                 SymbolTable.add(paramName, Symbol(IntType, isDefined = true))
             }
-            node.body!!.accept(this)
+            node.body.accept(this)
         }
     }
 

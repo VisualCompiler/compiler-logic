@@ -19,12 +19,21 @@ sealed class CompilationException(
     }
 }
 
-class LexicalException(
+// Lexer
+class InvalidCharacterException(
     character: Char,
     line: Int? = null,
     column: Int? = null
-) : CompilationException("LexicalException(Invalid character '$character')", line, column)
+) : CompilationException("InvalidCharacterException('$character' is not a valid character)", line, column)
 
+class UnexpectedCharacterException(
+    val expected: String,
+    val actual: String,
+    line: Int? = null,
+    column: Int? = null
+) : CompilationException("UnexpectedCharacterException(Expected '$expected', got '$actual')", line, column)
+
+// Parser
 class UnexpectedTokenException(
     val expected: String,
     val actual: String,
@@ -71,12 +80,6 @@ class InvalidStatementException(
     column: Int? = null
 ) : CompilationException("InvalidStatementException($message)", line, column)
 
-class TackyException(
-    operator: String,
-    line: Int? = null,
-    column: Int? = null
-) : CompilationException("TackyException(Invalid operator: $operator)", line, column)
-
 class NestedFunctionException(
     line: Int? = null,
     column: Int? = null
@@ -119,3 +122,10 @@ class IllegalStateException(
     line: Int? = null,
     column: Int? = null
 ) : CompilationException("Internal error: Variable '$name' should have been caught by IdentifierResolution.")
+
+// TACKY
+class TackyException(
+    operator: String,
+    line: Int? = null,
+    column: Int? = null
+) : CompilationException("TackyException(Invalid operator: $operator)", line, column)

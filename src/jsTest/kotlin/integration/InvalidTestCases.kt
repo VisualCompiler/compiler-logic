@@ -4,9 +4,9 @@ import compiler.CompilerStage
 import exceptions.ArgumentCountException
 import exceptions.DuplicateVariableDeclaration
 import exceptions.IncompatibleFuncDeclarationException
+import exceptions.InvalidCharacterException
 import exceptions.InvalidLValueException
 import exceptions.InvalidStatementException
-import exceptions.LexicalException
 import exceptions.MissingDeclarationException
 import exceptions.NestedFunctionException
 import exceptions.NotFunctionException
@@ -28,7 +28,7 @@ object InvalidTestCases {
             InvalidTestCase(
                 code = "#",
                 failingStage = CompilerStage.LEXER,
-                expectedException = LexicalException::class
+                expectedException = InvalidCharacterException::class
             ),
             // Parser errors
             InvalidTestCase(
@@ -183,7 +183,8 @@ object InvalidTestCases {
             ),
             // Function redeclaration with different parameter count (illegal in C)
             InvalidTestCase(
-                code = """
+                code =
+                """
                     int func(int a, int b);
                     int func(int a);
                     int main(void) {
@@ -195,7 +196,8 @@ object InvalidTestCases {
             ),
             // Nested function inside block
             InvalidTestCase(
-                code = """
+                code =
+                """
                     int main(void) {
                         {
                             int nested(int x) {
@@ -210,7 +212,8 @@ object InvalidTestCases {
             ),
             // ArgumentCountException - Wrong number of arguments for function
             InvalidTestCase(
-                code = """
+                code =
+                """
                     int func(int a, int b);
                     int main(void) {
                         return func(1);
@@ -220,7 +223,8 @@ object InvalidTestCases {
                 expectedException = ArgumentCountException::class
             ),
             InvalidTestCase(
-                code = """
+                code =
+                """
                     int main(void) {
                         int nested(int x) {
                             return x + 1;
@@ -233,7 +237,8 @@ object InvalidTestCases {
             ),
             // NotFunctionException - Calling something that's not a function
             InvalidTestCase(
-                code = """
+                code =
+                """
                     int main(void) {
                         int a = 5;
                         return a(1, 2); 
@@ -244,7 +249,8 @@ object InvalidTestCases {
             ),
             // NotVariableException - Using function as a variable
             InvalidTestCase(
-                code = """
+                code =
+                """
                     int func(int x) {
                         return x + 1;
                     }
@@ -258,7 +264,8 @@ object InvalidTestCases {
             ),
             // ReDeclarationFunctionException - Function defined more than once
             InvalidTestCase(
-                code = """
+                code =
+                """
                     int func(int x) {
                         return x + 1;
                     }
