@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class PseudoEliminatorTest {
-    private val eliminator = PseudoEliminator()
+    private fun createEliminator() = PseudoEliminator()
 
     @Test
     fun `should replace a single pseudo-register and calculate stack size`() {
@@ -13,6 +13,7 @@ class PseudoEliminatorTest {
         val program = AsmProgram(listOf(function))
 
         // Act
+        val eliminator = createEliminator()
         val resultProgram = eliminator.eliminate(program)
         val resultFunction = resultProgram.functions[0]
 
@@ -36,6 +37,7 @@ class PseudoEliminatorTest {
         val program = AsmProgram(listOf(function))
 
         // Act
+        val eliminator = createEliminator()
         val resultProgram = eliminator.eliminate(program)
         val resultFunction = resultProgram.functions[0]
 
@@ -64,6 +66,7 @@ class PseudoEliminatorTest {
         val program = AsmProgram(listOf(function))
 
         // Act
+        val eliminator = createEliminator()
         val resultProgram = eliminator.eliminate(program)
         val resultFunction = resultProgram.functions[0]
 
@@ -92,6 +95,7 @@ class PseudoEliminatorTest {
         val originalBody = program.functions[0].body.toList() // Make a copy
 
         // Act
+        val eliminator = createEliminator()
         val resultProgram = eliminator.eliminate(program)
         val resultFunction = resultProgram.functions[0]
 
@@ -107,6 +111,7 @@ class PseudoEliminatorTest {
         val program = AsmProgram(listOf(function))
 
         // Act
+        val eliminator = createEliminator()
         val resultProgram = eliminator.eliminate(program)
         val resultFunction = resultProgram.functions[0]
 
