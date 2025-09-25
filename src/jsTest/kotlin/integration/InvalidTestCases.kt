@@ -9,8 +9,8 @@ import exceptions.InvalidLValueException
 import exceptions.InvalidStatementException
 import exceptions.MissingDeclarationException
 import exceptions.NestedFunctionException
-import exceptions.NotFunctionException
-import exceptions.NotVariableException
+import exceptions.NotAFunctionException
+import exceptions.NotAVariableException
 import exceptions.ReDeclarationFunctionException
 import exceptions.UnexpectedTokenException
 import kotlin.reflect.KClass
@@ -184,20 +184,20 @@ object InvalidTestCases {
             // Function redeclaration with different parameter count (illegal in C)
             InvalidTestCase(
                 code =
-                """
+                    """
                     int func(int a, int b);
                     int func(int a);
                     int main(void) {
                         return func(1, 2);
                     }
-                """.trimIndent(),
+                    """.trimIndent(),
                 failingStage = CompilerStage.PARSER,
                 expectedException = IncompatibleFuncDeclarationException::class
             ),
             // Nested function inside block
             InvalidTestCase(
                 code =
-                """
+                    """
                     int main(void) {
                         {
                             int nested(int x) {
@@ -206,51 +206,51 @@ object InvalidTestCases {
                         }
                         return 0;
                     }
-                """.trimIndent(),
+                    """.trimIndent(),
                 failingStage = CompilerStage.PARSER,
                 expectedException = NestedFunctionException::class
             ),
             // ArgumentCountException - Wrong number of arguments for function
             InvalidTestCase(
                 code =
-                """
+                    """
                     int func(int a, int b);
                     int main(void) {
                         return func(1);
                     }
-                """.trimIndent(),
+                    """.trimIndent(),
                 failingStage = CompilerStage.PARSER,
                 expectedException = ArgumentCountException::class
             ),
             InvalidTestCase(
                 code =
-                """
+                    """
                     int main(void) {
                         int nested(int x) {
                             return x + 1;
                         }
                         return nested(5);
                     }
-                """.trimIndent(),
+                    """.trimIndent(),
                 failingStage = CompilerStage.PARSER,
                 expectedException = NestedFunctionException::class
             ),
             // NotFunctionException - Calling something that's not a function
             InvalidTestCase(
                 code =
-                """
+                    """
                     int main(void) {
                         int a = 5;
                         return a(1, 2); 
                     }
-                """.trimIndent(),
+                    """.trimIndent(),
                 failingStage = CompilerStage.PARSER,
-                expectedException = NotFunctionException::class
+                expectedException = NotAFunctionException::class
             ),
             // NotVariableException - Using function as a variable
             InvalidTestCase(
                 code =
-                """
+                    """
                     int func(int x) {
                         return x + 1;
                     }
@@ -258,14 +258,14 @@ object InvalidTestCases {
                         int a = func;
                         return a;
                     }
-                """.trimIndent(),
+                    """.trimIndent(),
                 failingStage = CompilerStage.PARSER,
-                expectedException = NotVariableException::class
+                expectedException = NotAVariableException::class
             ),
             // ReDeclarationFunctionException - Function defined more than once
             InvalidTestCase(
                 code =
-                """
+                    """
                     int func(int x) {
                         return x + 1;
                     }
@@ -275,7 +275,7 @@ object InvalidTestCases {
                     int main(void) {
                         return func(5);
                     }
-                """.trimIndent(),
+                    """.trimIndent(),
                 failingStage = CompilerStage.PARSER,
                 expectedException = ReDeclarationFunctionException::class
             )

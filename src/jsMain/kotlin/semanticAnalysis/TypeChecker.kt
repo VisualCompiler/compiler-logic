@@ -2,8 +2,8 @@ package semanticAnalysis
 
 import exceptions.ArgumentCountException
 import exceptions.IncompatibleFuncDeclarationException
-import exceptions.NotFunctionException
-import exceptions.NotVariableException
+import exceptions.NotAFunctionException
+import exceptions.NotAVariableException
 import exceptions.ReDeclarationFunctionException
 import parser.AssignmentExpression
 import parser.BinaryExpression
@@ -111,7 +111,7 @@ class TypeChecker : Visitor<Unit> {
                 ?: throw IllegalStateException(node.name)
 
         if (symbol.type !is IntType) {
-            throw NotVariableException(node.name)
+            throw NotAVariableException(node.name)
         }
     }
 
@@ -185,7 +185,7 @@ class TypeChecker : Visitor<Unit> {
                 ?: throw exceptions.IllegalStateException(node.name)
 
         when (val type = symbol.type) {
-            is IntType -> throw NotFunctionException(node.name)
+            is IntType -> throw NotAFunctionException(node.name)
             is FunType -> {
                 if (type.paramCount != node.arguments.size) {
                     throw ArgumentCountException(

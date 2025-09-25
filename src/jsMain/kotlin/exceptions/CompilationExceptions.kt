@@ -95,19 +95,23 @@ class IncompatibleFuncDeclarationException(
     name: String,
     line: Int? = null,
     column: Int? = null
-) : CompilationException("Function '$name' redeclared with a different number of parameters.", line, column)
+) : CompilationException(
+        "IncompatibleFuncDeclarationException(Function '$name' redeclared with a different number of parameters.)",
+        line,
+        column
+    )
 
-class NotFunctionException(
+class NotAFunctionException(
     name: String,
     line: Int? = null,
     column: Int? = null
-) : CompilationException("Cannot call '$name' because it is not a function.", line, column)
+) : CompilationException("NotAFunctionException(Cannot call '$name' because it is not a function.)", line, column)
 
-class NotVariableException(
+class NotAVariableException(
     name: String,
     line: Int? = null,
     column: Int? = null
-) : CompilationException("Cannot use function '$name' as a variable.", line, column)
+) : CompilationException("NotAVariableException(Cannot use function '$name' as a variable.)", line, column)
 
 class ArgumentCountException(
     name: String,
@@ -115,13 +119,17 @@ class ArgumentCountException(
     actual: Int,
     line: Int? = null,
     column: Int? = null
-) : CompilationException("Wrong number of arguments for function '$name'. Expected $expected, got $actual.", line, column)
+) : CompilationException(
+        "ArgumentCountException(Wrong number of arguments for function '$name'. Expected $expected, got $actual.)",
+        line,
+        column
+    )
 
 class IllegalStateException(
     name: String,
     line: Int? = null,
     column: Int? = null
-) : CompilationException("Internal error: Variable '$name' should have been caught by IdentifierResolution.")
+) : CompilationException("IllegalStateException(Internal error: Variable '$name' should have been caught by IdentifierResolution.)")
 
 // TACKY
 class TackyException(
