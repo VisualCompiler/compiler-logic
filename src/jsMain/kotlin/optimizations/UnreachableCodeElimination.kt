@@ -51,7 +51,7 @@ class UnreachableCodeElimination : Optimization() {
             functionName = cfg.functionName,
             root = cfg.root,
             blocks = reachableBlocks,
-            edges = reachableEdges
+            edges = reachableEdges.toMutableList()
         )
     }
 
@@ -162,7 +162,7 @@ class UnreachableCodeElimination : Optimization() {
             cfg.blocks
                 .filter { it.instructions.isEmpty() && it.successors.size <= 1 }
                 .toMutableSet()
-        val newEdges = cfg.edges.toMutableList()
+        val newEdges = cfg.edges
         val blocksToKeep = cfg.blocks.filter { it !in blocksToRemove }.toMutableList()
 
         // map for easy search of nodes by their ID
@@ -194,7 +194,7 @@ class UnreachableCodeElimination : Optimization() {
             functionName = cfg.functionName,
             root = cfg.root,
             blocks = blocksToKeep,
-            edges = newEdges.distinct()
+            edges = newEdges.distinct().toMutableList()
         )
     }
 

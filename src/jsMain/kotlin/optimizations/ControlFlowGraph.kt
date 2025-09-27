@@ -43,7 +43,7 @@ data class ControlFlowGraph(
     val functionName: String? = null,
     val root: CFGNode? = null,
     val blocks: List<Block> = emptyList(),
-    val edges: List<Edge> = emptyList()
+    val edges: MutableList<Edge> = mutableListOf()
 ) {
     fun construct(
         functionName: String,
@@ -98,7 +98,7 @@ data class ControlFlowGraph(
     private fun buildEdges(
         nodes: List<CFGNode>,
         blocks: List<Block>
-    ): List<Edge> {
+    ): MutableList<Edge> {
         val edges = mutableListOf<Edge>()
         val entry = nodes.filterIsInstance<START>().firstOrNull()
         val exit = nodes.filterIsInstance<EXIT>().firstOrNull()
@@ -113,7 +113,7 @@ data class ControlFlowGraph(
         }
 
         // entry -> first block
-        blocks.firstOrNull()?.let { connect(entry!!, it) }
+        blocks.firstOrNull()?.let { connect(entry ?: return@let, it) }
 
         for ((i, block) in blocks.withIndex()) {
             val last = block.instructions.lastOrNull()

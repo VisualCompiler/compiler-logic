@@ -19,7 +19,38 @@ class ConstantFolding : Optimization() {
     override fun apply(cfg: ControlFlowGraph): ControlFlowGraph {
         val optimizedBlocks =
             cfg.blocks.map { block ->
-                val optimizedInstructions = block.instructions.mapNotNull { foldInstruction(it) }
+                val optimizedInstructions =
+                    block.instructions.mapNotNull { instruction ->
+                        val folded = foldInstruction(instruction)
+                        if (folded == null && (instruction is JumpIfZero || instruction is JumpIfNotZero)) {
+                            // Remove the edge to the target label since the condition is always false (folded = null)
+                            val target =
+                                when (instruction) {
+                                    is JumpIfZero -> instruction.target
+                                    is JumpIfNotZero -> instruction.target
+                                    else -> null
+                                }
+                            val labelBlock = cfg.blocks.find { it.instructions.first() == target }
+                            if (labelBlock != null) {
+                                block.successors.remove(labelBlock.id)
+                                val edgeToRemove = cfg.edges.find { it.from.id == block.id && it.to.id == labelBlock.id }
+                                if (edgeToRemove != null) {
+                                    cfg.edges.remove(edgeToRemove)
+                                }
+                            }
+                        } else if (folded is TackyJump) {
+                            // Remove the edge to the next block since we're now jumping unconditionally to a different target
+                            val nextBlock = cfg.blocks.find { it.id == block.id + 1 }
+                            if (nextBlock != null) {
+                                block.successors.remove(block.id + 1)
+                                val edgeToRemove = cfg.edges.find { it.from.id == block.id && it.to.id == block.id + 1 }
+                                if (edgeToRemove != null) {
+                                    cfg.edges.remove(edgeToRemove)
+                                }
+                            }
+                        }
+                        folded
+                    }
                 block.copy(instructions = optimizedInstructions)
             }
         return cfg.copy(blocks = optimizedBlocks)
