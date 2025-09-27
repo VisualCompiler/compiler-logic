@@ -250,7 +250,7 @@ class CompilerExport {
         nodes +=
             cfg.blocks.mapIndexed { i, block ->
                 val id = "block_$i"
-                val label = block.instructions.joinToString(";\n") { it.toPseudoCode(0) }.ifEmpty { "Empty Block" }
+                val label = block.instructions.joinToString("\n") { it.toPseudoCode(0) }.ifEmpty { "Empty Block" }
                 CFGNode(id, label, "block")
             }
         nodes += CFGNode("exit", "Exit", "exit")
@@ -285,17 +285,6 @@ class CompilerExport {
 
         return Json.encodeToString(CFGExport(cfg.functionName ?: "unknown", nodes, edges, instructionCount))
     }
-
-    private fun Any.toId(cfg: ControlFlowGraph): String =
-        when (this) {
-            is START -> "entry"
-            is EXIT -> "exit"
-            is Block -> {
-                val index = cfg.blocks.indexOf(this)
-                if (index >= 0) "block_$index" else "unknown_block"
-            }
-            else -> "unknown"
-        }
 
     fun getCFGForFunction(
         precomputed: String?,
