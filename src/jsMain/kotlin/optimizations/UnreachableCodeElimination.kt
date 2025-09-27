@@ -7,7 +7,7 @@ import tacky.TackyJump
 import tacky.TackyLabel
 
 class UnreachableCodeElimination : Optimization() {
-    override val optimizationType: OptimizationType = OptimizationType.UNREACHABLE_CODE_ELIMINATION
+    override val optimizationType: OptimizationType = OptimizationType.C_UNREACHABLE_CODE_ELIMINATION
 
     override fun apply(cfg: ControlFlowGraph): ControlFlowGraph {
         var currentCfg = removeUnreachableBlocks(cfg)
@@ -38,13 +38,14 @@ class UnreachableCodeElimination : Optimization() {
 
         val reachableBlocks = cfg.blocks.filter { it.id in reachableNodeIds }
 
-        val reachableEdges = cfg.edges.filter { edge ->
-            val fromReachable = edge.from.id in reachableNodeIds
-            val toReachable = edge.to.id in reachableNodeIds
-            val toExit = edge.to is EXIT
+        val reachableEdges =
+            cfg.edges.filter { edge ->
+                val fromReachable = edge.from.id in reachableNodeIds
+                val toReachable = edge.to.id in reachableNodeIds
+                val toExit = edge.to is EXIT
 
-            fromReachable && (toReachable || toExit)
-        }
+                fromReachable && (toReachable || toExit)
+            }
 
         return ControlFlowGraph(
             functionName = cfg.functionName,
@@ -86,10 +87,11 @@ class UnreachableCodeElimination : Optimization() {
         }
 
         // rebuild the blocks with the redundant jumps removed
-        val newBlocks = cfg.blocks.map { oldBlock ->
-            val newInstructions = oldBlock.instructions.filterNot { it in jumpsToRemove }
-            Block(oldBlock.id, newInstructions, oldBlock.predecessors, oldBlock.successors)
-        }
+        val newBlocks =
+            cfg.blocks.map { oldBlock ->
+                val newInstructions = oldBlock.instructions.filterNot { it in jumpsToRemove }
+                Block(oldBlock.id, newInstructions, oldBlock.predecessors, oldBlock.successors)
+            }
 
         return ControlFlowGraph(
             functionName = cfg.functionName,
@@ -135,10 +137,11 @@ class UnreachableCodeElimination : Optimization() {
             return cfg
         }
 
-        val newBlocks = cfg.blocks.map { oldBlock ->
-            val newInstructions = oldBlock.instructions.filterNot { it in labelsToRemove }
-            Block(oldBlock.id, newInstructions, oldBlock.predecessors, oldBlock.successors)
-        }
+        val newBlocks =
+            cfg.blocks.map { oldBlock ->
+                val newInstructions = oldBlock.instructions.filterNot { it in labelsToRemove }
+                Block(oldBlock.id, newInstructions, oldBlock.predecessors, oldBlock.successors)
+            }
 
         return ControlFlowGraph(
             functionName = cfg.functionName,
@@ -155,9 +158,10 @@ class UnreachableCodeElimination : Optimization() {
             return cfg
         }
 
-        val blocksToRemove = cfg.blocks
-            .filter { it.instructions.isEmpty() && it.successors.size <= 1 }
-            .toMutableSet()
+        val blocksToRemove =
+            cfg.blocks
+                .filter { it.instructions.isEmpty() && it.successors.size <= 1 }
+                .toMutableSet()
         val newEdges = cfg.edges.toMutableList()
         val blocksToKeep = cfg.blocks.filter { it !in blocksToRemove }.toMutableList()
 
@@ -194,16 +198,21 @@ class UnreachableCodeElimination : Optimization() {
         )
     }
 
-    private fun findNodeById(cfg: ControlFlowGraph, nodeId: Int): CFGNode? {
+    private fun findNodeById(
+        cfg: ControlFlowGraph,
+        nodeId: Int
+    ): CFGNode? {
         cfg.blocks.find { it.id == nodeId }?.let { return it }
         cfg.root?.let { if (it.id == nodeId) return it }
         return null
     }
 
-    private fun findBlockByLabel(blocks: List<Block>, label: TackyLabel): Block? {
-        return blocks.find { block ->
+    private fun findBlockByLabel(
+        blocks: List<Block>,
+        label: TackyLabel
+    ): Block? =
+        blocks.find { block ->
             val firstInstruction = block.instructions.firstOrNull()
             firstInstruction is TackyLabel && firstInstruction.name == label.name
         }
-    }
 }

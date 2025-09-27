@@ -21,93 +21,102 @@ class CopyPropagation : Optimization() {
     // A map to store which copies reach each specific instruction. This is needed for the final rewrite.
     private val instructionReachingCopies = mutableMapOf<TackyInstruction, Set<TackyCopy>>()
 
-    override val optimizationType: OptimizationType = OptimizationType.COPY_PROPAGATION
+    override val optimizationType: OptimizationType = OptimizationType.A_COPY_PROPAGATION
 
     override fun apply(cfg: ControlFlowGraph): ControlFlowGraph {
-        val newBlocks = cfg.blocks.map { block ->
-            val newInstructions = mutableListOf<TackyInstruction>()
-            val copyMap = mutableMapOf<String, TackyVal>()
+        val newBlocks =
+            cfg.blocks.map { block ->
+                val newInstructions = mutableListOf<TackyInstruction>()
+                val copyMap = mutableMapOf<String, TackyVal>()
 
-            for (instr in block.instructions) {
-                when (instr) {
-                    is TackyCopy -> {
-                        if (instr.src is TackyVar && instr.src.name == instr.dest.name) {
-                        } else {
-                            val newSrc = if (instr.src is TackyVar && copyMap.containsKey(instr.src.name)) {
-                                copyMap[instr.src.name]!!
+                for (instr in block.instructions) {
+                    when (instr) {
+                        is TackyCopy -> {
+                            if (instr.src is TackyVar && instr.src.name == instr.dest.name) {
                             } else {
-                                instr.src
-                            }
+                                val newSrc =
+                                    if (instr.src is TackyVar && copyMap.containsKey(instr.src.name)) {
+                                        copyMap[instr.src.name]!!
+                                    } else {
+                                        instr.src
+                                    }
 
-                            copyMap[instr.dest.name] = newSrc
-                            newInstructions.add(TackyCopy(newSrc, instr.dest, instr.sourceId))
-                        }
-                    }
-                    is TackyRet -> {
-                        val newValue = if (instr.value is TackyVar && copyMap.containsKey(instr.value.name)) {
-                            copyMap[instr.value.name]!!
-                        } else {
-                            instr.value
-                        }
-                        newInstructions.add(TackyRet(newValue, instr.sourceId))
-                    }
-                    is TackyUnary -> {
-                        val newSrc = if (instr.src is TackyVar && copyMap.containsKey(instr.src.name)) {
-                            copyMap[instr.src.name]!!
-                        } else {
-                            instr.src
-                        }
-                        copyMap.remove(instr.dest.name)
-                        newInstructions.add(TackyUnary(instr.operator, newSrc, instr.dest, instr.sourceId))
-                    }
-                    is TackyBinary -> {
-                        val newSrc1 = if (instr.src1 is TackyVar && copyMap.containsKey(instr.src1.name)) {
-                            copyMap[instr.src1.name]!!
-                        } else {
-                            instr.src1
-                        }
-                        val newSrc2 = if (instr.src2 is TackyVar && copyMap.containsKey(instr.src2.name)) {
-                            copyMap[instr.src2.name]!!
-                        } else {
-                            instr.src2
-                        }
-                        copyMap.remove(instr.dest.name)
-                        newInstructions.add(TackyBinary(instr.operator, newSrc1, newSrc2, instr.dest, instr.sourceId))
-                    }
-                    is TackyFunCall -> {
-                        val newArgs = instr.args.map { arg ->
-                            if (arg is TackyVar && copyMap.containsKey(arg.name)) {
-                                copyMap[arg.name]!!
-                            } else {
-                                arg
+                                copyMap[instr.dest.name] = newSrc
+                                newInstructions.add(TackyCopy(newSrc, instr.dest, instr.sourceId))
                             }
                         }
-                        copyMap.remove(instr.dest.name)
-                        newInstructions.add(TackyFunCall(instr.funName, newArgs, instr.dest, instr.sourceId))
-                    }
-                    is JumpIfZero -> {
-                        val newCondition = if (instr.condition is TackyVar && copyMap.containsKey(instr.condition.name)) {
-                            copyMap[instr.condition.name]!!
-                        } else {
-                            instr.condition
+                        is TackyRet -> {
+                            val newValue =
+                                if (instr.value is TackyVar && copyMap.containsKey(instr.value.name)) {
+                                    copyMap[instr.value.name]!!
+                                } else {
+                                    instr.value
+                                }
+                            newInstructions.add(TackyRet(newValue, instr.sourceId))
                         }
-                        newInstructions.add(JumpIfZero(newCondition, instr.target, instr.sourceId))
-                    }
-                    is JumpIfNotZero -> {
-                        val newCondition = if (instr.condition is TackyVar && copyMap.containsKey(instr.condition.name)) {
-                            copyMap[instr.condition.name]!!
-                        } else {
-                            instr.condition
+                        is TackyUnary -> {
+                            val newSrc =
+                                if (instr.src is TackyVar && copyMap.containsKey(instr.src.name)) {
+                                    copyMap[instr.src.name]!!
+                                } else {
+                                    instr.src
+                                }
+                            copyMap.remove(instr.dest.name)
+                            newInstructions.add(TackyUnary(instr.operator, newSrc, instr.dest, instr.sourceId))
                         }
-                        newInstructions.add(JumpIfNotZero(newCondition, instr.target, instr.sourceId))
-                    }
-                    else -> {
-                        newInstructions.add(instr)
+                        is TackyBinary -> {
+                            val newSrc1 =
+                                if (instr.src1 is TackyVar && copyMap.containsKey(instr.src1.name)) {
+                                    copyMap[instr.src1.name]!!
+                                } else {
+                                    instr.src1
+                                }
+                            val newSrc2 =
+                                if (instr.src2 is TackyVar && copyMap.containsKey(instr.src2.name)) {
+                                    copyMap[instr.src2.name]!!
+                                } else {
+                                    instr.src2
+                                }
+                            copyMap.remove(instr.dest.name)
+                            newInstructions.add(TackyBinary(instr.operator, newSrc1, newSrc2, instr.dest, instr.sourceId))
+                        }
+                        is TackyFunCall -> {
+                            val newArgs =
+                                instr.args.map { arg ->
+                                    if (arg is TackyVar && copyMap.containsKey(arg.name)) {
+                                        copyMap[arg.name]!!
+                                    } else {
+                                        arg
+                                    }
+                                }
+                            copyMap.remove(instr.dest.name)
+                            newInstructions.add(TackyFunCall(instr.funName, newArgs, instr.dest, instr.sourceId))
+                        }
+                        is JumpIfZero -> {
+                            val newCondition =
+                                if (instr.condition is TackyVar && copyMap.containsKey(instr.condition.name)) {
+                                    copyMap[instr.condition.name]!!
+                                } else {
+                                    instr.condition
+                                }
+                            newInstructions.add(JumpIfZero(newCondition, instr.target, instr.sourceId))
+                        }
+                        is JumpIfNotZero -> {
+                            val newCondition =
+                                if (instr.condition is TackyVar && copyMap.containsKey(instr.condition.name)) {
+                                    copyMap[instr.condition.name]!!
+                                } else {
+                                    instr.condition
+                                }
+                            newInstructions.add(JumpIfNotZero(newCondition, instr.target, instr.sourceId))
+                        }
+                        else -> {
+                            newInstructions.add(instr)
+                        }
                     }
                 }
+                block.copy(instructions = newInstructions)
             }
-            block.copy(instructions = newInstructions)
-        }
 
         return cfg.copy(blocks = newBlocks)
     }
@@ -116,7 +125,11 @@ class CopyPropagation : Optimization() {
         outSets = mutableMapOf()
         instructionReachingCopies.clear()
 
-        val allCopies = cfg.blocks.flatMap { it.instructions }.filterIsInstance<TackyCopy>().toSet()
+        val allCopies =
+            cfg.blocks
+                .flatMap { it.instructions }
+                .filterIsInstance<TackyCopy>()
+                .toSet()
 
         val worklist = cfg.blocks.toMutableList()
         cfg.blocks.forEach {
@@ -141,7 +154,10 @@ class CopyPropagation : Optimization() {
         }
     }
 
-    private fun meet(block: Block, allCopies: Set<TackyCopy>): Set<TackyCopy> {
+    private fun meet(
+        block: Block,
+        allCopies: Set<TackyCopy>
+    ): Set<TackyCopy> {
         if (block.predecessors.all { it == 0 }) {
             return emptySet<TackyCopy>()
         }
@@ -157,7 +173,10 @@ class CopyPropagation : Optimization() {
         return incomingCopies
     }
 
-    private fun transfer(block: Block, inSet: Set<TackyCopy>): Set<TackyCopy> {
+    private fun transfer(
+        block: Block,
+        inSet: Set<TackyCopy>
+    ): Set<TackyCopy> {
         var currentCopies = inSet.toMutableSet()
         for (instruction in block.instructions) {
             instructionReachingCopies[instruction] = currentCopies.toSet()
@@ -194,54 +213,65 @@ class CopyPropagation : Optimization() {
         return currentCopies
     }
 
-    private fun rewrite(instruction: TackyInstruction, reaching: Set<TackyCopy>): TackyInstruction {
+    private fun rewrite(
+        instruction: TackyInstruction,
+        reaching: Set<TackyCopy>
+    ): TackyInstruction {
         val substitutionMap = reaching.associate { it.dest.name to it.src }
 
         return when (instruction) {
             is TackyRet -> TackyRet(value = substitute(instruction.value, substitutionMap), instruction.sourceId)
-            is TackyUnary -> TackyUnary(
-                operator = instruction.operator,
-                src = substitute(instruction.src, substitutionMap),
-                dest = instruction.dest,
-                instruction.sourceId
-            )
-            is TackyBinary -> TackyBinary(
-                operator = instruction.operator,
-                src1 = substitute(instruction.src1, substitutionMap),
-                src2 = substitute(instruction.src2, substitutionMap),
-                dest = instruction.dest,
-                instruction.sourceId
-            )
-            is TackyCopy -> TackyCopy(
-                src = substitute(instruction.src, substitutionMap),
-                dest = instruction.dest,
-                instruction.sourceId
-            )
-            is TackyFunCall -> TackyFunCall(
-                funName = instruction.funName,
-                args = instruction.args.map { substitute(it, substitutionMap) },
-                dest = instruction.dest,
-                instruction.sourceId
-            )
-            is JumpIfZero -> JumpIfZero(
-                condition = substitute(instruction.condition, substitutionMap),
-                target = instruction.target,
-                instruction.sourceId
-            )
-            is JumpIfNotZero -> JumpIfNotZero(
-                condition = substitute(instruction.condition, substitutionMap),
-                target = instruction.target,
-                instruction.sourceId
-            )
+            is TackyUnary ->
+                TackyUnary(
+                    operator = instruction.operator,
+                    src = substitute(instruction.src, substitutionMap),
+                    dest = instruction.dest,
+                    instruction.sourceId
+                )
+            is TackyBinary ->
+                TackyBinary(
+                    operator = instruction.operator,
+                    src1 = substitute(instruction.src1, substitutionMap),
+                    src2 = substitute(instruction.src2, substitutionMap),
+                    dest = instruction.dest,
+                    instruction.sourceId
+                )
+            is TackyCopy ->
+                TackyCopy(
+                    src = substitute(instruction.src, substitutionMap),
+                    dest = instruction.dest,
+                    instruction.sourceId
+                )
+            is TackyFunCall ->
+                TackyFunCall(
+                    funName = instruction.funName,
+                    args = instruction.args.map { substitute(it, substitutionMap) },
+                    dest = instruction.dest,
+                    instruction.sourceId
+                )
+            is JumpIfZero ->
+                JumpIfZero(
+                    condition = substitute(instruction.condition, substitutionMap),
+                    target = instruction.target,
+                    instruction.sourceId
+                )
+            is JumpIfNotZero ->
+                JumpIfNotZero(
+                    condition = substitute(instruction.condition, substitutionMap),
+                    target = instruction.target,
+                    instruction.sourceId
+                )
             else -> instruction
         }
     }
 
-    private fun substitute(value: TackyVal, substitutionMap: Map<String, TackyVal>): TackyVal {
-        return if (value is TackyVar && substitutionMap.containsKey(value.name)) {
+    private fun substitute(
+        value: TackyVal,
+        substitutionMap: Map<String, TackyVal>
+    ): TackyVal =
+        if (value is TackyVar && substitutionMap.containsKey(value.name)) {
             substitutionMap.getValue(value.name)
         } else {
             value
         }
-    }
 }

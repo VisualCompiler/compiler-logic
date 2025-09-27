@@ -55,10 +55,10 @@ sealed class CompilerWorkflow {
                 take(
                     tacky as TackyProgram,
                     listOf(
-                        OptimizationType.CONSTANT_FOLDING,
-                        OptimizationType.DEAD_STORE_ELIMINATION,
-                        OptimizationType.UNREACHABLE_CODE_ELIMINATION,
-                        OptimizationType.COPY_PROPAGATION
+                        OptimizationType.B_CONSTANT_FOLDING,
+                        OptimizationType.D_DEAD_STORE_ELIMINATION,
+                        OptimizationType.C_UNREACHABLE_CODE_ELIMINATION,
+                        OptimizationType.A_COPY_PROPAGATION
                     )
                 )
             val asm = take(optimizedTacky)
@@ -100,11 +100,11 @@ sealed class CompilerWorkflow {
                 while (true) {
                     var cfg = ControlFlowGraph().construct(it.name, it.body)
                     for (optimization in optimizations.sorted()) {
-                        if (optimization == OptimizationType.CONSTANT_FOLDING) {
+                        if (optimization == OptimizationType.B_CONSTANT_FOLDING) {
                             cfg = constantFolding.apply(cfg)
-                        } else if (optimization == OptimizationType.DEAD_STORE_ELIMINATION) {
+                        } else if (optimization == OptimizationType.D_DEAD_STORE_ELIMINATION) {
                             cfg = deadStoreElimination.apply(cfg)
-                        } else if (optimization == OptimizationType.COPY_PROPAGATION) {
+                        } else if (optimization == OptimizationType.A_COPY_PROPAGATION) {
                             cfg = copyPropagation.apply(cfg)
                         } else {
                             cfg = unreachableCodeElimination.apply(cfg)

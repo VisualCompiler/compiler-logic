@@ -96,10 +96,10 @@ class IncompatibleFuncDeclarationException(
     line: Int? = null,
     column: Int? = null
 ) : CompilationException(
-        "IncompatibleFuncDeclarationException(Function '$name' redeclared with a different number of parameters.)",
-        line,
-        column
-    )
+    "IncompatibleFuncDeclarationException(Function '$name' redeclared with a different number of parameters.)",
+    line,
+    column
+)
 
 class NotAFunctionException(
     name: String,
@@ -120,10 +120,10 @@ class ArgumentCountException(
     line: Int? = null,
     column: Int? = null
 ) : CompilationException(
-        "ArgumentCountException(Wrong number of arguments for function '$name'. Expected $expected, got $actual.)",
-        line,
-        column
-    )
+    "ArgumentCountException(Wrong number of arguments for function '$name'. Expected $expected, got $actual.)",
+    line,
+    column
+)
 
 class IllegalStateException(
     name: String,

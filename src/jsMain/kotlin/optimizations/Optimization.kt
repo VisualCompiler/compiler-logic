@@ -1,10 +1,10 @@
 package optimizations
 
 enum class OptimizationType {
-    CONSTANT_FOLDING,
-    DEAD_STORE_ELIMINATION,
-    UNREACHABLE_CODE_ELIMINATION,
-    COPY_PROPAGATION
+    B_CONSTANT_FOLDING,
+    D_DEAD_STORE_ELIMINATION,
+    C_UNREACHABLE_CODE_ELIMINATION,
+    A_COPY_PROPAGATION
 }
 
 sealed class Optimization {
@@ -16,10 +16,10 @@ sealed class Optimization {
 object OptimizationManager {
     private val optimizations: Map<OptimizationType, Optimization> =
         mapOf(
-            OptimizationType.CONSTANT_FOLDING to ConstantFolding(),
-            OptimizationType.DEAD_STORE_ELIMINATION to DeadStoreElimination(),
-            OptimizationType.UNREACHABLE_CODE_ELIMINATION to UnreachableCodeElimination(),
-            OptimizationType.COPY_PROPAGATION to CopyPropagation()
+            OptimizationType.B_CONSTANT_FOLDING to ConstantFolding(),
+            OptimizationType.D_DEAD_STORE_ELIMINATION to DeadStoreElimination(),
+            OptimizationType.C_UNREACHABLE_CODE_ELIMINATION to UnreachableCodeElimination(),
+            OptimizationType.A_COPY_PROPAGATION to CopyPropagation()
         )
 
     fun applyOptimizations(

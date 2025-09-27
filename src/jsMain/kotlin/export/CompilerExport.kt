@@ -115,10 +115,10 @@ class CompilerExport {
                     tacky,
                     optimizations =
                     listOf(
-                        OptimizationType.CONSTANT_FOLDING,
-                        OptimizationType.DEAD_STORE_ELIMINATION,
-                        OptimizationType.COPY_PROPAGATION,
-                        OptimizationType.UNREACHABLE_CODE_ELIMINATION
+                        OptimizationType.B_CONSTANT_FOLDING,
+                        OptimizationType.D_DEAD_STORE_ELIMINATION,
+                        OptimizationType.A_COPY_PROPAGATION,
+                        OptimizationType.C_UNREACHABLE_CODE_ELIMINATION
                     )
                 )
             val asm = CompilerWorkflow.take(optimizedTacky)
@@ -222,10 +222,10 @@ class CompilerExport {
 
     private val optTypeMap =
         mapOf(
-            "CONSTANT_FOLDING" to OptimizationType.CONSTANT_FOLDING,
-            "DEAD_STORE_ELIMINATION" to OptimizationType.DEAD_STORE_ELIMINATION,
-            "COPY_PROPAGATION" to OptimizationType.COPY_PROPAGATION,
-            "UNREACHABLE_CODE_ELIMINATION" to OptimizationType.UNREACHABLE_CODE_ELIMINATION
+            "CONSTANT_FOLDING" to OptimizationType.B_CONSTANT_FOLDING,
+            "DEAD_STORE_ELIMINATION" to OptimizationType.D_DEAD_STORE_ELIMINATION,
+            "COPY_PROPAGATION" to OptimizationType.A_COPY_PROPAGATION,
+            "UNREACHABLE_CODE_ELIMINATION" to OptimizationType.C_UNREACHABLE_CODE_ELIMINATION
         )
 
     private fun generateOptimizationCombinations(): List<List<String>> {

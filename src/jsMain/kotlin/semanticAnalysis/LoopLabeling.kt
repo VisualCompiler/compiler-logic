@@ -86,7 +86,7 @@ class LoopLabeling : Visitor<Unit> {
 
     override fun visit(node: ForStatement) {
         currentLabel = newLabel()
-        node.label = currentLabel!!
+        node.label = (currentLabel ?: return)
         node.body.accept(this)
         currentLabel = null
         node.post?.accept(this)

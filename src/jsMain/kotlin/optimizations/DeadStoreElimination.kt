@@ -12,7 +12,7 @@ import tacky.TackyUnary
 import tacky.TackyVar
 
 class DeadStoreElimination : Optimization() {
-    override val optimizationType: OptimizationType = OptimizationType.DEAD_STORE_ELIMINATION
+    override val optimizationType: OptimizationType = OptimizationType.D_DEAD_STORE_ELIMINATION
 
     override fun apply(cfg: ControlFlowGraph): ControlFlowGraph {
         val liveness = LivenessAnalysis()
