@@ -39,9 +39,16 @@ class ConstantFolding : Optimization() {
                                 }
                             }
                         } else if (folded is TackyJump) {
-                            // Remove the edge to the next block since we're now jumping unconditionally to a different target
+                            // Remove the edge to the next block if next block ≠ target block, since we're now jumping unconditionally to target
                             val nextBlock = cfg.blocks.find { it.id == block.id + 1 }
-                            if (nextBlock != null) {
+                            val target =
+                                when (instruction) {
+                                    is JumpIfZero -> instruction.target
+                                    is JumpIfNotZero -> instruction.target
+                                    else -> null
+                                }
+                            val labelBlock = cfg.blocks.find { it.instructions.first() == target }
+                            if (nextBlock != null && nextBlock.id != labelBlock?.id) {
                                 block.successors.remove(block.id + 1)
                                 val edgeToRemove = cfg.edges.find { it.from.id == block.id && it.to.id == block.id + 1 }
                                 if (edgeToRemove != null) {
