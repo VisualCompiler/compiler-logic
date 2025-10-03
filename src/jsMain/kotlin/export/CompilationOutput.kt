@@ -44,9 +44,19 @@ data class TackyOutput(
     override val stage: String = CompilerStage.TACKY.name.lowercase(),
     val tacky: String? = null,
     val tackyPretty: String? = null,
+    override val errors: Array<CompilationError>,
+    val sourceLocation: SourceLocationInfo? = null
+) : CompilationOutput()
+
+@OptIn(ExperimentalJsExport::class)
+@JsExport
+@Serializable
+@SerialName("OptimizationOutput")
+data class OptimizationOutput(
+    override val stage: String = CompilerStage.OPTIMIZATIONS.name.lowercase(),
     val precomputedCFGs: String = "",
-    val precomputedAssembly: String = "",
-    val optimizations: Array<String?> = arrayOf("CONSTANT_FOLDING", "DEAD_STORE_ELIMINATION", "COPY_PROPAGATION", "UNREACHABLE_CODE_ELIMINATION"),
+    val optimizations: Array<String?> =
+        arrayOf("CONSTANT_FOLDING", "DEAD_STORE_ELIMINATION", "COPY_PROPAGATION", "UNREACHABLE_CODE_ELIMINATION"),
     val functionNames: Array<String?> = emptyArray(),
     override val errors: Array<CompilationError>,
     val sourceLocation: SourceLocationInfo? = null
@@ -60,6 +70,7 @@ data class AssemblyOutput(
     override val stage: String = CompilerStage.ASSEMBLY.name.lowercase(),
     val assembly: String? = null,
     val rawAssembly: String? = null,
+    val precomputedAssembly: String = "",
     override val errors: Array<CompilationError>,
     val sourceLocation: SourceLocationInfo? = null
 ) : CompilationOutput()

@@ -102,24 +102,30 @@ class CompilerExport {
             outputs.add(
                 TackyOutput(
                     tackyPretty = tackyProgram.toPseudoCode(),
-                    functionNames = tackyProgram.functions.map { it.name }.toTypedArray(),
-                    precomputedCFGs = precomputeAllCFGs(tackyProgram),
-                    precomputedAssembly = precomputeAllAssembly(tackyProgram),
                     errors = emptyArray(),
                     tacky = Json.encodeToString(tackyProgram),
                     sourceLocation = sourceLocationInfo
+                )
+            )
+            val cfgs = precomputeAllCFGs(tackyProgram)
+            outputs.add(
+                OptimizationOutput(
+                    optimizations = optTypeMap.keys.toTypedArray(),
+                    precomputedCFGs = cfgs,
+                    functionNames = tackyProgram.functions.map { it.name }.toTypedArray(),
+                    errors = emptyArray()
                 )
             )
             val optimizedTacky =
                 CompilerWorkflow.take(
                     tacky,
                     optimizations =
-                    listOf(
-                        OptimizationType.B_CONSTANT_FOLDING,
-                        OptimizationType.D_DEAD_STORE_ELIMINATION,
-                        OptimizationType.A_COPY_PROPAGATION,
-                        OptimizationType.C_UNREACHABLE_CODE_ELIMINATION
-                    )
+                        listOf(
+                            OptimizationType.B_CONSTANT_FOLDING,
+                            OptimizationType.D_DEAD_STORE_ELIMINATION,
+                            OptimizationType.A_COPY_PROPAGATION,
+                            OptimizationType.C_UNREACHABLE_CODE_ELIMINATION
+                        )
                 )
             val asm = CompilerWorkflow.take(optimizedTacky)
             val finalAssemblyString = codeEmitter.emit(asm as AsmProgram)
@@ -129,6 +135,7 @@ class CompilerExport {
                     errors = emptyArray(),
                     assembly = finalAssemblyString,
                     rawAssembly = rawAssembly,
+                    precomputedAssembly = precomputeAllAssembly(tackyProgram),
                     sourceLocation = sourceLocationInfo
                 )
             )
@@ -153,7 +160,7 @@ class CompilerExport {
                 CompilerStage.PARSER -> outputs.add(ParserOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
                 CompilerStage.TACKY -> outputs.add(TackyOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
                 CompilerStage.ASSEMBLY -> outputs.add(AssemblyOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
-                CompilerStage.OPTIMIZATIONS -> null // TODO We're currently exporting optimization results inside TackyOutput, we should move it to its own object
+                CompilerStage.OPTIMIZATIONS -> outputs.add(OptimizationOutput(errors = arrayOf(error), sourceLocation = sourceLocationInfo))
             }
         } catch (e: Exception) {
             // Fallback for any unexpected runtime errors
