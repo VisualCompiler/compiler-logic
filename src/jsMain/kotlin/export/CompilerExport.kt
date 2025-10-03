@@ -211,12 +211,21 @@ class CompilerExport {
         val assemblies = mutableListOf<AssemblyEntry>()
 
         for (optList in allOptLists) {
-            val optimizedTacky =
-                CompilerWorkflow.take(
-                    program,
-                    optimizations = optList.mapNotNull(optTypeMap::get)
+            val optimizedProgram =
+                TackyProgram(
+                    functions =
+                        program.functions.map { function ->
+                            if (function.body.isNotEmpty()) {
+                                val cfg = ControlFlowGraph().construct(function.name, function.body)
+                                val optimizedCfg = OptimizationManager.applyOptimizations(cfg, optList.mapNotNull(optTypeMap::get))
+                                function.copy(body = optimizedCfg.toInstructions())
+                            } else {
+                                function
+                            }
+                        }
                 )
-            val asm = CompilerWorkflow.take(optimizedTacky)
+
+            val asm = CompilerWorkflow.take(optimizedProgram)
             val finalAssemblyString = CodeEmitter().emit(asm as AsmProgram)
 
             // Create one entry per optimization set with the full program assembly
