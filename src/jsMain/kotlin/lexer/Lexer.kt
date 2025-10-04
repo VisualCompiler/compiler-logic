@@ -1,7 +1,7 @@
 package lexer
 
 import exceptions.InvalidCharacterException
-import exceptions.UnexpectedTokenException
+import exceptions.UnexpectedCharacterException
 
 sealed class TokenType {
     // keywords
@@ -191,14 +191,14 @@ class Lexer(
                 if (match('&')) {
                     addToken(TokenType.AND)
                 } else {
-                    throw UnexpectedTokenException(char.toString(), "&", line, current - lineStart)
+                    throw UnexpectedCharacterException(char.toString(), "&", line, current - lineStart)
                 }
             }
             '|' -> {
                 if (match('|')) {
                     addToken(TokenType.OR)
                 } else {
-                    throw UnexpectedTokenException(char.toString(), "|", line, current - lineStart)
+                    throw UnexpectedCharacterException(char.toString(), "|", line, current - lineStart)
                 }
             }
             '=' -> {

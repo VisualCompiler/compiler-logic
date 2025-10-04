@@ -3,6 +3,7 @@ package compiler
 import assembly.AsmConstruct
 import assembly.InstructionFixer
 import assembly.PseudoEliminator
+import assembly.TackyToAsm
 import lexer.Lexer
 import lexer.Token
 import optimizations.ConstantFolding
@@ -21,7 +22,6 @@ import semanticAnalysis.TypeChecker
 import tacky.TackyConstruct
 import tacky.TackyGenVisitor
 import tacky.TackyProgram
-import tacky.TackyToAsm
 
 enum class CompilerStage {
     LEXER,

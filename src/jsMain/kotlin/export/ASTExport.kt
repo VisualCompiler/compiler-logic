@@ -4,6 +4,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import parser.ASTVisitor
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
@@ -32,7 +33,6 @@ import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
 import parser.VariableExpression
-import parser.Visitor
 import parser.WhileStatement
 
 fun createJsonNode(
@@ -82,7 +82,7 @@ enum class NodeType {
     Declaration
 }
 
-class ASTExport : Visitor<JsonObject> {
+class ASTExport : ASTVisitor<JsonObject> {
     override fun visit(node: SimpleProgram): JsonObject {
         val decls = JsonArray(node.functionDeclaration.map { it.accept(this) })
         return createJsonNode(NodeType.Program.name, "Program", JsonObject(mapOf("declarations" to decls)), false, node.location, node.id)
@@ -131,7 +131,7 @@ class ASTExport : Visitor<JsonObject> {
 
     override fun visit(node: ForStatement): JsonObject {
         val childrenMap =
-            mutableMapOf<String, kotlinx.serialization.json.JsonElement>(
+            mutableMapOf<String, JsonElement>(
                 "init" to node.init.accept(this)
             )
         node.condition?.let { childrenMap["cond"] = it.accept(this) }
@@ -147,7 +147,7 @@ class ASTExport : Visitor<JsonObject> {
     }
 
     override fun visit(node: InitExpression): JsonObject {
-        val childrenMap = mutableMapOf<String, kotlinx.serialization.json.JsonElement>()
+        val childrenMap = mutableMapOf<String, JsonElement>()
         node.expression?.let { childrenMap["expression"] = it.accept(this) }
         return createJsonNode(NodeType.Expression.name, "Expression", JsonObject(childrenMap), false, node.location, node.id)
     }

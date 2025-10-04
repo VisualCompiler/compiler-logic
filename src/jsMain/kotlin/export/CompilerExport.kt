@@ -110,7 +110,6 @@ class CompilerExport {
             val cfgs = precomputeAllCFGs(tackyProgram)
             outputs.add(
                 OptimizationOutput(
-                    optimizations = optTypeMap.keys.toTypedArray(),
                     precomputedCFGs = cfgs,
                     functionNames = tackyProgram.functions.map { it.name }.toTypedArray(),
                     errors = emptyArray()

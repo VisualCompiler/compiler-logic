@@ -2,6 +2,7 @@ package tacky
 
 import exceptions.TackyException
 import lexer.TokenType
+import parser.ASTVisitor
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
@@ -30,10 +31,9 @@ import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
 import parser.VariableExpression
-import parser.Visitor
 import parser.WhileStatement
 
-class TackyGenVisitor : Visitor<TackyConstruct?> {
+class TackyGenVisitor : ASTVisitor<TackyConstruct?> {
     private var tempCounter = 0
     private var labelCounter = 0
 
@@ -293,7 +293,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         return null
     }
 
-    override fun visit(node: ConditionalExpression): TackyConstruct? {
+    override fun visit(node: ConditionalExpression): TackyConstruct {
         val resultVar = newTemporary()
 
         val elseLabel = newLabel("cond_else", node.id)
@@ -319,7 +319,6 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     }
 
     override fun visit(node: LabeledStatement): TackyConstruct? {
-        val label = node.label
         currentInstructions += TackyLabel(node.label, node.id)
         node.statement.accept(this)
         return null
@@ -361,7 +360,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         return null
     }
 
-    override fun visit(node: FunctionCall): TackyConstruct? {
+    override fun visit(node: FunctionCall): TackyConstruct {
         val args = node.arguments.map { it.accept(this) as TackyVal }
         val dest = newTemporary()
         currentInstructions += TackyFunCall(node.name, args, dest, node.id)

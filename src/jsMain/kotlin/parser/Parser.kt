@@ -139,7 +139,7 @@ class Parser {
         if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
             val lookaheadTokens = tokens.toMutableList()
             val start = expect(TokenType.KEYWORD_INT, lookaheadTokens)
-            val name = parseIdentifier(lookaheadTokens)
+            parseIdentifier(lookaheadTokens)
 
             if (lookaheadTokens.firstOrNull()?.type == TokenType.LEFT_PAREN) {
                 expect(TokenType.KEYWORD_INT, tokens) // consume the int keyword
@@ -458,7 +458,7 @@ class Parser {
                 nextToken = tokens.removeFirst()
                 if (tokens.firstOrNull()?.type == TokenType.LEFT_PAREN) {
                     // function call
-                    val leftParen = tokens.removeFirst() // consume '('
+                    tokens.removeFirst() // consume '('
                     val args = mutableListOf<Expression>()
                     if (tokens.firstOrNull()?.type != TokenType.RIGHT_PAREN) {
                         do {
@@ -499,7 +499,7 @@ class Parser {
                 val nToken = tokens.removeFirst()
                 throw UnexpectedTokenException(
                     expected =
-                        "${TokenType.INT_LITERAL}, ${TokenType.IDENTIFIER}, unary operator, ${TokenType.LEFT_PAREN}",
+                    "${TokenType.INT_LITERAL}, ${TokenType.IDENTIFIER}, unary operator, ${TokenType.LEFT_PAREN}",
                     actual = nToken.type.toString(),
                     line = nToken.startLine,
                     column = nToken.startColumn

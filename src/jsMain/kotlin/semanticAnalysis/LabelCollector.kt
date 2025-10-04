@@ -3,6 +3,7 @@ package semanticAnalysis
 import exceptions.DuplicateLabelException
 import exceptions.UndeclaredLabelException
 import parser.ASTNode
+import parser.ASTVisitor
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
@@ -31,10 +32,9 @@ import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
 import parser.VariableExpression
-import parser.Visitor
 import parser.WhileStatement
 
-class LabelCollector : Visitor<Unit> {
+class LabelCollector : ASTVisitor<Unit> {
     val definedLabels: MutableSet<String> = mutableSetOf<String>()
 
     override fun visit(node: LabeledStatement) {
@@ -150,7 +150,7 @@ class LabelCollector : Visitor<Unit> {
 
     private class GotoValidator(
         private val definedLabels: Set<String>
-    ) : Visitor<Unit> {
+    ) : ASTVisitor<Unit> {
         override fun visit(node: GotoStatement) {
             if (node.label !in definedLabels) {
                 throw UndeclaredLabelException(node.label)

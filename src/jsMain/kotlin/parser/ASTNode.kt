@@ -13,5 +13,5 @@ sealed class ASTNode(
     open val location: SourceLocation,
     open val id: String = Random.nextLong().toString()
 ) {
-    abstract fun <T> accept(visitor: Visitor<T>): T
+    abstract fun <T> accept(visitor: ASTVisitor<T>): T
 }

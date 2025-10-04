@@ -4,6 +4,7 @@ import exceptions.DuplicateVariableDeclaration
 import exceptions.MissingDeclarationException
 import exceptions.NestedFunctionException
 import parser.ASTNode
+import parser.ASTVisitor
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
@@ -36,7 +37,6 @@ import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
 import parser.VariableExpression
-import parser.Visitor
 import parser.WhileStatement
 
 data class SymbolInfo(
@@ -44,7 +44,7 @@ data class SymbolInfo(
     val hasLinkage: Boolean
 )
 
-class IdentifierResolution : Visitor<ASTNode> {
+class IdentifierResolution : ASTVisitor<ASTNode> {
     private var tempCounter = 0
 
     private fun newTemporary(name: String): String = "$name.${tempCounter++}"

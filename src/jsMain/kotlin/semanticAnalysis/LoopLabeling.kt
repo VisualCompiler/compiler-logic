@@ -1,6 +1,7 @@
 package semanticAnalysis
 
 import exceptions.InvalidStatementException
+import parser.ASTVisitor
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
@@ -29,10 +30,9 @@ import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
 import parser.VariableExpression
-import parser.Visitor
 import parser.WhileStatement
 
-class LoopLabeling : Visitor<Unit> {
+class LoopLabeling : ASTVisitor<Unit> {
     var currentLabel: String? = null
     private var labelCounter = 0
 

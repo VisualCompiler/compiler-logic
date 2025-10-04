@@ -5,6 +5,7 @@ import exceptions.IncompatibleFuncDeclarationException
 import exceptions.NotAFunctionException
 import exceptions.NotAVariableException
 import exceptions.ReDeclarationFunctionException
+import parser.ASTVisitor
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
@@ -33,10 +34,9 @@ import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
 import parser.VariableExpression
-import parser.Visitor
 import parser.WhileStatement
 
-class TypeChecker : Visitor<Unit> {
+class TypeChecker : ASTVisitor<Unit> {
     fun analyze(program: SimpleProgram) {
         SymbolTable.clear() // Ensure the table is fresh for each compilation.
         program.accept(this)

@@ -1,6 +1,6 @@
 package parser
 
-interface Visitor<T> {
+interface ASTVisitor<T> {
     fun visit(node: SimpleProgram): T
 
     fun visit(node: ReturnStatement): T
