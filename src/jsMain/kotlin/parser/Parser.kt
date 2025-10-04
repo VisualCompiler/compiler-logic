@@ -33,7 +33,12 @@ class Parser {
         // After a full program is parsed, we must be at EOF
         expect(TokenType.EOF, tokenSet)
         if (!tokenSet.isEmpty()) {
-            throw UnexpectedEndOfFileException()
+            throw UnexpectedTokenException(
+                line = tokenSet.first().startLine,
+                column = tokens.first().startColumn,
+                expected = TokenType.EOF.toString(),
+                actual = tokens.first().type.toString()
+            )
         }
         return ast
     }
@@ -386,7 +391,7 @@ class Parser {
                 when (nextType) {
                     TokenType.ASSIGN -> {
                         if (left !is VariableExpression) {
-                            throw InvalidLValueException()
+                            throw InvalidLValueException(line = left.location.startLine, column = left.location.startCol)
                         }
                         val right = parseExpression(prec, tokens)
                         AssignmentExpression(
@@ -494,7 +499,7 @@ class Parser {
                 val nToken = tokens.removeFirst()
                 throw UnexpectedTokenException(
                     expected =
-                    "${TokenType.INT_LITERAL}, ${TokenType.IDENTIFIER}, unary operator, ${TokenType.LEFT_PAREN}",
+                        "${TokenType.INT_LITERAL}, ${TokenType.IDENTIFIER}, unary operator, ${TokenType.LEFT_PAREN}",
                     actual = nToken.type.toString(),
                     line = nToken.startLine,
                     column = nToken.startColumn

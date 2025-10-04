@@ -56,14 +56,14 @@ class LoopLabeling : Visitor<Unit> {
 
     override fun visit(node: BreakStatement) {
         if (currentLabel == null) {
-            throw InvalidStatementException("Break statement outside of loop")
+            throw InvalidStatementException("Break statement outside of loop", node.location.startLine, node.location.startCol)
         }
         node.label = currentLabel!!
     }
 
     override fun visit(node: ContinueStatement) {
         if (currentLabel == null) {
-            throw InvalidStatementException("Continue statement outside of loop")
+            throw InvalidStatementException("Continue statement outside of loop", node.location.startLine, node.location.startCol)
         }
         node.label = currentLabel!!
     }

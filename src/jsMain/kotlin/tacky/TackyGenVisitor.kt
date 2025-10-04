@@ -52,43 +52,55 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         currentInstructions.clear()
     }
 
-    private fun convertUnaryOp(tokenType: TokenType): TackyUnaryOP {
+    private fun convertUnaryOp(tokenType: TokenType): TackyUnaryOP =
         if (tokenType == TokenType.TILDE) {
-            return TackyUnaryOP.COMPLEMENT
+            TackyUnaryOP.COMPLEMENT
         } else if (tokenType == TokenType.NEGATION) {
-            return TackyUnaryOP.NEGATE
+            TackyUnaryOP.NEGATE
         } else if (tokenType == TokenType.NOT) {
-            return TackyUnaryOP.NOT
+            TackyUnaryOP.NOT
         } else {
             throw TackyException(tokenType.toString())
         }
-    }
 
     private fun convertBinaryOp(tokenType: TokenType): TackyBinaryOP {
-        if (tokenType == TokenType.PLUS) {
-            return TackyBinaryOP.ADD
-        } else if (tokenType == TokenType.NEGATION) {
-            return TackyBinaryOP.SUBTRACT
-        } else if (tokenType == TokenType.MULTIPLY) {
-            return TackyBinaryOP.MULTIPLY
-        } else if (tokenType == TokenType.DIVIDE) {
-            return TackyBinaryOP.DIVIDE
-        } else if (tokenType == TokenType.REMAINDER) {
-            return TackyBinaryOP.REMAINDER
-        } else if (tokenType == TokenType.EQUAL_TO) {
-            return TackyBinaryOP.EQUAL
-        } else if (tokenType == TokenType.GREATER) {
-            return TackyBinaryOP.GREATER
-        } else if (tokenType == TokenType.LESS) {
-            return TackyBinaryOP.LESS
-        } else if (tokenType == TokenType.GREATER_EQUAL) {
-            return TackyBinaryOP.GREATER_EQUAL
-        } else if (tokenType == TokenType.LESS_EQUAL) {
-            return TackyBinaryOP.LESS_EQUAL
-        } else if (tokenType == TokenType.NOT_EQUAL) {
-            return TackyBinaryOP.NOT_EQUAL
-        } else {
-            throw TackyException(tokenType.toString())
+        when (tokenType) {
+            TokenType.PLUS -> {
+                return TackyBinaryOP.ADD
+            }
+            TokenType.NEGATION -> {
+                return TackyBinaryOP.SUBTRACT
+            }
+            TokenType.MULTIPLY -> {
+                return TackyBinaryOP.MULTIPLY
+            }
+            TokenType.DIVIDE -> {
+                return TackyBinaryOP.DIVIDE
+            }
+            TokenType.REMAINDER -> {
+                return TackyBinaryOP.REMAINDER
+            }
+            TokenType.EQUAL_TO -> {
+                return TackyBinaryOP.EQUAL
+            }
+            TokenType.GREATER -> {
+                return TackyBinaryOP.GREATER
+            }
+            TokenType.LESS -> {
+                return TackyBinaryOP.LESS
+            }
+            TokenType.GREATER_EQUAL -> {
+                return TackyBinaryOP.GREATER_EQUAL
+            }
+            TokenType.LESS_EQUAL -> {
+                return TackyBinaryOP.LESS_EQUAL
+            }
+            TokenType.NOT_EQUAL -> {
+                return TackyBinaryOP.NOT_EQUAL
+            }
+            else -> {
+                throw TackyException(tokenType.toString())
+            }
         }
     }
 

@@ -86,7 +86,7 @@ class TypeChecker : Visitor<Unit> {
         val existingSymbol = SymbolTable.get(node.name)
         if (existingSymbol != null) {
             if (existingSymbol.type != funType) {
-                throw IncompatibleFuncDeclarationException(node.name)
+                throw IncompatibleFuncDeclarationException(node.name, node.location.startLine, node.location.startCol)
             }
             isAlreadyDefined = existingSymbol.isDefined
             if (isAlreadyDefined && hasBody) {
@@ -111,7 +111,7 @@ class TypeChecker : Visitor<Unit> {
                 ?: throw IllegalStateException(node.name)
 
         if (symbol.type !is IntType) {
-            throw NotAVariableException(node.name)
+            throw NotAVariableException(node.name, node.location.startLine, node.location.startCol)
         }
     }
 

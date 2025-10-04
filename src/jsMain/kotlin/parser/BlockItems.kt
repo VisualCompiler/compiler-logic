@@ -1,6 +1,8 @@
 package parser
 
-sealed class Statement(location: SourceLocation) : ASTNode(location)
+sealed class Statement(
+    location: SourceLocation
+) : ASTNode(location)
 
 data class ReturnStatement(
     val expression: Expression,
@@ -16,7 +18,9 @@ data class ExpressionStatement(
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
 
-class NullStatement(override val location: SourceLocation) : Statement(location) {
+class NullStatement(
+    override val location: SourceLocation
+) : Statement(location) {
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 
     override fun equals(other: Any?): Boolean = other is NullStatement
@@ -67,7 +71,9 @@ data class ForStatement(
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
 
-sealed class ForInit(location: SourceLocation) : ASTNode(location)
+sealed class ForInit(
+    location: SourceLocation
+) : ASTNode(location)
 
 data class InitDeclaration(
     val varDeclaration: VariableDeclaration,
@@ -107,7 +113,9 @@ class LabeledStatement(
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
 
-sealed class Declaration(location: SourceLocation) : ASTNode(location)
+sealed class Declaration(
+    location: SourceLocation
+) : ASTNode(location)
 
 data class VariableDeclaration(
     val name: String,
@@ -129,7 +137,9 @@ data class FunDecl(
     override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
 }
 
-sealed class BlockItem(location: SourceLocation) : ASTNode(location)
+sealed class BlockItem(
+    location: SourceLocation
+) : ASTNode(location)
 
 data class S(
     val statement: Statement

@@ -67,7 +67,9 @@ class IdentifierResolution : Visitor<ASTNode> {
 
     private fun declare(
         name: String,
-        hasLinkage: Boolean
+        hasLinkage: Boolean,
+        line: Int = -1,
+        col: Int = -1
     ): String {
         val currentScope = scopeStack.last()
         val existing = currentScope[name]
@@ -75,7 +77,7 @@ class IdentifierResolution : Visitor<ASTNode> {
         if (existing != null) {
             // A redeclaration in the same scope is only okay if both have linkage.
             if (!existing.hasLinkage || !hasLinkage) {
-                throw DuplicateVariableDeclaration()
+                throw DuplicateVariableDeclaration(line, col)
             }
             // If both have linkage (e.g., two function declarations), it's okay.
             return existing.uniqueName
@@ -89,13 +91,17 @@ class IdentifierResolution : Visitor<ASTNode> {
 
     private fun leaveScope() = scopeStack.removeAt(scopeStack.lastIndex)
 
-    private fun resolve(name: String): SymbolInfo {
+    private fun resolve(
+        name: String,
+        line: Int = -1,
+        col: Int = -1
+    ): SymbolInfo {
         scopeStack.asReversed().forEach { scope ->
             if (scope.containsKey(name)) {
                 return scope.getValue(name)
             }
         }
-        throw MissingDeclarationException(name)
+        throw MissingDeclarationException(name, line, col)
     }
 
     override fun visit(node: SimpleProgram): ASTNode {
@@ -161,19 +167,19 @@ class IdentifierResolution : Visitor<ASTNode> {
             // We're inside another function - check if this is a prototype or definition
             if (node.body != null) {
                 // Function definition with body - not allowed inside other functions
-                throw NestedFunctionException()
+                throw NestedFunctionException(node.location.startLine, node.location.startCol)
             } else {
-                declare(node.name, hasLinkage = true)
+                declare(node.name, hasLinkage = true, node.location.startLine, node.location.startCol)
                 return FunctionDeclaration(node.name, node.params, null, node.location)
             }
         } else {
-            declare(node.name, hasLinkage = true)
+            declare(node.name, hasLinkage = true, node.location.startLine, node.location.startCol)
 
             enterScope()
 
             val newParams =
                 node.params.map { paramName ->
-                    declare(paramName, hasLinkage = false)
+                    declare(paramName, hasLinkage = false, node.location.startLine, node.location.startCol)
                 }
             val newBody = node.body?.accept(this) as Block?
 
@@ -231,7 +237,7 @@ class IdentifierResolution : Visitor<ASTNode> {
     override fun visit(node: VariableDeclaration): ASTNode {
         val newInit = node.init?.accept(this) as Expression?
 
-        val uniqueName = declare(node.name, hasLinkage = false)
+        val uniqueName = declare(node.name, hasLinkage = false, node.location.startLine, node.location.startCol)
 
         return VariableDeclaration(uniqueName, newInit, node.location)
     }
@@ -257,7 +263,7 @@ class IdentifierResolution : Visitor<ASTNode> {
         val funDecl = node.funDecl.accept(this) as FunctionDeclaration
 
         if (funDecl.body != null) {
-            throw NestedFunctionException()
+            throw NestedFunctionException(node.location.startLine, node.location.startCol)
         } else {
             return FunDecl(funDecl)
         }
