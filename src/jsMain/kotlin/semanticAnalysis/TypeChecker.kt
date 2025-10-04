@@ -2,9 +2,10 @@ package semanticAnalysis
 
 import exceptions.ArgumentCountException
 import exceptions.IncompatibleFuncDeclarationException
-import exceptions.NotFunctionException
-import exceptions.NotVariableException
+import exceptions.NotAFunctionException
+import exceptions.NotAVariableException
 import exceptions.ReDeclarationFunctionException
+import parser.ASTVisitor
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
@@ -33,10 +34,9 @@ import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
 import parser.VariableExpression
-import parser.Visitor
 import parser.WhileStatement
 
-class TypeChecker : Visitor<Unit> {
+class TypeChecker : ASTVisitor<Unit> {
     fun analyze(program: SimpleProgram) {
         SymbolTable.clear() // Ensure the table is fresh for each compilation.
         program.accept(this)
@@ -86,11 +86,11 @@ class TypeChecker : Visitor<Unit> {
         val existingSymbol = SymbolTable.get(node.name)
         if (existingSymbol != null) {
             if (existingSymbol.type != funType) {
-                throw IncompatibleFuncDeclarationException(node.name)
+                throw IncompatibleFuncDeclarationException(node.name, node.location.startLine, node.location.startCol)
             }
             isAlreadyDefined = existingSymbol.isDefined
             if (isAlreadyDefined && hasBody) {
-                throw ReDeclarationFunctionException("Function '${node.name}' cannot be defined more than once.")
+                throw ReDeclarationFunctionException(node.name)
             }
         }
 
@@ -101,7 +101,7 @@ class TypeChecker : Visitor<Unit> {
             node.params.forEach { paramName ->
                 SymbolTable.add(paramName, Symbol(IntType, isDefined = true))
             }
-            node.body!!.accept(this)
+            node.body.accept(this)
         }
     }
 
@@ -111,7 +111,7 @@ class TypeChecker : Visitor<Unit> {
                 ?: throw IllegalStateException(node.name)
 
         if (symbol.type !is IntType) {
-            throw NotVariableException(node.name)
+            throw NotAVariableException(node.name, node.location.startLine, node.location.startCol)
         }
     }
 
@@ -134,7 +134,7 @@ class TypeChecker : Visitor<Unit> {
     }
 
     override fun visit(node: ConditionalExpression) {
-        node.codition.accept(this)
+        node.condition.accept(this)
         node.thenExpression.accept(this)
         node.elseExpression.accept(this)
     }
@@ -185,7 +185,7 @@ class TypeChecker : Visitor<Unit> {
                 ?: throw exceptions.IllegalStateException(node.name)
 
         when (val type = symbol.type) {
-            is IntType -> throw NotFunctionException(node.name)
+            is IntType -> throw NotAFunctionException(node.name)
             is FunType -> {
                 if (type.paramCount != node.arguments.size) {
                     throw ArgumentCountException(

@@ -4,6 +4,7 @@ import exceptions.DuplicateVariableDeclaration
 import exceptions.MissingDeclarationException
 import exceptions.NestedFunctionException
 import parser.ASTNode
+import parser.ASTVisitor
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
@@ -36,7 +37,6 @@ import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
 import parser.VariableExpression
-import parser.Visitor
 import parser.WhileStatement
 
 data class SymbolInfo(
@@ -44,7 +44,7 @@ data class SymbolInfo(
     val hasLinkage: Boolean
 )
 
-class IdentifierResolution : Visitor<ASTNode> {
+class IdentifierResolution : ASTVisitor<ASTNode> {
     private var tempCounter = 0
 
     private fun newTemporary(name: String): String = "$name.${tempCounter++}"
@@ -67,7 +67,9 @@ class IdentifierResolution : Visitor<ASTNode> {
 
     private fun declare(
         name: String,
-        hasLinkage: Boolean
+        hasLinkage: Boolean,
+        line: Int = -1,
+        col: Int = -1
     ): String {
         val currentScope = scopeStack.last()
         val existing = currentScope[name]
@@ -75,7 +77,7 @@ class IdentifierResolution : Visitor<ASTNode> {
         if (existing != null) {
             // A redeclaration in the same scope is only okay if both have linkage.
             if (!existing.hasLinkage || !hasLinkage) {
-                throw DuplicateVariableDeclaration()
+                throw DuplicateVariableDeclaration(line, col)
             }
             // If both have linkage (e.g., two function declarations), it's okay.
             return existing.uniqueName
@@ -89,13 +91,17 @@ class IdentifierResolution : Visitor<ASTNode> {
 
     private fun leaveScope() = scopeStack.removeAt(scopeStack.lastIndex)
 
-    private fun resolve(name: String): SymbolInfo {
+    private fun resolve(
+        name: String,
+        line: Int = -1,
+        col: Int = -1
+    ): SymbolInfo {
         scopeStack.asReversed().forEach { scope ->
             if (scope.containsKey(name)) {
                 return scope.getValue(name)
             }
         }
-        throw MissingDeclarationException(name)
+        throw MissingDeclarationException(name, line, col)
     }
 
     override fun visit(node: SimpleProgram): ASTNode {
@@ -161,19 +167,19 @@ class IdentifierResolution : Visitor<ASTNode> {
             // We're inside another function - check if this is a prototype or definition
             if (node.body != null) {
                 // Function definition with body - not allowed inside other functions
-                throw NestedFunctionException()
+                throw NestedFunctionException(node.location.startLine, node.location.startCol)
             } else {
-                declare(node.name, hasLinkage = true)
+                declare(node.name, hasLinkage = true, node.location.startLine, node.location.startCol)
                 return FunctionDeclaration(node.name, node.params, null, node.location)
             }
         } else {
-            declare(node.name, hasLinkage = true)
+            declare(node.name, hasLinkage = true, node.location.startLine, node.location.startCol)
 
             enterScope()
 
             val newParams =
                 node.params.map { paramName ->
-                    declare(paramName, hasLinkage = false)
+                    declare(paramName, hasLinkage = false, node.location.startLine, node.location.startCol)
                 }
             val newBody = node.body?.accept(this) as Block?
 
@@ -209,7 +215,7 @@ class IdentifierResolution : Visitor<ASTNode> {
     }
 
     override fun visit(node: ConditionalExpression): ASTNode {
-        val condition = node.codition.accept(this) as Expression
+        val condition = node.condition.accept(this) as Expression
         val thenExpression = node.thenExpression.accept(this) as Expression
         val elseExpression = node.elseExpression.accept(this) as Expression
         return ConditionalExpression(condition, thenExpression, elseExpression, node.location)
@@ -231,7 +237,7 @@ class IdentifierResolution : Visitor<ASTNode> {
     override fun visit(node: VariableDeclaration): ASTNode {
         val newInit = node.init?.accept(this) as Expression?
 
-        val uniqueName = declare(node.name, hasLinkage = false)
+        val uniqueName = declare(node.name, hasLinkage = false, node.location.startLine, node.location.startCol)
 
         return VariableDeclaration(uniqueName, newInit, node.location)
     }
@@ -241,14 +247,12 @@ class IdentifierResolution : Visitor<ASTNode> {
         return S(statement)
     }
 
-    override fun visit(node: D): ASTNode {
-        val declaration = node.declaration.accept(this)
-        return when (declaration) {
+    override fun visit(node: D): ASTNode =
+        when (val declaration = node.declaration.accept(this)) {
             is VarDecl -> D(declaration)
             is FunDecl -> D(declaration)
             else -> throw IllegalStateException("Unexpected declaration type: ${declaration::class.simpleName}")
         }
-    }
 
     override fun visit(node: VarDecl): ASTNode {
         val newVarDeclData = node.varDecl.accept(this) as VariableDeclaration
@@ -259,21 +263,21 @@ class IdentifierResolution : Visitor<ASTNode> {
         val funDecl = node.funDecl.accept(this) as FunctionDeclaration
 
         if (funDecl.body != null) {
-            throw NestedFunctionException()
+            throw NestedFunctionException(node.location.startLine, node.location.startCol)
         } else {
             return FunDecl(funDecl)
         }
     }
 
     override fun visit(node: Block): ASTNode {
-        enterScope()
         val newItems = node.items.map { it.accept(this) as BlockItem }
-        leaveScope()
         return Block(newItems, node.location)
     }
 
     override fun visit(node: CompoundStatement): ASTNode {
+        enterScope()
         val newBlock = node.block.accept(this) as Block
+        leaveScope()
         return CompoundStatement(newBlock, node.location)
     }
 

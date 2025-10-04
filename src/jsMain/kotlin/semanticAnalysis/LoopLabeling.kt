@@ -1,6 +1,7 @@
 package semanticAnalysis
 
 import exceptions.InvalidStatementException
+import parser.ASTVisitor
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
@@ -29,10 +30,9 @@ import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
 import parser.VariableExpression
-import parser.Visitor
 import parser.WhileStatement
 
-class LoopLabeling : Visitor<Unit> {
+class LoopLabeling : ASTVisitor<Unit> {
     var currentLabel: String? = null
     private var labelCounter = 0
 
@@ -56,14 +56,14 @@ class LoopLabeling : Visitor<Unit> {
 
     override fun visit(node: BreakStatement) {
         if (currentLabel == null) {
-            throw InvalidStatementException("Break statement outside of loop")
+            throw InvalidStatementException("Break statement outside of loop", node.location.startLine, node.location.startCol)
         }
         node.label = currentLabel!!
     }
 
     override fun visit(node: ContinueStatement) {
         if (currentLabel == null) {
-            throw InvalidStatementException("Continue statement outside of loop")
+            throw InvalidStatementException("Continue statement outside of loop", node.location.startLine, node.location.startCol)
         }
         node.label = currentLabel!!
     }
@@ -86,7 +86,7 @@ class LoopLabeling : Visitor<Unit> {
 
     override fun visit(node: ForStatement) {
         currentLabel = newLabel()
-        node.label = currentLabel!!
+        node.label = (currentLabel ?: return)
         node.body.accept(this)
         currentLabel = null
         node.post?.accept(this)
@@ -128,7 +128,7 @@ class LoopLabeling : Visitor<Unit> {
     }
 
     override fun visit(node: ConditionalExpression) {
-        node.codition.accept(this)
+        node.condition.accept(this)
         node.thenExpression.accept(this)
         node.elseExpression.accept(this)
     }

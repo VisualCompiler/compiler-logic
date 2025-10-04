@@ -2,6 +2,7 @@ package tacky
 
 import exceptions.TackyException
 import lexer.TokenType
+import parser.ASTVisitor
 import parser.AssignmentExpression
 import parser.BinaryExpression
 import parser.Block
@@ -30,16 +31,18 @@ import parser.UnaryExpression
 import parser.VarDecl
 import parser.VariableDeclaration
 import parser.VariableExpression
-import parser.Visitor
 import parser.WhileStatement
 
-class TackyGenVisitor : Visitor<TackyConstruct?> {
+class TackyGenVisitor : ASTVisitor<TackyConstruct?> {
     private var tempCounter = 0
     private var labelCounter = 0
 
     private fun newTemporary(): TackyVar = TackyVar("tmp.${tempCounter++}")
 
-    private fun newLabel(base: String, sourceId: String = ""): TackyLabel = TackyLabel(".L_${base}_${labelCounter++}", sourceId)
+    private fun newLabel(
+        base: String,
+        sourceId: String = ""
+    ): TackyLabel = TackyLabel(".L_${base}_${labelCounter++}", sourceId)
 
     private val currentInstructions = mutableListOf<TackyInstruction>()
 
@@ -49,43 +52,55 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         currentInstructions.clear()
     }
 
-    private fun convertUnaryOp(tokenType: TokenType): TackyUnaryOP {
+    private fun convertUnaryOp(tokenType: TokenType): TackyUnaryOP =
         if (tokenType == TokenType.TILDE) {
-            return TackyUnaryOP.COMPLEMENT
+            TackyUnaryOP.COMPLEMENT
         } else if (tokenType == TokenType.NEGATION) {
-            return TackyUnaryOP.NEGATE
+            TackyUnaryOP.NEGATE
         } else if (tokenType == TokenType.NOT) {
-            return TackyUnaryOP.NOT
+            TackyUnaryOP.NOT
         } else {
             throw TackyException(tokenType.toString())
         }
-    }
 
     private fun convertBinaryOp(tokenType: TokenType): TackyBinaryOP {
-        if (tokenType == TokenType.PLUS) {
-            return TackyBinaryOP.ADD
-        } else if (tokenType == TokenType.NEGATION) {
-            return TackyBinaryOP.SUBTRACT
-        } else if (tokenType == TokenType.MULTIPLY) {
-            return TackyBinaryOP.MULTIPLY
-        } else if (tokenType == TokenType.DIVIDE) {
-            return TackyBinaryOP.DIVIDE
-        } else if (tokenType == TokenType.REMAINDER) {
-            return TackyBinaryOP.REMAINDER
-        } else if (tokenType == TokenType.EQUAL_TO) {
-            return TackyBinaryOP.EQUAL
-        } else if (tokenType == TokenType.GREATER) {
-            return TackyBinaryOP.GREATER
-        } else if (tokenType == TokenType.LESS) {
-            return TackyBinaryOP.LESS
-        } else if (tokenType == TokenType.GREATER_EQUAL) {
-            return TackyBinaryOP.GREATER_EQUAL
-        } else if (tokenType == TokenType.LESS_EQUAL) {
-            return TackyBinaryOP.LESS_EQUAL
-        } else if (tokenType == TokenType.NOT_EQUAL) {
-            return TackyBinaryOP.NOT_EQUAL
-        } else {
-            throw TackyException(tokenType.toString())
+        when (tokenType) {
+            TokenType.PLUS -> {
+                return TackyBinaryOP.ADD
+            }
+            TokenType.NEGATION -> {
+                return TackyBinaryOP.SUBTRACT
+            }
+            TokenType.MULTIPLY -> {
+                return TackyBinaryOP.MULTIPLY
+            }
+            TokenType.DIVIDE -> {
+                return TackyBinaryOP.DIVIDE
+            }
+            TokenType.REMAINDER -> {
+                return TackyBinaryOP.REMAINDER
+            }
+            TokenType.EQUAL_TO -> {
+                return TackyBinaryOP.EQUAL
+            }
+            TokenType.GREATER -> {
+                return TackyBinaryOP.GREATER
+            }
+            TokenType.LESS -> {
+                return TackyBinaryOP.LESS
+            }
+            TokenType.GREATER_EQUAL -> {
+                return TackyBinaryOP.GREATER_EQUAL
+            }
+            TokenType.LESS_EQUAL -> {
+                return TackyBinaryOP.LESS_EQUAL
+            }
+            TokenType.NOT_EQUAL -> {
+                return TackyBinaryOP.NOT_EQUAL
+            }
+            else -> {
+                throw TackyException(tokenType.toString())
+            }
         }
     }
 
@@ -278,13 +293,13 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         return null
     }
 
-    override fun visit(node: ConditionalExpression): TackyConstruct? {
+    override fun visit(node: ConditionalExpression): TackyConstruct {
         val resultVar = newTemporary()
 
         val elseLabel = newLabel("cond_else", node.id)
         val endLabel = newLabel("cond_end", node.id)
 
-        val conditionResult = node.codition.accept(this) as TackyVal
+        val conditionResult = node.condition.accept(this) as TackyVal
         currentInstructions += JumpIfZero(conditionResult, elseLabel, node.id)
 
         val thenResult = node.thenExpression.accept(this) as TackyVal
@@ -304,7 +319,6 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
     }
 
     override fun visit(node: LabeledStatement): TackyConstruct? {
-        val label = node.label
         currentInstructions += TackyLabel(node.label, node.id)
         node.statement.accept(this)
         return null
@@ -346,7 +360,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         return null
     }
 
-    override fun visit(node: FunctionCall): TackyConstruct? {
+    override fun visit(node: FunctionCall): TackyConstruct {
         val args = node.arguments.map { it.accept(this) as TackyVal }
         val dest = newTemporary()
         currentInstructions += TackyFunCall(node.name, args, dest, node.id)

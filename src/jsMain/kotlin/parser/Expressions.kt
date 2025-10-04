@@ -2,20 +2,22 @@ package parser
 
 import lexer.Token
 
-sealed class Expression(location: SourceLocation) : ASTNode(location)
+sealed class Expression(
+    location: SourceLocation
+) : ASTNode(location)
 
 data class IntExpression(
     val value: Int,
     override val location: SourceLocation
 ) : Expression(location) {
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+    override fun <T> accept(visitor: ASTVisitor<T>): T = visitor.visit(this)
 }
 
 data class VariableExpression(
     val name: String,
     override val location: SourceLocation
 ) : Expression(location) {
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+    override fun <T> accept(visitor: ASTVisitor<T>): T = visitor.visit(this)
 }
 
 data class UnaryExpression(
@@ -23,7 +25,7 @@ data class UnaryExpression(
     val expression: Expression,
     override val location: SourceLocation
 ) : Expression(location) {
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+    override fun <T> accept(visitor: ASTVisitor<T>): T = visitor.visit(this)
 }
 
 data class BinaryExpression(
@@ -32,7 +34,7 @@ data class BinaryExpression(
     val right: Expression,
     override val location: SourceLocation
 ) : Expression(location) {
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+    override fun <T> accept(visitor: ASTVisitor<T>): T = visitor.visit(this)
 }
 
 data class AssignmentExpression(
@@ -40,16 +42,16 @@ data class AssignmentExpression(
     val rvalue: Expression,
     override val location: SourceLocation
 ) : Expression(location) {
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+    override fun <T> accept(visitor: ASTVisitor<T>): T = visitor.visit(this)
 }
 
 data class ConditionalExpression(
-    val codition: Expression,
+    val condition: Expression,
     val thenExpression: Expression,
     val elseExpression: Expression,
     override val location: SourceLocation
 ) : Expression(location) {
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+    override fun <T> accept(visitor: ASTVisitor<T>): T = visitor.visit(this)
 }
 
 data class FunctionCall(
@@ -57,5 +59,5 @@ data class FunctionCall(
     val arguments: List<Expression>,
     override val location: SourceLocation
 ) : Expression(location) {
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+    override fun <T> accept(visitor: ASTVisitor<T>): T = visitor.visit(this)
 }

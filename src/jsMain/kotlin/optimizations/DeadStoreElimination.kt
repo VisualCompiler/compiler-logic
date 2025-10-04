@@ -5,7 +5,6 @@ import tacky.JumpIfZero
 import tacky.TackyBinary
 import tacky.TackyCopy
 import tacky.TackyFunCall
-import tacky.TackyInstruction
 import tacky.TackyJump
 import tacky.TackyLabel
 import tacky.TackyRet
@@ -13,133 +12,116 @@ import tacky.TackyUnary
 import tacky.TackyVar
 
 class DeadStoreElimination : Optimization() {
-    override val optimizationType: OptimizationType = OptimizationType.DEAD_STORE_ELIMINATION
+    override val optimizationType: OptimizationType = OptimizationType.D_DEAD_STORE_ELIMINATION
 
     override fun apply(cfg: ControlFlowGraph): ControlFlowGraph {
-        val livenessAnalysis = LivenessAnalysis()
-        val liveVariables = livenessAnalysis.analyze(cfg)
+        val liveness = LivenessAnalysis()
+        val liveAfter = liveness.analyze(cfg)
 
-        val optimizedBlocks = cfg.blocks.map { block ->
-            val optimizedInstructions = block.instructions.withIndex().filterNot { (idx, instr) ->
-                isDeadStore(block.id, idx, instr, liveVariables)
-            }.map { it.value }
-
-            block.copy(instructions = optimizedInstructions)
-        }
+        val optimizedBlocks =
+            cfg.blocks.map { block ->
+                val optimizedInstructions =
+                    block.instructions
+                        .withIndex()
+                        .filterNot { (idx, instr) ->
+                            when (instr) {
+                                is TackyFunCall -> false
+                                is TackyUnary, is TackyBinary, is TackyCopy -> {
+                                    val live = liveAfter[block.id to idx] ?: emptySet()
+                                    val dest =
+                                        when (instr) {
+                                            is TackyUnary -> instr.dest.name
+                                            is TackyBinary -> instr.dest.name
+                                            is TackyCopy -> instr.dest.name
+                                            else -> ""
+                                        }
+                                    dest !in live
+                                }
+                                else -> false
+                            }
+                        }.map { it.value }
+                block.copy(instructions = optimizedInstructions)
+            }
 
         return cfg.copy(blocks = optimizedBlocks)
-    }
-
-    internal fun isDeadStore(
-        blockId: Int,
-        idx: Int,
-        instruction: TackyInstruction,
-        liveVariables: Map<Pair<Int, Int>, Set<String>>
-    ): Boolean {
-        // Never eliminate function calls (side effects)
-        if (instruction is TackyFunCall) return false
-
-        // Only instructions with destinations are considered
-        val dest = when (instruction) {
-            is TackyUnary -> instruction.dest.name
-            is TackyBinary -> instruction.dest.name
-            is TackyCopy -> instruction.dest.name
-            else -> return false
-        }
-
-        val liveAfter = liveVariables[blockId to idx] ?: emptySet()
-        return dest !in liveAfter
     }
 }
 
 class LivenessAnalysis {
+    private val instructionAnnotations = mutableMapOf<Pair<Int, Int>, Set<String>>()
+    private val blockAnnotations = mutableMapOf<Int, Set<String>>()
+
     fun analyze(cfg: ControlFlowGraph): Map<Pair<Int, Int>, Set<String>> {
-        val allStaticVariables = extractStaticVariables(cfg)
-        val blockOut = mutableMapOf<Int, Set<String>>()
-        val worklist = ArrayDeque<Int>()
-
-        // init: all blocks start with empty live-out
-        cfg.blocks.forEach { block ->
-            blockOut[block.id] = emptySet()
-            worklist.add(block.id)
+        for (block in cfg.blocks) {
+            blockAnnotations[block.id] = emptySet()
         }
 
-        // backward fixpoint
-        while (worklist.isNotEmpty()) {
-            val currentId = worklist.removeFirst()
-            val currentBlock = cfg.blocks.find { it.id == currentId } ?: continue
-
-            val succLive = currentBlock.successors.flatMap { succId ->
-                blockOut[succId] ?: emptySet()
-            }.toSet()
-
-            if (succLive != blockOut[currentId]) {
-                blockOut[currentId] = succLive
-                currentBlock.predecessors.forEach { worklist.add(it) }
+        val workList = cfg.blocks.map { it.id }.toMutableList()
+        while (workList.isNotEmpty()) {
+            val blockId = workList.removeFirst()
+            val block = cfg.blocks.find { it.id == blockId } ?: continue
+            val out = meet(block, emptySet())
+            val newIn = transfer(block, out)
+            if (newIn != blockAnnotations[block.id]) {
+                blockAnnotations[block.id] = newIn
+                workList.addAll(block.predecessors)
             }
         }
 
-        // instruction-level liveness
-        val instructionLiveVars = mutableMapOf<Pair<Int, Int>, Set<String>>()
-
-        cfg.blocks.forEach { block ->
-            var live = blockOut[block.id] ?: emptySet()
-
-            block.instructions.withIndex().reversed().forEach { (idx, instr) ->
-                instructionLiveVars[block.id to idx] = live
-                live = transfer(instr, live, allStaticVariables)
-            }
-        }
-
-        return instructionLiveVars
+        return instructionAnnotations
     }
 
-    internal fun transfer(
-        instruction: TackyInstruction,
+    private fun transfer(
+        block: Block,
         liveAfter: Set<String>,
-        allStaticVariables: Set<String>
+        staticVariables: Set<String> = emptySet()
     ): Set<String> {
         val liveBefore = liveAfter.toMutableSet()
-
-        when (instruction) {
-            is TackyUnary -> {
-                liveBefore.remove(instruction.dest.name)
-                if (instruction.src is TackyVar) liveBefore.add(instruction.src.name)
-            }
-            is TackyBinary -> {
-                liveBefore.remove(instruction.dest.name)
-                if (instruction.src1 is TackyVar) liveBefore.add(instruction.src1.name)
-                if (instruction.src2 is TackyVar) liveBefore.add(instruction.src2.name)
-            }
-            is TackyCopy -> {
-                liveBefore.remove(instruction.dest.name)
-                if (instruction.src is TackyVar) liveBefore.add(instruction.src.name)
-            }
-            is TackyFunCall -> {
-                liveBefore.remove(instruction.dest.name)
-                instruction.args.forEach { arg ->
-                    if (arg is TackyVar) liveBefore.add(arg.name)
+        block.instructions.withIndex().reversed().forEach { (idx, instruction) ->
+            instructionAnnotations[block.id to idx] = liveBefore.toSet()
+            when (instruction) {
+                is TackyUnary -> {
+                    liveBefore.remove(instruction.dest.name)
+                    if (instruction.src is TackyVar) liveBefore.add(instruction.src.name)
                 }
-                liveBefore.addAll(allStaticVariables) // conservatively keep statics alive
+                is TackyBinary -> {
+                    liveBefore.remove(instruction.dest.name)
+                    if (instruction.src1 is TackyVar) liveBefore.add(instruction.src1.name)
+                    if (instruction.src2 is TackyVar) liveBefore.add(instruction.src2.name)
+                }
+                is TackyCopy -> {
+                    liveBefore.remove(instruction.dest.name)
+                    if (instruction.src is TackyVar) liveBefore.add(instruction.src.name)
+                }
+                is TackyFunCall -> {
+                    liveBefore.remove(instruction.dest.name)
+                    instruction.args.forEach { arg ->
+                        if (arg is TackyVar) liveBefore.add(arg.name)
+                    }
+                }
+                is TackyRet -> {
+                    if (instruction.value is TackyVar) liveBefore.add(instruction.value.name)
+                }
+                is JumpIfZero -> {
+                    if (instruction.condition is TackyVar) liveBefore.add(instruction.condition.name)
+                }
+                is JumpIfNotZero -> {
+                    if (instruction.condition is TackyVar) liveBefore.add(instruction.condition.name)
+                }
+                is TackyJump, is TackyLabel -> {}
             }
-            is TackyRet -> {
-                if (instruction.value is TackyVar) liveBefore.add(instruction.value.name)
-            }
-            is JumpIfZero -> {
-                if (instruction.condition is TackyVar) liveBefore.add(instruction.condition.name)
-            }
-            is JumpIfNotZero -> {
-                if (instruction.condition is TackyVar) liveBefore.add(instruction.condition.name)
-            }
-            is TackyJump -> { /* no effect */ }
-            is TackyLabel -> { /* no effect */ }
         }
-
         return liveBefore
     }
 
-    internal fun extractStaticVariables(cfg: ControlFlowGraph): Set<String> {
-        // stub: no statics for now
-        return emptySet()
+    private fun meet(
+        block: Block,
+        allStaticVariables: Set<String>
+    ): MutableSet<String> {
+        val liveVariables = mutableSetOf<String>()
+        for (suc in block.successors) {
+            liveVariables.addAll(blockAnnotations.getOrElse(suc) { emptySet() })
+        }
+        return liveVariables
     }
 }

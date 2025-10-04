@@ -33,7 +33,12 @@ class Parser {
         // After a full program is parsed, we must be at EOF
         expect(TokenType.EOF, tokenSet)
         if (!tokenSet.isEmpty()) {
-            throw UnexpectedEndOfFileException()
+            throw UnexpectedTokenException(
+                line = tokenSet.first().startLine,
+                column = tokens.first().startColumn,
+                expected = TokenType.EOF.toString(),
+                actual = tokens.first().type.toString()
+            )
         }
         return ast
     }
@@ -59,15 +64,16 @@ class Parser {
         val name = parseIdentifier(tokens)
         expect(TokenType.LEFT_PAREN, tokens)
         val params = mutableListOf<String>()
-        if (tokens.firstOrNull()?.type != TokenType.KEYWORD_VOID) {
+        if (tokens.firstOrNull()?.type == TokenType.KEYWORD_VOID) {
+            tokens.removeFirst() // consume 'void'
+        } else if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
             // get params
             do {
                 expect(TokenType.KEYWORD_INT, tokens)
                 params.add(parseIdentifier(tokens))
             } while (tokens.firstOrNull()?.type == TokenType.COMMA && tokens.removeFirst().type == TokenType.COMMA)
-        } else {
-            tokens.removeFirst() // consume 'void'
         }
+        // If neither void nor int, assume no parameters (empty parameter list)
         val endParan = expect(TokenType.RIGHT_PAREN, tokens)
         val body: Block?
         val endLine: Int
@@ -86,18 +92,23 @@ class Parser {
         return FunctionDeclaration(name, params, body, SourceLocation(func.startLine, func.startColumn, endLine, endColumn))
     }
 
-    private fun parseFunctionDeclarationFromBody(tokens: MutableList<Token>, name: String, location: SourceLocation): FunctionDeclaration {
+    private fun parseFunctionDeclarationFromBody(
+        tokens: MutableList<Token>,
+        name: String,
+        location: SourceLocation
+    ): FunctionDeclaration {
         expect(TokenType.LEFT_PAREN, tokens)
         val params = mutableListOf<String>()
-        if (tokens.firstOrNull()?.type != TokenType.KEYWORD_VOID) {
+        if (tokens.firstOrNull()?.type == TokenType.KEYWORD_VOID) {
+            tokens.removeFirst() // consume 'void'
+        } else if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
             // get params
             do {
                 expect(TokenType.KEYWORD_INT, tokens)
                 params.add(parseIdentifier(tokens))
             } while (tokens.firstOrNull()?.type == TokenType.COMMA && tokens.removeFirst().type == TokenType.COMMA)
-        } else {
-            tokens.removeFirst() // consume 'void'
         }
+        // If neither void nor int, assume no parameters (empty parameter list)
         val end = expect(TokenType.RIGHT_PAREN, tokens)
         val body: Block?
         val finalLocation: SourceLocation
@@ -128,12 +139,20 @@ class Parser {
         if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
             val lookaheadTokens = tokens.toMutableList()
             val start = expect(TokenType.KEYWORD_INT, lookaheadTokens)
-            val name = parseIdentifier(lookaheadTokens)
+            parseIdentifier(lookaheadTokens)
 
             if (lookaheadTokens.firstOrNull()?.type == TokenType.LEFT_PAREN) {
-                expect(TokenType.KEYWORD_INT, tokens)
+                expect(TokenType.KEYWORD_INT, tokens) // consume the int keyword
                 val actualName = parseIdentifier(tokens)
-                D(FunDecl(parseFunctionDeclarationFromBody(tokens, actualName, SourceLocation(start.startLine, start.startColumn, start.endLine, start.endColumn))))
+                D(
+                    FunDecl(
+                        parseFunctionDeclarationFromBody(
+                            tokens,
+                            actualName,
+                            SourceLocation(start.startLine, start.startColumn, start.endLine, start.endColumn)
+                        )
+                    )
+                )
             } else {
                 val end = expect(TokenType.KEYWORD_INT, tokens)
                 val actualName = parseIdentifier(tokens)
@@ -214,7 +233,12 @@ class Parser {
                     endLine = elseStatement.location.endLine
                     endCol = elseStatement.location.endCol
                 }
-                return IfStatement(condition, thenStatement, elseStatement, SourceLocation(ifToken.startLine, ifToken.startColumn, endLine, endCol))
+                return IfStatement(
+                    condition,
+                    thenStatement,
+                    elseStatement,
+                    SourceLocation(ifToken.startLine, ifToken.startColumn, endLine, endCol)
+                )
             }
             TokenType.KEYWORD_RETURN -> {
                 val returnToken = expect(TokenType.KEYWORD_RETURN, tokens)
@@ -229,7 +253,10 @@ class Parser {
                 val gotoToken = expect(TokenType.GOTO, tokens)
                 val label = parseIdentifier(tokens)
                 val semicolonToken = expect(TokenType.SEMICOLON, tokens)
-                return GotoStatement(label, SourceLocation(gotoToken.startLine, gotoToken.startColumn, semicolonToken.endLine, semicolonToken.endColumn))
+                return GotoStatement(
+                    label,
+                    SourceLocation(gotoToken.startLine, gotoToken.startColumn, semicolonToken.endLine, semicolonToken.endColumn)
+                )
             }
             TokenType.IDENTIFIER -> {
                 // Handle labeled statements: IDENTIFIER followed by COLON
@@ -238,22 +265,38 @@ class Parser {
                     val labelName = labelToken.lexeme
                     expect(TokenType.COLON, tokens)
                     val statement = parseStatement(tokens)
-                    return LabeledStatement(labelName, statement, SourceLocation(labelToken.startLine, labelToken.startColumn, statement.location.endLine, statement.location.endCol))
+                    return LabeledStatement(
+                        labelName,
+                        statement,
+                        SourceLocation(labelToken.startLine, labelToken.startColumn, statement.location.endLine, statement.location.endCol)
+                    )
                 } else {
                     // Not a label, parse as expression statement by delegating to default branch
                     val expression = parseOptionalExpression(tokens = tokens, followedByType = TokenType.SEMICOLON)
-                    return if (expression != null) ExpressionStatement(expression, expression.location) else NullStatement(SourceLocation(0, 0, 0, 0))
+                    return if (expression !=
+                        null
+                    ) {
+                        ExpressionStatement(expression, expression.location)
+                    } else {
+                        NullStatement(SourceLocation(0, 0, 0, 0))
+                    }
                 }
             }
             TokenType.KEYWORD_BREAK -> {
                 val breakToken = expect(TokenType.KEYWORD_BREAK, tokens)
                 val semicolonToken = expect(TokenType.SEMICOLON, tokens)
-                return BreakStatement("", SourceLocation(breakToken.startLine, breakToken.startColumn, semicolonToken.endLine, semicolonToken.endColumn))
+                return BreakStatement(
+                    "",
+                    SourceLocation(breakToken.startLine, breakToken.startColumn, semicolonToken.endLine, semicolonToken.endColumn)
+                )
             }
             TokenType.KEYWORD_CONTINUE -> {
                 val continueToken = expect(TokenType.KEYWORD_CONTINUE, tokens)
                 val semicolonToken = expect(TokenType.SEMICOLON, tokens)
-                return ContinueStatement("", SourceLocation(continueToken.startLine, continueToken.startColumn, semicolonToken.endLine, semicolonToken.endColumn))
+                return ContinueStatement(
+                    "",
+                    SourceLocation(continueToken.startLine, continueToken.startColumn, semicolonToken.endLine, semicolonToken.endColumn)
+                )
             }
             TokenType.KEYWORD_WHILE -> {
                 val whileToken = expect(TokenType.KEYWORD_WHILE, tokens)
@@ -261,7 +304,12 @@ class Parser {
                 val condition = parseExpression(tokens = tokens)
                 expect(TokenType.RIGHT_PAREN, tokens)
                 val body = parseStatement(tokens)
-                return WhileStatement(condition, body, "", SourceLocation(whileToken.startLine, whileToken.startColumn, body.location.endLine, body.location.endCol))
+                return WhileStatement(
+                    condition,
+                    body,
+                    "",
+                    SourceLocation(whileToken.startLine, whileToken.startColumn, body.location.endLine, body.location.endCol)
+                )
             }
             TokenType.KEYWORD_DO -> {
                 val doToken = expect(TokenType.KEYWORD_DO, tokens)
@@ -271,7 +319,12 @@ class Parser {
                 val condition = parseExpression(tokens = tokens)
                 expect(TokenType.RIGHT_PAREN, tokens)
                 val semicolonToken = expect(TokenType.SEMICOLON, tokens)
-                return DoWhileStatement(condition, body, "", SourceLocation(doToken.startLine, doToken.startColumn, semicolonToken.endLine, semicolonToken.endColumn))
+                return DoWhileStatement(
+                    condition,
+                    body,
+                    "",
+                    SourceLocation(doToken.startLine, doToken.startColumn, semicolonToken.endLine, semicolonToken.endColumn)
+                )
             }
             TokenType.KEYWORD_FOR -> {
                 val forToken = expect(TokenType.KEYWORD_FOR, tokens)
@@ -295,7 +348,13 @@ class Parser {
             }
             else -> {
                 val expression = parseOptionalExpression(tokens = tokens, followedByType = TokenType.SEMICOLON)
-                return if (expression != null) ExpressionStatement(expression, expression.location) else NullStatement(SourceLocation(0, 0, 0, 0))
+                return if (expression !=
+                    null
+                ) {
+                    ExpressionStatement(expression, expression.location)
+                } else {
+                    NullStatement(SourceLocation(0, 0, 0, 0))
+                }
             }
         }
     }
@@ -304,8 +363,12 @@ class Parser {
         if (tokens.firstOrNull()?.type == TokenType.KEYWORD_INT) {
             val start = expect(TokenType.KEYWORD_INT, tokens)
             val name = parseIdentifier(tokens)
-            val declaration = parseVariableDeclaration(tokens, name, SourceLocation(start.startLine, start.startColumn, start.endLine, start.endColumn))
-            return InitDeclaration(declaration, SourceLocation(start.startLine, start.startColumn, declaration.location.endLine, declaration.location.endCol))
+            val declaration =
+                parseVariableDeclaration(tokens, name, SourceLocation(start.startLine, start.startColumn, start.endLine, start.endColumn))
+            return InitDeclaration(
+                declaration,
+                SourceLocation(start.startLine, start.startColumn, declaration.location.endLine, declaration.location.endCol)
+            )
         }
         val expression = parseOptionalExpression(tokens = tokens, followedByType = TokenType.SEMICOLON)
         return InitExpression(expression, expression?.location ?: SourceLocation(0, 0, 0, 0))
@@ -328,16 +391,30 @@ class Parser {
                 when (nextType) {
                     TokenType.ASSIGN -> {
                         if (left !is VariableExpression) {
-                            throw InvalidLValueException()
+                            throw InvalidLValueException(line = left.location.startLine, column = left.location.startCol)
                         }
                         val right = parseExpression(prec, tokens)
-                        AssignmentExpression(left, right, SourceLocation(left.location.startLine, left.location.startCol, right.location.endLine, right.location.endCol))
+                        AssignmentExpression(
+                            left,
+                            right,
+                            SourceLocation(left.location.startLine, left.location.startCol, right.location.endLine, right.location.endCol)
+                        )
                     }
                     TokenType.QUESTION_MARK -> {
-                        val thenExpression = parseExpression(prec, tokens)
+                        val thenExpression = parseExpression(tokens = tokens)
                         expect(TokenType.COLON, tokens)
                         val elseExpression = parseExpression(prec, tokens)
-                        return ConditionalExpression(left, thenExpression, elseExpression, SourceLocation(left.location.startLine, left.location.startCol, elseExpression.location.endLine, elseExpression.location.endCol))
+                        return ConditionalExpression(
+                            left,
+                            thenExpression,
+                            elseExpression,
+                            SourceLocation(
+                                left.location.startLine,
+                                left.location.startCol,
+                                elseExpression.location.endLine,
+                                elseExpression.location.endCol
+                            )
+                        )
                     }
                     else -> {
                         val right = parseExpression(prec + 1, tokens)
@@ -372,13 +449,16 @@ class Parser {
         when (nextToken.type) {
             TokenType.INT_LITERAL -> {
                 nextToken = tokens.removeFirst()
-                return IntExpression(value = nextToken.lexeme.toInt(), SourceLocation(nextToken.startLine, nextToken.startColumn, nextToken.endLine, nextToken.endColumn))
+                return IntExpression(
+                    value = nextToken.lexeme.toInt(),
+                    SourceLocation(nextToken.startLine, nextToken.startColumn, nextToken.endLine, nextToken.endColumn)
+                )
             }
             TokenType.IDENTIFIER -> {
                 nextToken = tokens.removeFirst()
                 if (tokens.firstOrNull()?.type == TokenType.LEFT_PAREN) {
                     // function call
-                    val leftParen = tokens.removeFirst() // consume '('
+                    tokens.removeFirst() // consume '('
                     val args = mutableListOf<Expression>()
                     if (tokens.firstOrNull()?.type != TokenType.RIGHT_PAREN) {
                         do {
@@ -386,17 +466,28 @@ class Parser {
                         } while (tokens.firstOrNull()?.type == TokenType.COMMA && tokens.removeFirst().type == TokenType.COMMA)
                     }
                     val rightParen = expect(TokenType.RIGHT_PAREN, tokens)
-                    return FunctionCall(nextToken.lexeme, args, SourceLocation(nextToken.startLine, nextToken.startColumn, rightParen.endLine, rightParen.endColumn))
+                    return FunctionCall(
+                        nextToken.lexeme,
+                        args,
+                        SourceLocation(nextToken.startLine, nextToken.startColumn, rightParen.endLine, rightParen.endColumn)
+                    )
                 } else {
                     // It's a variable
-                    return VariableExpression(nextToken.lexeme, SourceLocation(nextToken.startLine, nextToken.startColumn, nextToken.endLine, nextToken.endColumn))
+                    return VariableExpression(
+                        nextToken.lexeme,
+                        SourceLocation(nextToken.startLine, nextToken.startColumn, nextToken.endLine, nextToken.endColumn)
+                    )
                 }
             }
 
             TokenType.TILDE, TokenType.NEGATION, TokenType.NOT -> {
                 val operator = tokens.removeFirst()
                 val factor = parseFactor(tokens)
-                return UnaryExpression(operator = operator, expression = factor, SourceLocation(operator.startLine, operator.startColumn, factor.location.endLine, factor.location.endCol))
+                return UnaryExpression(
+                    operator = operator,
+                    expression = factor,
+                    SourceLocation(operator.startLine, operator.startColumn, factor.location.endLine, factor.location.endCol)
+                )
             }
             TokenType.LEFT_PAREN -> {
                 expect(TokenType.LEFT_PAREN, tokens)

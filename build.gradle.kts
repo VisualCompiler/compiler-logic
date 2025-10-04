@@ -130,3 +130,77 @@ tasks.named("build") {
 tasks.named("koverHtmlReport") {
     dependsOn("jsTest", "jvmTest")
 }
+
+// Task to create the main class
+tasks.register<JavaCompile>("compileMainClass") {
+    group = "build"
+    description = "Compiles the main class for the JAR"
+    val tempDir = temporaryDir
+    val mainClassFile = File(tempDir, "CompilerMain.java")
+    // Create the main class file during configuration
+    val mainClassContent =
+        """
+package compiler;
+
+import java.io.File;
+import java.nio.file.Files;
+
+public class CompilerMain {
+    public static void main(String[] args) {
+        if (args.length == 0) {
+            System.out.println("Usage: java -jar compiler.jar <input_file>");
+            System.exit(1);
+        }
+        
+        File inputFile = new File(args[0]);
+        if (!inputFile.exists()) {
+            System.out.println("Error: File " + args[0] + " does not exist");
+            System.exit(1);
+        }
+        
+        try {
+            String sourceCode = new String(Files.readAllBytes(inputFile.toPath()));
+            CompilerWorkflow.Companion.fullCompile(sourceCode);
+            System.exit(0);
+        } catch (Exception e) {
+            System.err.println("Exception: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+}
+        """.trimIndent()
+
+    mainClassFile.writeText(mainClassContent)
+
+    source = fileTree(tempDir) { include("**/*.java") }
+    destinationDirectory = file("$buildDir/classes/java/main")
+    classpath = kotlin.jvm().compilations["main"].runtimeDependencyFiles + files(kotlin.jvm().compilations["main"].output)
+
+    dependsOn("jvmMainClasses")
+}
+
+// Create executable JAR for JVM target
+tasks.register<Jar>("createCompilerJar") {
+    group = "build"
+    description = "Creates an executable JAR for the JVM target"
+    from(kotlin.jvm().compilations["main"].output)
+    from("$buildDir/classes/java/main") {
+        include("compiler/CompilerMain.class")
+    }
+    archiveBaseName.set("compiler")
+    archiveClassifier.set("")
+    manifest {
+        attributes["Main-Class"] = "compiler.CompilerMain"
+    }
+    dependsOn("jvmMainClasses", "compileMainClass")
+    // Include all dependencies in the JAR
+    from(
+        kotlin
+            .jvm()
+            .compilations["main"]
+            .runtimeDependencyFiles
+            .map { if (it.isDirectory) it else zipTree(it) }
+    )
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

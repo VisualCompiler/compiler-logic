@@ -8,7 +8,7 @@ parsing, and multiple other phases.
 - ``jsMain``: contains the core compiler logic
 - ``jsTest``: test directory for the main logic
 
-These two packages are compiled to JS and used for production
+These `js` packages are compiled to JavaScript and used for production.
 
 - ``jvmMain`` and ``jvmTest``: generated automatically through building the project. These packages are copied versions of ``jsMain`` and ``jsTest`` without js-specific code and are used only to generate test coverage reports, since Kover (the plugin we use to generate test reports) only supports JVM-compatible Kotlin code.
 
@@ -39,4 +39,21 @@ To generate a test coverage report,
 
     ``./gradlew koverHtmlReport``
 
-    _\* These two commands are also part of the build command_ 
+_All of these commands are also part of the build command_ 
+
+More test cases are found in the test suite of the book "Writing a C Compiler" by Nora Sandler. The test suite is also included in this project and can be run by following the steps below.
+
+
+1. Build the compiler
+
+``./gradlew build``
+
+2. Create a jar file
+
+``./gradlew createCompilerJar``
+
+3. Run the test script
+
+``cd src/resources/write_a_c_compiler-tests ./test_compiler_kotlin.sh ../../../build/libs/compiler-1.0-SNAPSHOT.jar && cd ../../..``
+
+For more information, see the [test suite's README](https://github.com/nlsandler/write_a_c_compiler/blob/master/README.md).

@@ -20,7 +20,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ControlFlowGraphTest {
-
     // ===== ControlFlowGraph Construction Tests =====
 
     @Test
@@ -46,10 +45,11 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should create single block for simple instructions`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyCopy(TackyConstant(2), TackyVar("y"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyCopy(TackyConstant(2), TackyVar("y"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertEquals(1, cfg.blocks.size)
@@ -59,13 +59,14 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should split blocks at labels`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyLabel("label1"),
-            TackyCopy(TackyConstant(2), TackyVar("y")),
-            TackyLabel("label2"),
-            TackyCopy(TackyConstant(3), TackyVar("z"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyLabel("label1"),
+                TackyCopy(TackyConstant(2), TackyVar("y")),
+                TackyLabel("label2"),
+                TackyCopy(TackyConstant(3), TackyVar("z"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertEquals(3, cfg.blocks.size)
@@ -76,12 +77,13 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should split blocks at jumps`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyJump(TackyLabel("end")),
-            TackyCopy(TackyConstant(2), TackyVar("y")),
-            TackyLabel("end")
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyJump(TackyLabel("end")),
+                TackyCopy(TackyConstant(2), TackyVar("y")),
+                TackyLabel("end")
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertEquals(3, cfg.blocks.size)
@@ -92,11 +94,12 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should split blocks at returns`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyRet(TackyVar("x")),
-            TackyCopy(TackyConstant(2), TackyVar("y"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyRet(TackyVar("x")),
+                TackyCopy(TackyConstant(2), TackyVar("y"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertEquals(2, cfg.blocks.size) // Adjusted to match actual behavior
@@ -106,12 +109,13 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should split blocks at conditional jumps`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            JumpIfZero(TackyVar("x"), TackyLabel("end")),
-            TackyCopy(TackyConstant(2), TackyVar("y")),
-            TackyLabel("end")
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                JumpIfZero(TackyVar("x"), TackyLabel("end")),
+                TackyCopy(TackyConstant(2), TackyVar("y")),
+                TackyLabel("end")
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertEquals(3, cfg.blocks.size)
@@ -122,15 +126,16 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should handle mixed control flow instructions`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyLabel("start"),
-            JumpIfZero(TackyVar("x"), TackyLabel("end")),
-            TackyCopy(TackyConstant(2), TackyVar("y")),
-            TackyJump(TackyLabel("start")),
-            TackyLabel("end"),
-            TackyRet(TackyVar("x"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyLabel("start"),
+                JumpIfZero(TackyVar("x"), TackyLabel("end")),
+                TackyCopy(TackyConstant(2), TackyVar("y")),
+                TackyJump(TackyLabel("start")),
+                TackyLabel("end"),
+                TackyRet(TackyVar("x"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertEquals(4, cfg.blocks.size) // Adjusted to match actual behavior
@@ -146,17 +151,18 @@ class ControlFlowGraphTest {
         assertTrue(cfg.edges.isNotEmpty())
         val startEdge = cfg.edges.find { it.from is START }
         assertNotNull(startEdge)
-        assertEquals(0, startEdge.from.id)
-        assertEquals(1, startEdge.to.id) // First block has id 1
+        assertEquals(-1, startEdge.from.id)
+        assertEquals(0, startEdge.to.id) // First block has id 0
     }
 
     @Test
     fun `buildEdges should connect blocks sequentially`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyCopy(TackyConstant(2), TackyVar("y")),
-            TackyCopy(TackyConstant(3), TackyVar("z"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyCopy(TackyConstant(2), TackyVar("y")),
+                TackyCopy(TackyConstant(3), TackyVar("z"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertEquals(1, cfg.blocks.size) // All in one block
@@ -165,10 +171,11 @@ class ControlFlowGraphTest {
 
     @Test
     fun `buildEdges should connect return to EXIT`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyRet(TackyVar("x"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyRet(TackyVar("x"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         val returnEdge = cfg.edges.find { it.to is EXIT }
@@ -178,49 +185,54 @@ class ControlFlowGraphTest {
 
     @Test
     fun `buildEdges should connect jumps to target labels`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyJump(TackyLabel("target")),
-            TackyCopy(TackyConstant(2), TackyVar("y")),
-            TackyLabel("target"),
-            TackyRet(TackyVar("x"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyJump(TackyLabel("target")),
+                TackyCopy(TackyConstant(2), TackyVar("y")),
+                TackyLabel("target"),
+                TackyRet(TackyVar("x"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
-        val jumpEdge = cfg.edges.find {
-            it.from is Block && it.to is Block && (it.from as Block).instructions.any { inst -> inst is TackyJump }
-        }
+        val jumpEdge =
+            cfg.edges.find {
+                it.from is Block && it.to is Block && it.from.instructions.any { inst -> inst is TackyJump }
+            }
         assertNotNull(jumpEdge)
     }
 
     @Test
     fun `buildEdges should connect conditional jumps to both target and next`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            JumpIfZero(TackyVar("x"), TackyLabel("target")),
-            TackyCopy(TackyConstant(2), TackyVar("y")),
-            TackyLabel("target"),
-            TackyRet(TackyVar("x"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                JumpIfZero(TackyVar("x"), TackyLabel("target")),
+                TackyCopy(TackyConstant(2), TackyVar("y")),
+                TackyLabel("target"),
+                TackyRet(TackyVar("x"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
-        val conditionalBlock = cfg.blocks.find {
-            it.instructions.any { inst -> inst is JumpIfZero }
-        }
+        val conditionalBlock =
+            cfg.blocks.find {
+                it.instructions.any { inst -> inst is JumpIfZero }
+            }
         assertNotNull(conditionalBlock)
-        assertTrue(conditionalBlock!!.successors.size >= 1)
+        assertTrue(conditionalBlock.successors.isNotEmpty())
     }
 
     // ===== toInstructions Tests =====
 
     @Test
     fun `toInstructions should return all instructions from all blocks`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyLabel("label"),
-            TackyCopy(TackyConstant(2), TackyVar("y")),
-            TackyRet(TackyVar("x"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyLabel("label"),
+                TackyCopy(TackyConstant(2), TackyVar("y")),
+                TackyRet(TackyVar("x"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         val result = cfg.toInstructions()
@@ -239,18 +251,18 @@ class ControlFlowGraphTest {
 
     @Test
     fun `START node should have correct properties`() {
-        val start = START(0)
+        val start = START()
 
-        assertEquals(0, start.id)
+        assertEquals(-1, start.id)
         assertTrue(start.predecessors.isEmpty())
         assertTrue(start.successors.isEmpty())
     }
 
     @Test
     fun `EXIT node should have correct properties`() {
-        val exit = EXIT(0)
+        val exit = EXIT()
 
-        assertEquals(0, exit.id)
+        assertEquals(-2, exit.id)
         assertTrue(exit.predecessors.isEmpty())
         assertTrue(exit.successors.isEmpty())
     }
@@ -282,7 +294,7 @@ class ControlFlowGraphTest {
 
     @Test
     fun `Edge should connect two nodes`() {
-        val start = START(0)
+        val start = START()
         val block = Block(1, listOf(TackyCopy(TackyConstant(1), TackyVar("x"))))
         val edge = Edge(start, block)
 
@@ -294,34 +306,36 @@ class ControlFlowGraphTest {
 
     @Test
     fun `findBlockByLabel should find block containing label`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyLabel("target"),
-            TackyRet(TackyVar("x"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyLabel("target"),
+                TackyRet(TackyVar("x"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
-        val targetLabel = TackyLabel("target")
-        val foundBlock = cfg.blocks.find {
-            it.instructions.any { inst -> inst is TackyLabel && inst.name == "target" }
-        }
+        val foundBlock =
+            cfg.blocks.find {
+                it.instructions.any { inst -> inst is TackyLabel && inst.name == "target" }
+            }
 
         assertNotNull(foundBlock)
-        assertTrue(foundBlock!!.instructions.any { it is TackyLabel && it.name == "target" })
+        assertTrue(foundBlock.instructions.any { it is TackyLabel && it.name == "target" })
     }
 
     @Test
     fun `findBlockByLabel should return null for non-existent label`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyRet(TackyVar("x"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyRet(TackyVar("x"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
-        val nonExistentLabel = TackyLabel("nonexistent")
-        val foundBlock = cfg.blocks.find {
-            it.instructions.any { inst -> inst is TackyLabel && inst.name == "nonexistent" }
-        }
+        val foundBlock =
+            cfg.blocks.find {
+                it.instructions.any { inst -> inst is TackyLabel && inst.name == "nonexistent" }
+            }
 
         assertNull(foundBlock)
     }
@@ -330,16 +344,17 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should handle nested control flow`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyLabel("outer"),
-            JumpIfZero(TackyVar("x"), TackyLabel("inner")),
-            TackyCopy(TackyConstant(2), TackyVar("y")),
-            TackyJump(TackyLabel("outer")),
-            TackyLabel("inner"),
-            TackyCopy(TackyConstant(3), TackyVar("z")),
-            TackyRet(TackyVar("z"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyLabel("outer"),
+                JumpIfZero(TackyVar("x"), TackyLabel("inner")),
+                TackyCopy(TackyConstant(2), TackyVar("y")),
+                TackyJump(TackyLabel("outer")),
+                TackyLabel("inner"),
+                TackyCopy(TackyConstant(3), TackyVar("z")),
+                TackyRet(TackyVar("z"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertTrue(cfg.blocks.size >= 4) // Should have multiple blocks
@@ -348,29 +363,31 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should handle multiple returns`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyLabel("branch1"),
-            TackyRet(TackyVar("x")),
-            TackyLabel("branch2"),
-            TackyRet(TackyConstant(0))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyLabel("branch1"),
+                TackyRet(TackyVar("x")),
+                TackyLabel("branch2"),
+                TackyRet(TackyConstant(0))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertEquals(3, cfg.blocks.size) // Adjusted to match actual behavior
         val returnEdges = cfg.edges.filter { it.to is EXIT }
-        assertTrue(returnEdges.size >= 1) // Should have paths to EXIT
+        assertTrue(returnEdges.isNotEmpty()) // Should have paths to EXIT
     }
 
     @Test
     fun `construct should handle unreachable code`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyJump(TackyLabel("end")),
-            TackyCopy(TackyConstant(2), TackyVar("y")), // Unreachable
-            TackyLabel("end"),
-            TackyRet(TackyVar("x"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyJump(TackyLabel("end")),
+                TackyCopy(TackyConstant(2), TackyVar("y")), // Unreachable
+                TackyLabel("end"),
+                TackyRet(TackyVar("x"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         // Should still create blocks for unreachable code
@@ -381,11 +398,12 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should handle only labels`() {
-        val instructions = listOf(
-            TackyLabel("label1"),
-            TackyLabel("label2"),
-            TackyLabel("label3")
-        )
+        val instructions =
+            listOf(
+                TackyLabel("label1"),
+                TackyLabel("label2"),
+                TackyLabel("label3")
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertEquals(3, cfg.blocks.size) // One block per label
@@ -393,10 +411,11 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should handle only jumps`() {
-        val instructions = listOf(
-            TackyJump(TackyLabel("target")),
-            TackyLabel("target")
-        )
+        val instructions =
+            listOf(
+                TackyJump(TackyLabel("target")),
+                TackyLabel("target")
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertEquals(2, cfg.blocks.size) // Jump block + label block
@@ -404,9 +423,10 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should handle only returns`() {
-        val instructions = listOf(
-            TackyRet(TackyConstant(0))
-        )
+        val instructions =
+            listOf(
+                TackyRet(TackyConstant(0))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertEquals(1, cfg.blocks.size) // One block with return
@@ -415,14 +435,15 @@ class ControlFlowGraphTest {
 
     @Test
     fun `construct should handle mixed instruction types`() {
-        val instructions = listOf(
-            TackyCopy(TackyConstant(1), TackyVar("x")),
-            TackyUnary(TackyUnaryOP.NEGATE, TackyVar("x"), TackyVar("y")),
-            TackyBinary(TackyBinaryOP.ADD, TackyVar("x"), TackyVar("y"), TackyVar("z")),
-            TackyLabel("loop"),
-            JumpIfNotZero(TackyVar("z"), TackyLabel("loop")),
-            TackyRet(TackyVar("z"))
-        )
+        val instructions =
+            listOf(
+                TackyCopy(TackyConstant(1), TackyVar("x")),
+                TackyUnary(TackyUnaryOP.NEGATE, TackyVar("x"), TackyVar("y")),
+                TackyBinary(TackyBinaryOP.ADD, TackyVar("x"), TackyVar("y"), TackyVar("z")),
+                TackyLabel("loop"),
+                JumpIfNotZero(TackyVar("z"), TackyLabel("loop")),
+                TackyRet(TackyVar("z"))
+            )
         val cfg = ControlFlowGraph().construct("test", instructions)
 
         assertTrue(cfg.blocks.size >= 2)

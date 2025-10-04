@@ -1,32 +1,22 @@
-package tacky
+package assembly
 
-import assembly.AllocateStack
-import assembly.AsmBinary
-import assembly.AsmBinaryOp
-import assembly.AsmFunction
-import assembly.AsmProgram
-import assembly.AsmUnary
-import assembly.AsmUnaryOp
-import assembly.Call
-import assembly.Cdq
-import assembly.Cmp
-import assembly.ConditionCode
-import assembly.DeAllocateStack
-import assembly.HardwareRegister
-import assembly.Idiv
-import assembly.Imm
-import assembly.Instruction
-import assembly.Jmp
-import assembly.JmpCC
-import assembly.Label
-import assembly.Mov
-import assembly.Operand
-import assembly.Pseudo
-import assembly.Push
-import assembly.Register
-import assembly.Ret
-import assembly.SetCC
-import assembly.Stack
+import tacky.JumpIfNotZero
+import tacky.JumpIfZero
+import tacky.TackyBinary
+import tacky.TackyBinaryOP
+import tacky.TackyConstant
+import tacky.TackyCopy
+import tacky.TackyFunCall
+import tacky.TackyFunction
+import tacky.TackyInstruction
+import tacky.TackyJump
+import tacky.TackyLabel
+import tacky.TackyProgram
+import tacky.TackyRet
+import tacky.TackyUnary
+import tacky.TackyUnaryOP
+import tacky.TackyVal
+import tacky.TackyVar
 
 class TackyToAsm {
     fun convert(tackyProgram: TackyProgram): AsmProgram {
@@ -42,7 +32,10 @@ class TackyToAsm {
         return AsmFunction(tackyFunc.name, paramSetupInstructions + bodyInstructions)
     }
 
-    private fun generateParamSetup(params: List<String>, sourceId: String): List<Instruction> {
+    private fun generateParamSetup(
+        params: List<String>,
+        sourceId: String
+    ): List<Instruction> {
         val instructions = mutableListOf<Instruction>()
         val argRegisters =
             listOf(
@@ -197,6 +190,12 @@ class TackyToAsm {
                     instructions.add(AllocateStack(stackPadding, tackyInstr.sourceId))
                 }
 
+                // Pass arguments in registers
+                registerArgs.forEachIndexed { index, arg ->
+                    val asmArg = convertVal(arg)
+                    instructions.add(Mov(asmArg, Register(argRegisters[index]), tackyInstr.sourceId))
+                }
+
                 // Pass arguments on the stack in reverse order
                 stackArgs.asReversed().forEach { arg ->
                     val asmArg = convertVal(arg)
@@ -206,12 +205,6 @@ class TackyToAsm {
                     } else {
                         instructions.add(Push(asmArg, tackyInstr.sourceId))
                     }
-                }
-
-                // Pass arguments in registers
-                registerArgs.forEachIndexed { index, arg ->
-                    val asmArg = convertVal(arg)
-                    instructions.add(Mov(asmArg, Register(argRegisters[index]), tackyInstr.sourceId))
                 }
 
                 instructions.add(Call(tackyInstr.funName, tackyInstr.sourceId))

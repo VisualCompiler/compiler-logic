@@ -1,42 +1,31 @@
 package optimizations
 
-import tacky.TackyProgram
-
 enum class OptimizationType {
-    CONSTANT_FOLDING,
-    DEAD_STORE_ELIMINATION,
-    UNREACHABLE_CODE_ELIMINATION,
-    COPY_PROPAGATION
+    B_CONSTANT_FOLDING,
+    D_DEAD_STORE_ELIMINATION,
+    C_UNREACHABLE_CODE_ELIMINATION,
+    A_COPY_PROPAGATION
 }
 
 sealed class Optimization {
     abstract val optimizationType: OptimizationType
+
     abstract fun apply(cfg: ControlFlowGraph): ControlFlowGraph
 }
 
 object OptimizationManager {
-    private val optimizations: Map<OptimizationType, Optimization> = mapOf(
-        OptimizationType.CONSTANT_FOLDING to ConstantFolding(),
-        OptimizationType.DEAD_STORE_ELIMINATION to DeadStoreElimination(),
-        OptimizationType.UNREACHABLE_CODE_ELIMINATION to UnreachableCodeElimination(),
-        OptimizationType.COPY_PROPAGATION to CopyPropagation()
-    )
+    private val optimizations: Map<OptimizationType, Optimization> =
+        mapOf(
+            OptimizationType.B_CONSTANT_FOLDING to ConstantFolding(),
+            OptimizationType.D_DEAD_STORE_ELIMINATION to DeadStoreElimination(),
+            OptimizationType.C_UNREACHABLE_CODE_ELIMINATION to UnreachableCodeElimination(),
+            OptimizationType.A_COPY_PROPAGATION to CopyPropagation()
+        )
 
-    fun optimizeProgram(program: TackyProgram, enabledOptimizations: Set<OptimizationType>): TackyProgram {
-        val optimizedFunctions = program.functions.map { function ->
-            if (function.body.isEmpty()) {
-                function
-            } else {
-                val cfg = ControlFlowGraph().construct(function.name, function.body)
-                val optimizedCfg = applyOptimizations(cfg, enabledOptimizations)
-                val optimizedInstructions = optimizedCfg.toInstructions()
-                function.copy(body = optimizedInstructions)
-            }
-        }
-        return program.copy(functions = optimizedFunctions)
-    }
-
-    fun applyOptimizations(cfg: ControlFlowGraph, enabledOptimizations: Set<OptimizationType>): ControlFlowGraph {
+    fun applyOptimizations(
+        cfg: ControlFlowGraph,
+        enabledOptimizations: List<OptimizationType>
+    ): ControlFlowGraph {
         var currentCfg = cfg
 
         while (true) {

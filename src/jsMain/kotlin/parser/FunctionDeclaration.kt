@@ -8,5 +8,5 @@ data class FunctionDeclaration(
     val body: Block?,
     override val location: SourceLocation
 ) : ASTNode(location) {
-    override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+    override fun <T> accept(visitor: ASTVisitor<T>): T = visitor.visit(this)
 }
