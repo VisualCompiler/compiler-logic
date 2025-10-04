@@ -209,7 +209,7 @@ class IdentifierResolution : Visitor<ASTNode> {
     }
 
     override fun visit(node: ConditionalExpression): ASTNode {
-        val condition = node.codition.accept(this) as Expression
+        val condition = node.condition.accept(this) as Expression
         val thenExpression = node.thenExpression.accept(this) as Expression
         val elseExpression = node.elseExpression.accept(this) as Expression
         return ConditionalExpression(condition, thenExpression, elseExpression, node.location)
@@ -241,14 +241,12 @@ class IdentifierResolution : Visitor<ASTNode> {
         return S(statement)
     }
 
-    override fun visit(node: D): ASTNode {
-        val declaration = node.declaration.accept(this)
-        return when (declaration) {
+    override fun visit(node: D): ASTNode =
+        when (val declaration = node.declaration.accept(this)) {
             is VarDecl -> D(declaration)
             is FunDecl -> D(declaration)
             else -> throw IllegalStateException("Unexpected declaration type: ${declaration::class.simpleName}")
         }
-    }
 
     override fun visit(node: VarDecl): ASTNode {
         val newVarDeclData = node.varDecl.accept(this) as VariableDeclaration
@@ -266,14 +264,14 @@ class IdentifierResolution : Visitor<ASTNode> {
     }
 
     override fun visit(node: Block): ASTNode {
-        enterScope()
         val newItems = node.items.map { it.accept(this) as BlockItem }
-        leaveScope()
         return Block(newItems, node.location)
     }
 
     override fun visit(node: CompoundStatement): ASTNode {
+        enterScope()
         val newBlock = node.block.accept(this) as Block
+        leaveScope()
         return CompoundStatement(newBlock, node.location)
     }
 

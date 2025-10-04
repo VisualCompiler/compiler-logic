@@ -39,7 +39,10 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
 
     private fun newTemporary(): TackyVar = TackyVar("tmp.${tempCounter++}")
 
-    private fun newLabel(base: String, sourceId: String = ""): TackyLabel = TackyLabel(".L_${base}_${labelCounter++}", sourceId)
+    private fun newLabel(
+        base: String,
+        sourceId: String = ""
+    ): TackyLabel = TackyLabel(".L_${base}_${labelCounter++}", sourceId)
 
     private val currentInstructions = mutableListOf<TackyInstruction>()
 
@@ -284,7 +287,7 @@ class TackyGenVisitor : Visitor<TackyConstruct?> {
         val elseLabel = newLabel("cond_else", node.id)
         val endLabel = newLabel("cond_end", node.id)
 
-        val conditionResult = node.codition.accept(this) as TackyVal
+        val conditionResult = node.condition.accept(this) as TackyVal
         currentInstructions += JumpIfZero(conditionResult, elseLabel, node.id)
 
         val thenResult = node.thenExpression.accept(this) as TackyVal

@@ -12,8 +12,11 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class CompilerTestSuite {
-
-    private fun assertAstEquals(expected: SimpleProgram, actual: SimpleProgram, message: String) {
+    private fun assertAstEquals(
+        expected: SimpleProgram,
+        actual: SimpleProgram,
+        message: String
+    ) {
         // Compare function declarations
         assertEquals(expected.functionDeclaration.size, actual.functionDeclaration.size, "$message - Function count mismatch")
 
@@ -31,7 +34,11 @@ class CompilerTestSuite {
         }
     }
 
-    private fun assertBlockEquals(expected: parser.Block, actual: parser.Block, message: String) {
+    private fun assertBlockEquals(
+        expected: parser.Block,
+        actual: parser.Block,
+        message: String
+    ) {
         assertEquals(expected.items.size, actual.items.size, "$message - Block item count mismatch")
 
         expected.items.forEachIndexed { index, expectedItem ->
@@ -43,14 +50,21 @@ class CompilerTestSuite {
                 }
                 is parser.D -> {
                     assertIs<parser.D>(actualItem, "$message - Expected D but got ${actualItem::class.simpleName} at index $index")
-                    assertDeclarationEquals(expectedItem.declaration, actualItem.declaration, "$message - Declaration mismatch at index $index")
+                    assertDeclarationEquals(
+                        expectedItem.declaration,
+                        actualItem.declaration,
+                        "$message - Declaration mismatch at index $index"
+                    )
                 }
-                else -> assertEquals(expectedItem, actualItem, "$message - Block item mismatch at index $index")
             }
         }
     }
 
-    private fun assertStatementEquals(expected: parser.Statement, actual: parser.Statement, message: String) {
+    private fun assertStatementEquals(
+        expected: parser.Statement,
+        actual: parser.Statement,
+        message: String
+    ) {
         when (expected) {
             is parser.ReturnStatement -> {
                 assertIs<parser.ReturnStatement>(actual, "$message - Expected ReturnStatement but got ${actual::class.simpleName}")
@@ -119,11 +133,14 @@ class CompilerTestSuite {
                 assertIs<parser.CompoundStatement>(actual, "$message - Expected CompoundStatement but got ${actual::class.simpleName}")
                 assertBlockEquals(expected.block, actual.block, "$message - CompoundStatement block mismatch")
             }
-            else -> assertEquals(expected, actual, "$message - Statement type mismatch")
         }
     }
 
-    private fun assertExpressionEquals(expected: parser.Expression, actual: parser.Expression, message: String) {
+    private fun assertExpressionEquals(
+        expected: parser.Expression,
+        actual: parser.Expression,
+        message: String
+    ) {
         when (expected) {
             is parser.IntExpression -> {
                 assertIs<parser.IntExpression>(actual, "$message - Expected IntExpression but got ${actual::class.simpleName}")
@@ -145,7 +162,10 @@ class CompilerTestSuite {
                 assertExpressionEquals(expected.expression, actual.expression, "$message - Unary expression mismatch")
             }
             is parser.AssignmentExpression -> {
-                assertIs<parser.AssignmentExpression>(actual, "$message - Expected AssignmentExpression but got ${actual::class.simpleName}")
+                assertIs<parser.AssignmentExpression>(
+                    actual,
+                    "$message - Expected AssignmentExpression but got ${actual::class.simpleName}"
+                )
                 assertExpressionEquals(expected.lvalue, actual.lvalue, "$message - Assignment lvalue mismatch")
                 assertExpressionEquals(expected.rvalue, actual.rvalue, "$message - Assignment rvalue mismatch")
             }
@@ -158,16 +178,22 @@ class CompilerTestSuite {
                 }
             }
             is parser.ConditionalExpression -> {
-                assertIs<parser.ConditionalExpression>(actual, "$message - Expected ConditionalExpression but got ${actual::class.simpleName}")
-                assertExpressionEquals(expected.codition, actual.codition, "$message - Conditional condition mismatch")
+                assertIs<parser.ConditionalExpression>(
+                    actual,
+                    "$message - Expected ConditionalExpression but got ${actual::class.simpleName}"
+                )
+                assertExpressionEquals(expected.condition, actual.condition, "$message - Conditional condition mismatch")
                 assertExpressionEquals(expected.thenExpression, actual.thenExpression, "$message - Conditional then mismatch")
                 assertExpressionEquals(expected.elseExpression, actual.elseExpression, "$message - Conditional else mismatch")
             }
-            else -> assertEquals(expected, actual, "$message - Expression type mismatch")
         }
     }
 
-    private fun assertForInitEquals(expected: parser.ForInit, actual: parser.ForInit, message: String) {
+    private fun assertForInitEquals(
+        expected: parser.ForInit,
+        actual: parser.ForInit,
+        message: String
+    ) {
         when (expected) {
             is parser.InitDeclaration -> {
                 assertIs<parser.InitDeclaration>(actual, "$message - Expected InitDeclaration but got ${actual::class.simpleName}")
@@ -181,11 +207,14 @@ class CompilerTestSuite {
                     assertEquals(expected.expression, actual.expression, "$message - InitExpression null mismatch")
                 }
             }
-            else -> assertEquals(expected, actual, "$message - ForInit type mismatch")
         }
     }
 
-    private fun assertTackyEquals(expected: TackyProgram, actual: TackyProgram, message: String) {
+    private fun assertTackyEquals(
+        expected: TackyProgram,
+        actual: TackyProgram,
+        message: String
+    ) {
         assertEquals(expected.functions.size, actual.functions.size, "$message - Tacky function count mismatch")
 
         expected.functions.forEachIndexed { index, expectedFunc ->
@@ -196,12 +225,20 @@ class CompilerTestSuite {
 
             expectedFunc.body.forEachIndexed { instrIndex, expectedInstr ->
                 val actualInstr = actualFunc.body[instrIndex]
-                assertTackyInstructionEquals(expectedInstr, actualInstr, "$message - Tacky instruction mismatch at function $index, instruction $instrIndex")
+                assertTackyInstructionEquals(
+                    expectedInstr,
+                    actualInstr,
+                    "$message - Tacky instruction mismatch at function $index, instruction $instrIndex"
+                )
             }
         }
     }
 
-    private fun assertTackyInstructionEquals(expected: tacky.TackyInstruction, actual: tacky.TackyInstruction, message: String) {
+    private fun assertTackyInstructionEquals(
+        expected: tacky.TackyInstruction,
+        actual: tacky.TackyInstruction,
+        message: String
+    ) {
         // Check sourceId for all instructions
         if (expected.sourceId.isEmpty()) {
             assertTrue(actual.sourceId.isNotEmpty(), "$message - TackyInstruction sourceId should not be empty")
@@ -259,11 +296,14 @@ class CompilerTestSuite {
                 assertIs<tacky.TackyLabel>(actual, "$message - Expected TackyLabel but got ${actual::class.simpleName}")
                 assertTackyLabelEquals(expected, actual, "$message - TackyLabel mismatch")
             }
-            else -> assertEquals(expected, actual, "$message - Tacky instruction type mismatch")
         }
     }
 
-    private fun assertTackyLabelEquals(expected: tacky.TackyLabel, actual: tacky.TackyLabel, message: String) {
+    private fun assertTackyLabelEquals(
+        expected: tacky.TackyLabel,
+        actual: tacky.TackyLabel,
+        message: String
+    ) {
         assertEquals(expected.name, actual.name, "$message - TackyLabel name mismatch")
         // For test data with empty sourceId, we expect actual sourceId to be non-empty
         if (expected.sourceId.isEmpty()) {
@@ -273,7 +313,11 @@ class CompilerTestSuite {
         }
     }
 
-    private fun assertTackyValueEquals(expected: tacky.TackyVal, actual: tacky.TackyVal, message: String) {
+    private fun assertTackyValueEquals(
+        expected: tacky.TackyVal,
+        actual: tacky.TackyVal,
+        message: String
+    ) {
         when (expected) {
             is tacky.TackyConstant -> {
                 assertIs<tacky.TackyConstant>(actual, "$message - Expected TackyConstant but got ${actual::class.simpleName}")
@@ -283,11 +327,14 @@ class CompilerTestSuite {
                 assertIs<tacky.TackyVar>(actual, "$message - Expected TackyVar but got ${actual::class.simpleName}")
                 assertEquals(expected.name, actual.name, "$message - TackyVar name mismatch")
             }
-            else -> assertEquals(expected, actual, "$message - Tacky value type mismatch")
         }
     }
 
-    private fun assertAssemblyEquals(expected: AsmProgram, actual: AsmProgram, message: String) {
+    private fun assertAssemblyEquals(
+        expected: AsmProgram,
+        actual: AsmProgram,
+        message: String
+    ) {
         assertEquals(expected.functions.size, actual.functions.size, "$message - Assembly function count mismatch")
 
         expected.functions.forEachIndexed { index, expectedFunc ->
@@ -298,12 +345,20 @@ class CompilerTestSuite {
 
             expectedFunc.body.forEachIndexed { instrIndex, expectedInstr ->
                 val actualInstr = actualFunc.body[instrIndex]
-                assertAssemblyInstructionEquals(expectedInstr, actualInstr, "$message - Assembly instruction mismatch at function $index, instruction $instrIndex")
+                assertAssemblyInstructionEquals(
+                    expectedInstr,
+                    actualInstr,
+                    "$message - Assembly instruction mismatch at function $index, instruction $instrIndex"
+                )
             }
         }
     }
 
-    private fun assertAssemblyInstructionEquals(expected: assembly.Instruction, actual: assembly.Instruction, message: String) {
+    private fun assertAssemblyInstructionEquals(
+        expected: assembly.Instruction,
+        actual: assembly.Instruction,
+        message: String
+    ) {
         when (expected) {
             is assembly.Mov -> {
                 assertIs<assembly.Mov>(actual, "$message - Expected Mov but got ${actual::class.simpleName}")
@@ -370,15 +425,22 @@ class CompilerTestSuite {
             is assembly.Ret -> {
                 assertIs<assembly.Ret>(actual, "$message - Expected Ret but got ${actual::class.simpleName}")
             }
-            else -> assertEquals(expected, actual, "$message - Assembly instruction type mismatch")
         }
     }
 
-    private fun assertAssemblyLabelEquals(expected: assembly.Label, actual: assembly.Label, message: String) {
+    private fun assertAssemblyLabelEquals(
+        expected: assembly.Label,
+        actual: assembly.Label,
+        message: String
+    ) {
         assertEquals(expected.name, actual.name, "$message - Assembly Label name mismatch")
     }
 
-    private fun assertAssemblyOperandEquals(expected: assembly.Operand, actual: assembly.Operand, message: String) {
+    private fun assertAssemblyOperandEquals(
+        expected: assembly.Operand,
+        actual: assembly.Operand,
+        message: String
+    ) {
         when (expected) {
             is assembly.Imm -> {
                 assertIs<assembly.Imm>(actual, "$message - Expected Imm but got ${actual::class.simpleName}")
@@ -396,11 +458,14 @@ class CompilerTestSuite {
                 assertIs<assembly.Pseudo>(actual, "$message - Expected Pseudo but got ${actual::class.simpleName}")
                 assertEquals(expected.name, actual.name, "$message - Pseudo name mismatch")
             }
-            else -> assertEquals(expected, actual, "$message - Assembly operand type mismatch")
         }
     }
 
-    private fun assertFunctionDeclarationEquals(expected: parser.FunctionDeclaration, actual: parser.FunctionDeclaration, message: String) {
+    private fun assertFunctionDeclarationEquals(
+        expected: parser.FunctionDeclaration,
+        actual: parser.FunctionDeclaration,
+        message: String
+    ) {
         assertEquals(expected.name, actual.name, "$message - Function declaration name mismatch")
         assertEquals(expected.params, actual.params, "$message - Function declaration params mismatch")
         if (expected.body != null && actual.body != null) {
@@ -410,7 +475,11 @@ class CompilerTestSuite {
         }
     }
 
-    private fun assertDeclarationEquals(expected: parser.Declaration, actual: parser.Declaration, message: String) {
+    private fun assertDeclarationEquals(
+        expected: parser.Declaration,
+        actual: parser.Declaration,
+        message: String
+    ) {
         when (expected) {
             is parser.VarDecl -> {
                 assertIs<parser.VarDecl>(actual, "$message - Expected VarDecl but got ${actual::class.simpleName}")
@@ -429,17 +498,6 @@ class CompilerTestSuite {
                     assertEquals(expected.init, actual.init, "$message - Variable declaration init null mismatch")
                 }
             }
-            is parser.FunctionDeclaration -> {
-                assertIs<parser.FunctionDeclaration>(actual, "$message - Expected FunctionDeclaration but got ${actual::class.simpleName}")
-                assertEquals(expected.name, actual.name, "$message - Function declaration name mismatch")
-                assertEquals(expected.params, actual.params, "$message - Function declaration params mismatch")
-                if (expected.body != null && actual.body != null) {
-                    assertBlockEquals(expected.body, actual.body, "$message - Function declaration body mismatch")
-                } else {
-                    assertEquals(expected.body, actual.body, "$message - Function declaration body null mismatch")
-                }
-            }
-            else -> assertEquals(expected, actual, "$message - Declaration type mismatch")
         }
     }
 
@@ -463,11 +521,11 @@ class CompilerTestSuite {
             // Parser stage
             val ast = CompilerWorkflow.take(tokens)
             assertIs<SimpleProgram>(ast)
-            val simpleProgram = ast as SimpleProgram
+            val simpleProgram = ast
             if (testCase.expectedAst != null) {
                 assertIs<SimpleProgram>(testCase.expectedAst, "Expected AST should be SimpleProgram")
                 assertAstEquals(
-                    expected = testCase.expectedAst as SimpleProgram,
+                    expected = testCase.expectedAst,
                     actual = simpleProgram,
                     message =
                     """

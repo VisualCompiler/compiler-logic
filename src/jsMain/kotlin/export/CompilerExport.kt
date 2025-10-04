@@ -120,12 +120,12 @@ class CompilerExport {
                 CompilerWorkflow.take(
                     tacky,
                     optimizations =
-                        listOf(
-                            OptimizationType.B_CONSTANT_FOLDING,
-                            OptimizationType.D_DEAD_STORE_ELIMINATION,
-                            OptimizationType.A_COPY_PROPAGATION,
-                            OptimizationType.C_UNREACHABLE_CODE_ELIMINATION
-                        )
+                    listOf(
+                        OptimizationType.B_CONSTANT_FOLDING,
+                        OptimizationType.D_DEAD_STORE_ELIMINATION,
+                        OptimizationType.A_COPY_PROPAGATION,
+                        OptimizationType.C_UNREACHABLE_CODE_ELIMINATION
+                    )
                 )
             val asm = CompilerWorkflow.take(optimizedTacky)
             val finalAssemblyString = codeEmitter.emit(asm as AsmProgram)
@@ -214,15 +214,15 @@ class CompilerExport {
             val optimizedProgram =
                 TackyProgram(
                     functions =
-                        program.functions.map { function ->
-                            if (function.body.isNotEmpty()) {
-                                val cfg = ControlFlowGraph().construct(function.name, function.body)
-                                val optimizedCfg = OptimizationManager.applyOptimizations(cfg, optList.mapNotNull(optTypeMap::get))
-                                function.copy(body = optimizedCfg.toInstructions())
-                            } else {
-                                function
-                            }
+                    program.functions.map { function ->
+                        if (function.body.isNotEmpty()) {
+                            val cfg = ControlFlowGraph().construct(function.name, function.body)
+                            val optimizedCfg = OptimizationManager.applyOptimizations(cfg, optList.mapNotNull(optTypeMap::get))
+                            function.copy(body = optimizedCfg.toInstructions())
+                        } else {
+                            function
                         }
+                    }
                 )
 
             val asm = CompilerWorkflow.take(optimizedProgram)

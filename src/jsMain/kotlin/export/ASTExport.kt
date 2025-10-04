@@ -43,22 +43,24 @@ fun createJsonNode(
     location: parser.SourceLocation? = null,
     id: String? = null
 ): JsonObject {
-    val nodeMap = mutableMapOf<String, JsonElement>(
-        "type" to JsonPrimitive(type),
-        "label" to JsonPrimitive(label),
-        "children" to children,
-        "edgeLabels" to JsonPrimitive(edgeLabels)
-    )
+    val nodeMap =
+        mutableMapOf<String, JsonElement>(
+            "type" to JsonPrimitive(type),
+            "label" to JsonPrimitive(label),
+            "children" to children,
+            "edgeLabels" to JsonPrimitive(edgeLabels)
+        )
 
     location?.let {
-        nodeMap["location"] = JsonObject(
-            mapOf(
-                "startLine" to JsonPrimitive(it.startLine),
-                "startCol" to JsonPrimitive(it.startCol),
-                "endLine" to JsonPrimitive(it.endLine),
-                "endCol" to JsonPrimitive(it.endCol)
+        nodeMap["location"] =
+            JsonObject(
+                mapOf(
+                    "startLine" to JsonPrimitive(it.startLine),
+                    "startCol" to JsonPrimitive(it.startCol),
+                    "endLine" to JsonPrimitive(it.endLine),
+                    "endCol" to JsonPrimitive(it.endCol)
+                )
             )
-        )
     }
 
     id?.let {
@@ -96,11 +98,14 @@ class ASTExport : Visitor<JsonObject> {
         return createJsonNode(NodeType.Statement.name, "ExpressionStatement", children, false, node.location, node.id)
     }
 
-    override fun visit(node: NullStatement): JsonObject = createJsonNode(NodeType.Statement.name, "NullStatement", JsonObject(emptyMap()), false, node.location, node.id)
+    override fun visit(node: NullStatement): JsonObject =
+        createJsonNode(NodeType.Statement.name, "NullStatement", JsonObject(emptyMap()), false, node.location, node.id)
 
-    override fun visit(node: BreakStatement): JsonObject = createJsonNode(NodeType.Statement.name, "BreakStatement", JsonObject(emptyMap()), false, node.location, node.id)
+    override fun visit(node: BreakStatement): JsonObject =
+        createJsonNode(NodeType.Statement.name, "BreakStatement", JsonObject(emptyMap()), false, node.location, node.id)
 
-    override fun visit(node: ContinueStatement): JsonObject = createJsonNode(NodeType.Statement.name, "continue", JsonObject(emptyMap()), false, node.location, node.id)
+    override fun visit(node: ContinueStatement): JsonObject =
+        createJsonNode(NodeType.Statement.name, "continue", JsonObject(emptyMap()), false, node.location, node.id)
 
     override fun visit(node: WhileStatement): JsonObject {
         val children =
@@ -174,7 +179,13 @@ class ASTExport : Visitor<JsonObject> {
                     "expression" to node.expression.accept(this)
                 )
             )
-        return createJsonNode(NodeType.Expression.name, "UnaryExpression(${node.operator.type})", children, location = node.location, id = node.id)
+        return createJsonNode(
+            NodeType.Expression.name,
+            "UnaryExpression(${node.operator.type})",
+            children,
+            location = node.location,
+            id = node.id
+        )
     }
 
     override fun visit(node: BinaryExpression): JsonObject {
@@ -185,10 +196,18 @@ class ASTExport : Visitor<JsonObject> {
                     "right" to node.right.accept(this)
                 )
             )
-        return createJsonNode(NodeType.Expression.name, "BinaryExpression(${node.operator.type})", children, edgeLabels = true, location = node.location, id = node.id)
+        return createJsonNode(
+            NodeType.Expression.name,
+            "BinaryExpression(${node.operator.type})",
+            children,
+            edgeLabels = true,
+            location = node.location,
+            id = node.id
+        )
     }
 
-    override fun visit(node: IntExpression): JsonObject = createJsonNode(NodeType.Expression.name, "Int(${node.value})", JsonObject(emptyMap()), false, node.location, node.id)
+    override fun visit(node: IntExpression): JsonObject =
+        createJsonNode(NodeType.Expression.name, "Int(${node.value})", JsonObject(emptyMap()), false, node.location, node.id)
 
     override fun visit(node: IfStatement): JsonObject {
         val childrenMap =
@@ -204,7 +223,7 @@ class ASTExport : Visitor<JsonObject> {
         val children =
             JsonObject(
                 mapOf(
-                    "cond" to node.codition.accept(this),
+                    "cond" to node.condition.accept(this),
                     "then" to node.thenExpression.accept(this),
                     "else" to node.elseExpression.accept(this)
                 )
@@ -242,16 +261,24 @@ class ASTExport : Visitor<JsonObject> {
     override fun visit(node: VariableDeclaration): JsonObject {
         val childrenMap = mutableMapOf<String, JsonElement>("name" to JsonPrimitive(node.name))
         node.init?.let { childrenMap["initializer"] = it.accept(this) }
-        return createJsonNode(NodeType.Declaration.name, "Declaration(${node.name})", JsonObject(childrenMap), false, node.location, node.id)
+        return createJsonNode(
+            NodeType.Declaration.name,
+            "Declaration(${node.name})",
+            JsonObject(childrenMap),
+            false,
+            node.location,
+            node.id
+        )
     }
 
     override fun visit(node: S): JsonObject = node.statement.accept(this)
 
-    override fun visit(node: D): JsonObject = when (node.declaration) {
-        is VarDecl -> node.declaration.accept(this)
-        is FunDecl -> node.declaration.accept(this)
-        is VariableDeclaration -> node.declaration.accept(this)
-    }
+    override fun visit(node: D): JsonObject =
+        when (node.declaration) {
+            is VarDecl -> node.declaration.accept(this)
+            is FunDecl -> node.declaration.accept(this)
+            is VariableDeclaration -> node.declaration.accept(this)
+        }
 
     override fun visit(node: Block): JsonObject {
         val blockItems = node.items.map { it.accept(this) }

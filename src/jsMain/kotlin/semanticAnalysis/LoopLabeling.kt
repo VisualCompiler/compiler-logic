@@ -128,7 +128,7 @@ class LoopLabeling : Visitor<Unit> {
     }
 
     override fun visit(node: ConditionalExpression) {
-        node.codition.accept(this)
+        node.condition.accept(this)
         node.thenExpression.accept(this)
         node.elseExpression.accept(this)
     }

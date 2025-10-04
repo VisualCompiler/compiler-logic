@@ -2,7 +2,9 @@ package parser
 
 import lexer.Token
 
-sealed class Expression(location: SourceLocation) : ASTNode(location)
+sealed class Expression(
+    location: SourceLocation
+) : ASTNode(location)
 
 data class IntExpression(
     val value: Int,
@@ -44,7 +46,7 @@ data class AssignmentExpression(
 }
 
 data class ConditionalExpression(
-    val codition: Expression,
+    val condition: Expression,
     val thenExpression: Expression,
     val elseExpression: Expression,
     override val location: SourceLocation

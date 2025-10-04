@@ -48,6 +48,6 @@ We also included the test suite of the book "Writing a C Compiler" by Nora Sandl
 ./gradlew createCompilerJar
 # Run the test script
 cd src/resources/write_a_c_compiler-tests
-./test_compiler_kotlin.sh ../../../build/libs/compiler-1.0-SNAPSHOT.jar
+./test_compiler_kotlin.sh ../../../build/libs/compiler-1.0-SNAPSHOT.jar && cd ../../..
 ```
 For more information, see the [test suite README](https://github.com/nlsandler/write_a_c_compiler/blob/master/README.md).
